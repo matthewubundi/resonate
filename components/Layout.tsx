@@ -1,12 +1,12 @@
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  Sparkles, 
-  FileEdit, 
-  BarChart3, 
-  Brain, 
-  Users, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Sparkles,
+  FileEdit,
+  BarChart3,
+  Brain,
+  Users,
+  Settings,
   Menu,
   LogOut,
   Cpu
@@ -19,6 +19,7 @@ interface LayoutProps {
   onNavigate: (page: PageView) => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
+  onLogout: () => void;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -31,8 +32,8 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-export const Layout: React.FC<LayoutProps> = ({ 
-  children, activePage, onNavigate
+export const Layout: React.FC<LayoutProps> = ({
+  children, activePage, onNavigate, onLogout
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
@@ -57,11 +58,10 @@ export const Layout: React.FC<LayoutProps> = ({
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all duration-200 group ${
-                  isActive 
-                    ? 'bg-white text-azure shadow-sm ring-1 ring-ink/5' 
-                    : 'text-ink/60 hover:bg-white/60 hover:text-ink'
-                }`}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all duration-200 group ${isActive
+                  ? 'bg-white text-azure shadow-sm ring-1 ring-ink/5'
+                  : 'text-ink/60 hover:bg-white/60 hover:text-ink'
+                  }`}
               >
                 <Icon size={18} className={isActive ? 'text-azure' : 'text-ink/60 group-hover:text-ink'} />
                 {item.label}
@@ -71,13 +71,13 @@ export const Layout: React.FC<LayoutProps> = ({
         </nav>
 
         <div className="p-4 border-t border-ink/5">
-           <button 
-             onClick={() => onNavigate('landing')}
-             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-ink/60 hover:bg-white/60 hover:text-ink transition-colors"
-           >
-             <LogOut size={18} />
-             Sign Out
-           </button>
+          <button
+            onClick={onLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-ink/60 hover:bg-white/60 hover:text-ink transition-colors"
+          >
+            <LogOut size={18} />
+            Sign Out
+          </button>
         </div>
       </aside>
 
@@ -91,7 +91,7 @@ export const Layout: React.FC<LayoutProps> = ({
             </button>
             <span className="font-bold text-ink">Identity Preserver</span>
           </div>
-          
+
           <div className="hidden md:flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-azure"></div>
             <h2 className="text-xs font-bold text-ink/50 uppercase tracking-widest">{activePage}</h2>
@@ -114,11 +114,11 @@ export const Layout: React.FC<LayoutProps> = ({
         {isMobileMenuOpen && (
           <div className="absolute inset-0 z-50 bg-ink/20 md:hidden backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="h-full w-64 bg-paleslate p-4 border-r border-ink/10 shadow-xl" onClick={e => e.stopPropagation()}>
-               <div className="flex items-center gap-2 mb-8 px-2">
-                 <div className="h-8 w-8 rounded bg-azure text-white flex items-center justify-center font-bold"><Cpu size={18}/></div>
-                 <span className="font-bold text-lg text-ink">Identity</span>
-               </div>
-               <nav className="space-y-1">
+              <div className="flex items-center gap-2 mb-8 px-2">
+                <div className="h-8 w-8 rounded bg-azure text-white flex items-center justify-center font-bold"><Cpu size={18} /></div>
+                <span className="font-bold text-lg text-ink">Identity</span>
+              </div>
+              <nav className="space-y-1">
                 {NAV_ITEMS.map((item) => (
                   <button
                     key={item.id}
@@ -126,9 +126,8 @@ export const Layout: React.FC<LayoutProps> = ({
                       onNavigate(item.id);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold ${
-                       activePage === item.id ? 'bg-white text-azure shadow-sm' : 'text-ink/60 hover:text-ink'
-                    }`}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold ${activePage === item.id ? 'bg-white text-azure shadow-sm' : 'text-ink/60 hover:text-ink'
+                      }`}
                   >
                     <item.icon size={18} />
                     {item.label}

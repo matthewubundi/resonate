@@ -1,15 +1,17 @@
 // Navigation Types
-export type PageView = 
-  | 'landing' 
-  | 'onboarding' 
-  | 'loading' 
-  | 'review' 
-  | 'dashboard' 
-  | 'transform' 
-  | 'editor' 
-  | 'analytics' 
-  | 'memory' 
-  | 'personas' 
+export type PageView =
+  | 'landing'
+  | 'login'
+  | 'signup'
+  | 'onboarding'
+  | 'loading'
+  | 'review'
+  | 'dashboard'
+  | 'transform'
+  | 'editor'
+  | 'analytics'
+  | 'memory'
+  | 'personas'
   | 'settings';
 
 export interface NavItem {

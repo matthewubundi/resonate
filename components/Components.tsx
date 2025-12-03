@@ -8,11 +8,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
 }
 
-export const Button: React.FC<ButtonProps> = ({ 
-  children, variant = 'primary', size = 'md', isLoading, className = '', ...props 
+export const Button: React.FC<ButtonProps> = ({
+  children, variant = 'primary', size = 'md', isLoading, className = '', ...props
 }) => {
   const baseStyles = "inline-flex items-center justify-center font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-paper focus:ring-azure disabled:opacity-50 disabled:pointer-events-none rounded-lg tracking-tight";
-  
+
   const variants = {
     primary: "bg-azure text-white hover:bg-azure-hover shadow-sm hover:shadow-md border border-transparent",
     secondary: "bg-paleslate text-ink border border-ink/10 hover:bg-paleslate-dark hover:text-ink hover:border-ink/20",
@@ -28,8 +28,8 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   return (
-    <button 
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`} 
+    <button
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       disabled={isLoading || props.disabled}
       {...props}
     >
@@ -55,7 +55,7 @@ export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ chi
 export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ children, className = '', ...props }) => (
   <h3 className={`text-lg font-bold text-ink tracking-tight ${className}`} {...props}>
     {children}
-  </div>
+  </h3>
 );
 
 export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className = '', ...props }) => (
@@ -72,7 +72,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const Input: React.FC<InputProps> = ({ label, className = '', ...props }) => (
   <div className="w-full">
     {label && <label className="block text-sm font-semibold text-ink mb-1.5">{label}</label>}
-    <input 
+    <input
       className={`flex h-10 w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus:bg-white ${className}`}
       {...props}
     />
@@ -86,7 +86,7 @@ interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 export const TextArea: React.FC<TextAreaProps> = ({ label, className = '', ...props }) => (
   <div className="w-full">
     {label && <label className="block text-sm font-semibold text-ink mb-1.5">{label}</label>}
-    <textarea 
+    <textarea
       className={`flex min-h-[80px] w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus:bg-white ${className}`}
       {...props}
     />
@@ -100,7 +100,7 @@ export const Chip: React.FC<{ label: string; onRemove?: () => void }> = ({ label
     {onRemove && (
       <button onClick={onRemove} className="ml-1 rounded-full p-0.5 hover:bg-azure/20 text-azure hover:text-azure-hover">
         <span className="sr-only">Remove</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
       </button>
     )}
   </span>
@@ -109,7 +109,7 @@ export const Chip: React.FC<{ label: string; onRemove?: () => void }> = ({ label
 // --- JSON VIEWER ---
 export const JsonViewer: React.FC<{ data: string | object }> = ({ data }) => {
   const content = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
-  
+
   // Minimal highlighting logic
   const highlighted = content.replace(/"([^"]+)":/g, '<span class="text-ink font-bold">"$1"</span>:');
 

@@ -285,21 +285,21 @@ const AppContent: React.FC = () => {
   const renderView = () => {
     switch (view) {
       case 'landing':
-        return <Landing onStart={() => handleNavigate('login')} />;
+        return <Landing onLogin={() => handleNavigate('login')} onSignup={() => handleNavigate('signup')} />;
       case 'login':
         return (
           <Login
             onLogin={handleLogin}
-            onNavigateToSignup={() => setView('signup')}
-            onBack={() => setView('landing')}
+            onNavigateToSignup={() => handleNavigate('signup')}
+            onBack={() => handleNavigate('landing')}
           />
         );
       case 'signup':
         return (
           <Signup
             onSignup={handleSignup}
-            onNavigateToLogin={() => setView('login')}
-            onBack={() => setView('landing')}
+            onNavigateToLogin={() => handleNavigate('login')}
+            onBack={() => handleNavigate('landing')}
           />
         );
       case 'onboarding':

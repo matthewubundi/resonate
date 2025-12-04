@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { Layout } from './components/Layout';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
@@ -11,6 +12,8 @@ import { PageView } from './types';
 import { DUMMY_JSON } from './constants';
 import { Card, CardHeader, CardTitle, CardContent, Input, TextArea, Button, JsonViewer, Chip } from './components/Components';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { User } from '@supabase/supabase-js';
 
 // --- Placeholder Pages for less critical UI ---
 
@@ -148,53 +151,93 @@ const Analytics = () => {
   );
 };
 
-const SettingsPage = () => (
-  <div className="max-w-2xl space-y-6">
-    <Card className="bg-white">
-      <CardHeader><CardTitle>General System</CardTitle></CardHeader>
-      <CardContent className="space-y-4">
-        <Input label="Display Name" defaultValue="User 1" />
-        <div className="flex items-center justify-between p-4 bg-paleslate rounded-lg border border-ink/5">
-          <span className="text-sm font-semibold text-ink">Interface Theme</span>
-          <div className="text-xs bg-white px-3 py-1 rounded-full text-ink font-bold border border-ink/10 shadow-sm">Paper White</div>
-        </div>
-      </CardContent>
-    </Card>
-    <Card className="bg-white">
-      <CardHeader><CardTitle>API Gateway</CardTitle></CardHeader>
-      <CardContent className="space-y-4">
-        <Input type="password" label="OpenAI API Key" placeholder="sk-..." />
-        <Input type="password" label="Anthropic API Key" placeholder="sk-..." />
-      </CardContent>
-    </Card>
-  </div>
-);
+const SettingsPage = ({ user }: { user: User | null }) => {
+  const getUserDisplayName = () => {
+    if (!user) return 'Guest';
+    return user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+  };
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      <Card className="bg-white">
+        <CardHeader><CardTitle>General System</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <Input label="Display Name" defaultValue={getUserDisplayName()} />
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-ink">Email</label>
+            <input
+              type="email"
+              value={user?.email || ''}
+              disabled
+              className="w-full px-4 py-2 rounded-lg border border-ink/10 bg-paleslate/30 text-ink/60 cursor-not-allowed"
+            />
+          </div>
+          <div className="flex items-center justify-between p-4 bg-paleslate rounded-lg border border-ink/5">
+            <span className="text-sm font-semibold text-ink">Interface Theme</span>
+            <div className="text-xs bg-white px-3 py-1 rounded-full text-ink font-bold border border-ink/10 shadow-sm">Paper White</div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="bg-white">
+        <CardHeader><CardTitle>API Gateway</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <Input type="password" label="OpenAI API Key" placeholder="sk-..." />
+          <Input type="password" label="Anthropic API Key" placeholder="sk-..." />
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 // --- Main App Component ---
 
-const App: React.FC = () => {
-  const [view, setView] = useState<PageView>('landing');
+const AppContent: React.FC = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Detect current route and map to view
+  const getInitialView = (): PageView => {
+    if (typeof window === 'undefined') return 'landing';
+
+    const routeMap: Record<string, PageView> = {
+      '/dashboard': 'dashboard',
+      '/transform': 'transform',
+      '/login': 'login',
+      '/signup': 'signup',
+      '/editor': 'editor',
+      '/analytics': 'analytics',
+      '/settings': 'settings',
+    };
+
+    return routeMap[pathname || '/'] || 'landing';
+  };
+
+  const [view, setView] = useState<PageView>(getInitialView());
   const [isDarkMode, setIsDarkMode] = useState(false); // Default to light
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, signOut, loading } = useAuth();
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
+  // Update view when pathname changes
+  useEffect(() => {
+    const currentView = getInitialView();
+    setView(currentView);
+  }, [pathname]);
+
   // Handle login
   const handleLogin = () => {
-    setIsAuthenticated(true);
-    setView('dashboard');
+    router.push('/dashboard');
   };
 
   // Handle signup
   const handleSignup = () => {
-    setIsAuthenticated(true);
     setView('onboarding'); // Take new users through onboarding
   };
 
   // Handle logout
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setView('landing');
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/');
   };
 
   // Protected route handler
@@ -202,12 +245,41 @@ const App: React.FC = () => {
     // If trying to access protected pages without authentication, redirect to login
     const protectedPages: PageView[] = ['dashboard', 'transform', 'editor', 'analytics', 'memory', 'personas', 'settings'];
 
-    if (protectedPages.includes(page) && !isAuthenticated) {
-      setView('login');
+    if (protectedPages.includes(page) && !user) {
+      router.push('/login');
     } else {
-      setView(page);
+      // Map page views to routes
+      const routeMap: Record<PageView, string> = {
+        'landing': '/',
+        'login': '/login',
+        'signup': '/signup',
+        'dashboard': '/dashboard',
+        'transform': '/transform',
+        'editor': '/editor',
+        'analytics': '/analytics',
+        'settings': '/settings',
+        'onboarding': '/onboarding',
+        'loading': '/loading',
+        'memory': '/memory',
+        'personas': '/personas',
+        'review': '/review',
+      };
+
+      router.push(routeMap[page] || '/');
     }
   };
+
+  // Show loading screen while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-paper via-paleslate to-azure/5">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 size={48} className="text-azure animate-spin" />
+          <p className="text-ink/60 font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Routing Logic
   const renderView = () => {
@@ -243,7 +315,7 @@ const App: React.FC = () => {
       case 'analytics':
         return <Analytics />;
       case 'settings':
-        return <SettingsPage />;
+        return <SettingsPage user={user} />;
       default:
         return <div className="p-8 text-center text-ink">Page: {view} (Placeholder)</div>;
     }
@@ -266,10 +338,20 @@ const App: React.FC = () => {
         isDarkMode={isDarkMode}
         toggleTheme={toggleTheme}
         onLogout={handleLogout}
+        user={user}
       >
         {renderView()}
       </Layout>
     </div>
+  );
+};
+
+// Wrap the app with AuthProvider
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 

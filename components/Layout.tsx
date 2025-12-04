@@ -12,6 +12,7 @@ import {
   Cpu
 } from 'lucide-react';
 import { NavItem, PageView } from '../types';
+import { User } from '@supabase/supabase-js';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ interface LayoutProps {
   isDarkMode: boolean;
   toggleTheme: () => void;
   onLogout: () => void;
+  user: User | null;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -33,9 +35,22 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export const Layout: React.FC<LayoutProps> = ({
-  children, activePage, onNavigate, onLogout
+  children, activePage, onNavigate, onLogout, user
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  // Get user display name from metadata or email
+  const getUserDisplayName = () => {
+    if (!user) return 'Guest';
+    return user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+  };
+
+  // Get user initials for avatar
+  const getUserInitial = () => {
+    if (!user) return 'G';
+    const name = user.user_metadata?.full_name || user.email || 'User';
+    return name.charAt(0).toUpperCase();
+  };
 
   return (
     <div className="flex h-screen w-full bg-paper text-ink overflow-hidden">
@@ -100,11 +115,13 @@ export const Layout: React.FC<LayoutProps> = ({
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-ink">System Admin</p>
-                <p className="text-[10px] text-azure font-bold uppercase tracking-wider">Online</p>
+                <p className="text-sm font-bold text-ink">{getUserDisplayName()}</p>
+                <p className="text-[10px] text-azure font-bold uppercase tracking-wider">
+                  {user?.email || 'Not logged in'}
+                </p>
               </div>
               <div className="h-9 w-9 rounded-full bg-paleslate border border-ink/10 text-azure flex items-center justify-center font-bold">
-                A
+                {getUserInitial()}
               </div>
             </div>
           </div>

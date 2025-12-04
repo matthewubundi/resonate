@@ -60,3 +60,108 @@ export interface Persona {
   isActive: boolean;
   avatarColor: string;
 }
+
+// Database Schema Types (matches Supabase schema)
+export interface Database {
+  public: {
+    Tables: {
+      profiles: {
+        Row: {
+          id: string; // uuid
+          email: string | null;
+          created_at: string; // timestamp with time zone
+          full_name: string | null;
+        };
+        Insert: {
+          id: string; // uuid (references auth.users)
+          email?: string | null;
+          created_at?: string;
+          full_name?: string | null;
+        };
+        Update: {
+          id?: string;
+          email?: string | null;
+          created_at?: string;
+          full_name?: string | null;
+        };
+      };
+      identities: {
+        Row: {
+          id: string; // uuid
+          user_id: string; // uuid (references profiles.id)
+          identity_json: Record<string, any>; // jsonb
+          is_active: boolean;
+          version_number: number;
+          created_at: string; // timestamp with time zone
+          updated_at: string; // timestamp with time zone
+        };
+        Insert: {
+          id?: string; // uuid (auto-generated)
+          user_id: string; // uuid (references profiles.id)
+          identity_json: Record<string, any>; // jsonb
+          is_active?: boolean;
+          version_number?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          identity_json?: Record<string, any>;
+          is_active?: boolean;
+          version_number?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      transformations: {
+        Row: {
+          id: string; // uuid
+          user_id: string; // uuid (references profiles.id)
+          input_text: string | null;
+          raw_llm_output: string | null;
+          final_output: string | null;
+          alignment_score: number | null; // numeric(3,1)
+          processing_time_ms: number | null;
+          model_used: string | null;
+          created_at: string; // timestamp with time zone
+        };
+        Insert: {
+          id?: string; // uuid (auto-generated)
+          user_id: string; // uuid (references profiles.id)
+          input_text?: string | null;
+          raw_llm_output?: string | null;
+          final_output?: string | null;
+          alignment_score?: number | null;
+          processing_time_ms?: number | null;
+          model_used?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          input_text?: string | null;
+          raw_llm_output?: string | null;
+          final_output?: string | null;
+          alignment_score?: number | null;
+          processing_time_ms?: number | null;
+          model_used?: string | null;
+          created_at?: string;
+        };
+      };
+    };
+  };
+}
+
+// Convenience types for database tables
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
+export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
+
+export type Identity = Database['public']['Tables']['identities']['Row'];
+export type IdentityInsert = Database['public']['Tables']['identities']['Insert'];
+export type IdentityUpdate = Database['public']['Tables']['identities']['Update'];
+
+export type Transformation = Database['public']['Tables']['transformations']['Row'];
+export type TransformationInsert = Database['public']['Tables']['transformations']['Insert'];
+export type TransformationUpdate = Database['public']['Tables']['transformations']['Update'];

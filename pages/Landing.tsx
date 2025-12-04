@@ -13,9 +13,14 @@ import {
   ChevronRight,
   Sparkles,
   ToggleRight,
-  ToggleLeft
+  ToggleLeft,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import HeroImage from '../assets/Hero.png';
+import IntegrationImage from '../assets/Integration.png';
+import ArchitectureImage from '../assets/Architecture.png';
 
 // --- Shared Framer Motion Variants ---
 const fadeInUp = {
@@ -29,6 +34,72 @@ const fadeInUp = {
 
 const springHover = {
   hover: { y: -5, transition: { type: "spring", stiffness: 300 } }
+};
+
+// --- Image Placeholder Component ---
+const ImagePlaceholder: React.FC<{
+  aspectRatio?: string;
+  className?: string;
+  alt: string;
+  src?: string | { src: string };
+  priority?: boolean;
+}> = ({ aspectRatio = "aspect-video", className = "", alt, src, priority = false }) => {
+  // Extract readable aspect ratio from Tailwind class
+  const getAspectRatioLabel = (ratio: string): string => {
+    const ratioMap: Record<string, string> = {
+      'aspect-video': '16:9',
+      'aspect-square': '1:1',
+      'aspect-[4/3]': '4:3',
+      'aspect-[3/2]': '3:2',
+      'aspect-[16/9]': '16:9',
+      'aspect-[16/6]': '16:6',
+    };
+    return ratioMap[ratio] || ratio.replace('aspect-', '').replace(/[\[\]]/g, '').replace(/\//g, ':');
+  };
+
+  const aspectRatioLabel = getAspectRatioLabel(aspectRatio);
+
+  // Normalize src - handle both string paths and imported image objects
+  const imageSrc = typeof src === 'string' ? src : src?.src;
+
+  // If src is provided, use Next.js Image component
+  if (imageSrc) {
+    // Filter out shadow and border classes from className when image is present
+    const cleanClassName = className
+      .replace(/\bshadow-\S+/g, '')
+      .replace(/\bborder-\S+/g, '')
+      .replace(/\bbg-\S+/g, '')
+      .trim()
+      .replace(/\s+/g, ' ');
+    
+    return (
+      <div className={`relative ${aspectRatio} ${cleanClassName} overflow-hidden`}>
+        <Image
+          src={imageSrc}
+          alt={alt}
+          fill
+          className="object-cover"
+          priority={priority}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        />
+      </div>
+    );
+  }
+  
+  // Placeholder UI when no src is provided
+  return (
+    <div className={`relative ${aspectRatio} ${className} rounded-xl overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200 flex items-center justify-center group`}>
+      <div className="flex flex-col items-center gap-3 text-slate-400 z-10">
+        <ImageIcon size={32} className="group-hover:text-slate-500 transition-colors" />
+        <span className="text-xs font-medium text-slate-500 px-4 text-center">{alt}</span>
+      </div>
+      {/* Aspect Ratio Badge */}
+      <div className="absolute top-2 right-2 bg-blue-600/90 text-white text-xs font-mono px-2 py-1 rounded backdrop-blur-sm shadow-sm z-20">
+        {aspectRatioLabel}
+      </div>
+      <div className="absolute inset-0 bg-grid-slate-200/50 opacity-30"></div>
+    </div>
+  );
 };
 
 export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = ({ onLogin, onSignup }) => {
@@ -156,73 +227,20 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
             </motion.div>
           </div>
 
-          {/* Hero Visual - Abstract Identity Card */}
+          {/* Hero Visual - Image Placeholder */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
             className="relative hidden lg:block"
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 to-purple-50 rounded-full blur-[100px] opacity-60" />
-
-            <div className="relative bg-white/60 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-2xl shadow-blue-900/5 rotate-[-3deg] hover:rotate-0 transition-all duration-500 z-10 max-w-md mx-auto">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-white flex items-center justify-center">
-                    <span className="text-xl">👨‍💻</span>
-                  </div>
-                  <div>
-                    <div className="h-3 w-32 bg-slate-200 rounded-full mb-2"></div>
-                    <div className="h-2 w-20 bg-slate-100 rounded-full"></div>
-                  </div>
-                </div>
-                <div className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold border border-green-200">
-                  99% Match
-                </div>
-              </div>
-
-              <div className="space-y-4 mb-8">
-                <div className="p-4 rounded-xl bg-white border border-slate-100 shadow-sm">
-                  <div className="flex gap-2 mb-2">
-                    <span className="h-2 w-2 rounded-full bg-red-400"></span>
-                    <span className="h-2 w-2 rounded-full bg-yellow-400"></span>
-                    <span className="h-2 w-2 rounded-full bg-green-400"></span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-2 w-full bg-slate-100 rounded-full"></div>
-                    <div className="h-2 w-5/6 bg-slate-100 rounded-full"></div>
-                    <div className="h-2 w-4/6 bg-slate-100 rounded-full"></div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <div className="flex-1 h-24 rounded-xl bg-blue-600/5 border border-blue-100 flex flex-col items-center justify-center gap-2">
-                    <Fingerprint className="text-blue-600" size={24} />
-                    <span className="text-[10px] font-bold text-blue-900 uppercase">Fingerprint</span>
-                  </div>
-                  <div className="flex-1 h-24 rounded-xl bg-purple-600/5 border border-purple-100 flex flex-col items-center justify-center gap-2">
-                    <Sparkles className="text-purple-600" size={24} />
-                    <span className="text-[10px] font-bold text-purple-900 uppercase">Tone</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-6 border-t border-slate-200/50">
-                <span className="text-xs font-mono text-slate-400">ID: 882-1X-ALP</span>
-                <span className="text-xs font-bold text-slate-900">Verified</span>
-              </div>
-            </div>
-
-            {/* Floating Elements */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-10 -right-10 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 z-20"
-            >
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs font-bold text-slate-700">Vocabulary Synced</span>
-              </div>
-            </motion.div>
+            <ImagePlaceholder
+              aspectRatio="aspect-[4/3]"
+              alt="Identity preservation visualization"
+              className="w-full shadow-2xl shadow-blue-900/10"
+              src={HeroImage}
+              priority
+            />
           </motion.div>
         </div>
       </section>
@@ -247,7 +265,16 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Architecture of Identity</h2>
-            <p className="text-lg text-slate-600">Built for precision, privacy, and performance. Our engine deconstructs your linguistic style and reconstructs it on demand.</p>
+            <p className="text-lg text-slate-600 mb-8">Built for precision, privacy, and performance. Our engine deconstructs your linguistic style and reconstructs it on demand.</p>
+            {/* Architecture Diagram Placeholder */}
+            <div className="max-w-4xl mx-auto">
+              <ImagePlaceholder
+                aspectRatio="aspect-[16/9]"
+                alt="Architecture diagram showing identity preservation workflow"
+                className="w-full rounded-xl"
+                src={ArchitectureImage}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -261,13 +288,15 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
               <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
                 <Fingerprint size={200} className="text-blue-600" />
               </div>
-              <div className="h-12 w-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-6">
-                <Fingerprint size={24} />
+              <div>
+                <div className="h-12 w-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-6">
+                  <Fingerprint size={24} />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-3">Digital Fingerprint</h3>
+                <p className="text-slate-600 leading-relaxed max-w-md">
+                  We don't just "prompt" the AI. We encapsulate your vocabulary, sentence structure, and tone into a portable JSON identity file that acts as a distinct layer between you and the model.
+                </p>
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-3">Digital Fingerprint</h3>
-              <p className="text-slate-600 leading-relaxed max-w-md">
-                We don't just "prompt" the AI. We encapsulate your vocabulary, sentence structure, and tone into a portable JSON identity file that acts as a distinct layer between you and the model.
-              </p>
             </motion.div>
 
             {/* Card 2: Medium */}
@@ -419,6 +448,16 @@ const InteractiveComparison = () => {
             </div>
             <span className={`text-sm font-bold ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>Preserved</span>
           </div>
+        </div>
+
+        {/* Comparison Visual Diagram */}
+        <div className="mb-12">
+          <ImagePlaceholder
+            aspectRatio="aspect-[16/6]"
+            alt="Visual comparison diagram showing generic AI vs IdentityPreserver transformation"
+            className="w-full rounded-2xl"
+            src={IntegrationImage}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

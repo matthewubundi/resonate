@@ -1,5 +1,5 @@
 -- Supabase Database Schema
--- This file documents the current database schema for the Identity Preserver application
+-- This file documents the current database schema for the Resonate application
 
 -- 1. Profiles Table (Links to Supabase Auth)
 -- Stores user profile information linked to Supabase Auth users
@@ -16,6 +16,7 @@ create table profiles (
 create table identities (
   id uuid default uuid_generate_v4() primary key,
   user_id uuid references profiles(id) not null,
+  name text, -- Human-readable name for the identity (e.g., "Work Persona", "Personal Blog")
   identity_json jsonb not null, -- The core structured object [cite: 103]
   is_active boolean default true,
   version_number int default 1,
@@ -75,4 +76,27 @@ create policy "Users can view own profile"
 create policy "Users can update own profile"
   on profiles for update
   using (auth.uid() = id);
+
+-- 9. Enable Row Level Security on identities table
+alter table identities enable row level security;
+
+-- 10. Policy: Users can read their own identities
+create policy "Users can view own identities"
+  on identities for select
+  using (auth.uid() = user_id);
+
+-- 11. Policy: Users can insert their own identities
+create policy "Users can insert own identities"
+  on identities for insert
+  with check (auth.uid() = user_id);
+
+-- 12. Policy: Users can update their own identities
+create policy "Users can update own identities"
+  on identities for update
+  using (auth.uid() = user_id);
+
+-- 13. Policy: Users can delete their own identities
+create policy "Users can delete own identities"
+  on identities for delete
+  using (auth.uid() = user_id);
 

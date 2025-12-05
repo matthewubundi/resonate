@@ -1,7 +1,7 @@
 # Authentication Implementation Summary
 
 ## Overview
-Successfully integrated Supabase authentication throughout the Identity Preserver application.
+Successfully integrated Supabase authentication throughout the Resonate application.
 
 ## Files Created
 

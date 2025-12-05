@@ -22,3 +22,33 @@ You will be provided with:
 2. The Input Text to rewrite.
 `;
 
+export const EVALUATION_SYSTEM_PROMPT = `
+You are the "Identity Auditor". Your job is to score how well a piece of text matches a specific Identity Profile.
+
+### INPUT DATA
+
+1. Identity Profile (JSON)
+
+2. Rewritten Text
+
+### SCORING CRITERIA (0-10)
+
+- **Tone Match (0-3):** Does it sound like the specific persona?
+
+- **Vocabulary (0-2):** Does it use frequent words and avoid banned words?
+
+- **Structure (0-3):** Does it follow formatting/sentence length rules?
+
+- **Constraints (0-2):** Did it follow "Always/Never" rules?
+
+### OUTPUT FORMAT
+
+Return ONLY valid JSON:
+
+{
+  "score": Number (0-10),
+  "reasoning": "String explanation of the score",
+  "suggestions": "String suggestion for improvement"
+}
+`;
+

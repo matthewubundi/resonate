@@ -63,7 +63,7 @@ export const Layout: React.FC<LayoutProps> = ({
             <div className="h-8 w-8 rounded-lg bg-azure flex items-center justify-center shadow-sm">
               <Cpu size={18} className="text-white" />
             </div>
-            <span className="font-bold text-lg tracking-tight text-ink">Identity<span className="text-azure">Preserver</span></span>
+            <span className="font-bold text-lg tracking-tight text-ink">Resonate</span>
           </div>
         </div>
 
@@ -106,7 +106,7 @@ export const Layout: React.FC<LayoutProps> = ({
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-ink/60 hover:text-ink">
               <Menu size={20} />
             </button>
-            <span className="font-bold text-ink">Identity Preserver</span>
+            <span className="font-bold text-ink">Resonate</span>
           </div>
 
           <div className="hidden md:flex items-center gap-2">
@@ -135,7 +135,7 @@ export const Layout: React.FC<LayoutProps> = ({
             <div className="h-full w-64 bg-paleslate p-4 border-r border-ink/10 shadow-xl" onClick={e => e.stopPropagation()}>
               <div className="flex items-center gap-2 mb-8 px-2">
                 <div className="h-8 w-8 rounded bg-azure text-white flex items-center justify-center font-bold"><Cpu size={18} /></div>
-                <span className="font-bold text-lg text-ink">Identity</span>
+                <span className="font-bold text-lg text-ink">Resonate</span>
               </div>
               <nav className="space-y-1">
                 {NAV_ITEMS.map((item) => (

@@ -127,7 +127,7 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
             <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
               <Cpu className="text-white" size={20} />
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900">Identity<span className="text-blue-600">Preserver</span></span>
+            <span className="font-bold text-xl tracking-tight text-slate-900">Resonate</span>
           </div>
           <div className="flex items-center gap-6">
             <div className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
@@ -366,7 +366,7 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
       <section className="py-24 px-6 bg-slate-50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-extrabold text-slate-900">Who is IdentityPreserver for?</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900">Who is Resonate for?</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -402,7 +402,7 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
             <div className="h-6 w-6 rounded bg-slate-900 flex items-center justify-center">
               <Cpu className="text-white" size={12} />
             </div>
-            <span className="font-bold text-slate-900">IdentityPreserver</span>
+            <span className="font-bold text-slate-900">Resonate</span>
           </div>
 
           <div className="flex gap-8 text-sm font-medium text-slate-500">
@@ -418,7 +418,7 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-8 text-center text-xs text-slate-400">
-          © 2024 Identity Preserver Inc. All rights reserved.
+          © 2024 Resonate Inc. All rights reserved.
         </div>
       </footer>
     </div>
@@ -434,14 +434,14 @@ const InteractiveComparison = () => {
       <div className="max-w-5xl mx-auto">
         <div className="mb-12">
           <h2 className="text-3xl font-extrabold text-slate-900 mb-2">The Difference is You</h2>
-          <p className="text-slate-600">Toggle Identity Preserver to see the transformation.</p>
+          <p className="text-slate-600">Toggle Resonate to see the transformation.</p>
         </div>
 
         {/* Comparison Visual Diagram */}
         <div className="mb-12">
           <ImagePlaceholder
             aspectRatio="aspect-[16/6]"
-            alt="Visual comparison diagram showing generic AI vs IdentityPreserver transformation"
+            alt="Visual comparison diagram showing generic AI vs Resonate transformation"
             className="w-full rounded-2xl"
             src={IntegrationImage}
           />

@@ -2,7 +2,7 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Identity Preserver
+# Resonate
 
 An AI-powered application that helps preserve and maintain your unique communication identity across different platforms and contexts.
 
@@ -60,7 +60,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Project Structure
 
 ```
-identity-preserver/
+resonate/
 ├── app/                    # Next.js app directory
 ├── components/             # Reusable UI components
 ├── contexts/              # React contexts (Auth, etc.)

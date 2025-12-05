@@ -1,6 +1,6 @@
 # System Architecture Document
 
-**Project:** Identity Preserver  
+**Project:** Resonate  
 **Version:** 0.0.0  
 **Last Updated:** December 4, 2025  
 **Status:** Active Development
@@ -32,7 +32,7 @@
 
 ## Executive Summary
 
-**Identity Preserver** is an AI-powered web application designed to help users preserve and maintain their unique communication identity across different platforms and contexts. The system leverages modern web technologies, secure authentication, and AI capabilities to analyze, store, and transform user communication patterns while maintaining their authentic voice.
+**Resonate** is an AI-powered web application designed to help users preserve and maintain their unique communication identity across different platforms and contexts. The system leverages modern web technologies, secure authentication, and AI capabilities to analyze, store, and transform user communication patterns while maintaining their authentic voice.
 
 ### Key Features
 - Secure user authentication with multiple providers
@@ -47,7 +47,7 @@
 ## System Overview
 
 ### Purpose
-The Identity Preserver system enables users to:
+The Resonate system enables users to:
 - Capture and analyze their unique communication style
 - Transform content while preserving their identity
 - Track identity alignment over time
@@ -174,7 +174,7 @@ The system is built on the following core principles:
 ### Directory Structure
 
 ```
-identity-preserver/
+resonate/
 ├── app/                          # Next.js App Router
 │   ├── auth/                     # Auth-related routes
 │   │   └── callback/             # OAuth callback handler

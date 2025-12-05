@@ -100,7 +100,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignup, onBac
                         </div>
                         <div>
                             <CardTitle className="text-2xl mb-2">Welcome Back</CardTitle>
-                            <p className="text-sm text-ink/60 font-medium">Sign in to continue to IdentityPreserver</p>
+                            <p className="text-sm text-ink/60 font-medium">Sign in to continue to Resonate</p>
                         </div>
                     </CardHeader>
 

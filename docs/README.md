@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains all project documentation for the Identity Preserver application.
+This directory contains all project documentation for the Resonate application.
 
 ## 📚 Available Documentation
 

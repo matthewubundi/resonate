@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Copy, RefreshCw, Sliders, ArrowRight } from 'lucide-react';
 import { Button, Card, TextArea } from '../components/Components';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Transform: React.FC = () => {
+  const { user } = useAuth();
   const [showDiff, setShowDiff] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -10,16 +13,46 @@ export const Transform: React.FC = () => {
   const [alignmentScore, setAlignmentScore] = useState<number | null>(null);
   const [reasoning, setReasoning] = useState<string[]>([]);
 
-  const handleTransform = () => {
-    // TODO: Implement actual transformation logic with API call
+  const handleTransform = async () => {
+    if (!inputText.trim() || !user) {
+      alert('Please enter text to transform and ensure you are logged in.');
+      return;
+    }
+
     setIsProcessing(true);
-    setTimeout(() => {
+    setOutputText('');
+    setAlignmentScore(null);
+    setReasoning([]);
+
+    try {
+      // Get the session token for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('You must be logged in to transform text.');
+        setIsProcessing(false);
+        return;
+      }
+
+      const res = await fetch('/api/transform', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ inputText })
+      });
+      
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      
+      setOutputText(data.output);
+      // Note: alignment_score and reasoning will be added in future updates
+    } catch (err: any) {
+      alert('Transformation failed: ' + (err.message || 'Unknown error'));
+      console.error(err);
+    } finally {
       setIsProcessing(false);
-      // Placeholder - will be replaced with actual API response
-      setOutputText('');
-      setAlignmentScore(null);
-      setReasoning([]);
-    }, 1500);
+    }
   };
 
   return (

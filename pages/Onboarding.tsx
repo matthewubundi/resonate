@@ -32,7 +32,7 @@ interface OnboardingData {
   sample2: string;
 }
 
-const STEPS = ['Communication Style', 'Vocabulary & Tone', 'Values & Ethics', 'Structure', 'Writing Samples'];
+const STEPS = ['Communication Style', 'Vocabulary & Tone', 'Values & Ethics', 'Structure', 'Writing Samples', 'Review & Confirm'];
 
 const getStorageKey = (userId: string | undefined) => {
   return userId ? `onboarding_${userId}` : 'onboarding_guest';
@@ -52,12 +52,41 @@ const getInitialFormData = (): OnboardingData => ({
   sample2: '',
 });
 
+interface GeneratedIdentity {
+  tone: string;
+  formality: string;
+  directness: string;
+  sentence_structure: {
+    typical_length: string;
+    patterns: string[];
+  };
+  vocabulary: {
+    frequent_words: string[];
+    avoid_words: string[];
+  };
+  values: string[];
+  ethics: string[];
+  humour: string;
+  formatting_preferences: {
+    default: string;
+    structure: string;
+    prefers_summaries: boolean;
+  };
+  decision_style: string;
+  rules: {
+    always: string[];
+    never: string[];
+  };
+}
+
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
   const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [generatedIdentity, setGeneratedIdentity] = useState<GeneratedIdentity | null>(null);
   
   const [formData, setFormData] = useState<OnboardingData>(getInitialFormData());
 
@@ -80,6 +109,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
         if (typeof parsed.step === 'number' && parsed.step >= 0 && parsed.step < STEPS.length) {
           setStep(parsed.step);
         }
+        if (parsed.generatedIdentity) {
+          setGeneratedIdentity(parsed.generatedIdentity);
+        }
       } catch (err) {
         console.error('Failed to parse saved onboarding data:', err);
         // Clear corrupted data
@@ -97,6 +129,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
     const dataToSave = {
       formData,
       step,
+      generatedIdentity,
       timestamp: Date.now(),
     };
     
@@ -105,7 +138,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
     } catch (err) {
       console.error('Failed to save onboarding data to localStorage:', err);
     }
-  }, [formData, step, isInitialized, user?.id]);
+  }, [formData, step, generatedIdentity, isInitialized, user?.id]);
 
   // Clear guest data when user logs in (to prevent storage bloat)
   useEffect(() => {
@@ -160,6 +193,10 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
         }
         return true;
       
+      case 5:
+        // Review step - no validation needed
+        return true;
+      
       default:
         return true;
     }
@@ -170,18 +207,86 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
       return;
     }
 
+    // If we're on step 4 (Writing Samples), generate the identity before moving to review
+    if (step === 4) {
+      await generateIdentity();
+      return;
+    }
+
     if (step < STEPS.length - 1) {
       setStep(step + 1);
       setError(null);
     } else {
-      // Final step - save onboarding data
+      // Final step (Review) - save onboarding data
       await handleComplete();
     }
   };
 
-  const handleComplete = async () => {
+  const generateIdentity = async () => {
     if (!user) {
-      setError('You must be logged in to complete onboarding.');
+      setError('You must be logged in to generate your identity.');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      // Get the session token for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('You must be logged in to generate your identity.');
+        setIsGenerating(false);
+        return;
+      }
+
+      // Transform form data to match API expected format
+      const rawInput = {
+        values: {
+          coreValues: [formData.coreValue1, formData.coreValue2],
+          neverRule: formData.neverRule,
+        },
+        vocabulary: {
+          frequentWords: formData.frequentWords.split(',').map(w => w.trim()).filter(w => w),
+          hatedWords: formData.hatedWords.split(',').map(w => w.trim()).filter(w => w),
+          tone: formData.tone,
+        },
+        writingSamples: [formData.sample1, formData.sample2],
+        formattingPreference: formData.formattingPreference,
+        professionalVoice: formData.professionalVoice,
+        writingGoal: formData.writingGoal,
+      };
+
+      // Call the generation API with Authorization header
+      const response = await fetch('/api/onboarding/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(rawInput),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate identity profile');
+      }
+
+      const { data } = await response.json();
+      setGeneratedIdentity(data);
+      
+      // Move to review step
+      setStep(5);
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate identity profile. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (!user || !generatedIdentity) {
+      setError('You must generate your identity profile before completing onboarding.');
       return;
     }
 
@@ -189,34 +294,12 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
     setError(null);
 
     try {
-      // Save onboarding data to identities table (or create initial identity)
-      const identityJson = {
-        communicationStyle: {
-          professionalVoice: formData.professionalVoice,
-          writingGoal: formData.writingGoal,
-        },
-        vocabulary: {
-          frequentWords: formData.frequentWords.split(',').map(w => w.trim()).filter(w => w),
-          hatedWords: formData.hatedWords.split(',').map(w => w.trim()).filter(w => w),
-          tone: formData.tone,
-        },
-        values: {
-          coreValues: [formData.coreValue1, formData.coreValue2],
-          neverRule: formData.neverRule,
-        },
-        structure: {
-          formattingPreference: formData.formattingPreference,
-        },
-        writingSamples: [formData.sample1, formData.sample2],
-        createdAt: new Date().toISOString(),
-      };
-
-      // Create initial identity
+      // Save the generated identity profile to identities table
       const { error: identityError } = await supabase
         .from('identities')
         .insert({
           user_id: user.id,
-          identity_json: identityJson,
+          identity_json: generatedIdentity,
           is_active: true,
           version_number: 1,
         });
@@ -252,6 +335,12 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
     } else {
       onBack();
     }
+  };
+
+  const handleRegenerate = async () => {
+    setStep(4);
+    setGeneratedIdentity(null);
+    setError(null);
   };
 
   return (
@@ -463,14 +552,120 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
                 />
               </div>
             )}
+
+            {step === 5 && generatedIdentity && (
+              <div className="space-y-6">
+                <div className="bg-white p-6 rounded-lg border border-ink/10">
+                  <h3 className="text-lg font-bold text-ink mb-4">Your Generated Identity Profile</h3>
+                  <p className="text-sm text-ink/60 mb-6">
+                    Review the AI-generated profile below. This will be used to preserve your writing style and voice.
+                  </p>
+                  
+                  <div className="space-y-4 text-sm">
+                    <div>
+                      <span className="font-semibold text-ink">Tone:</span>
+                      <span className="ml-2 text-ink/80">{generatedIdentity.tone}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-ink">Formality:</span>
+                      <span className="ml-2 text-ink/80">{generatedIdentity.formality}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-ink">Directness:</span>
+                      <span className="ml-2 text-ink/80">{generatedIdentity.directness}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-ink">Decision Style:</span>
+                      <span className="ml-2 text-ink/80">{generatedIdentity.decision_style}</span>
+                    </div>
+                    
+                    <div>
+                      <span className="font-semibold text-ink">Sentence Structure:</span>
+                      <div className="mt-1 ml-2 text-ink/80">
+                        <div>Typical Length: {generatedIdentity.sentence_structure.typical_length}</div>
+                        <div className="mt-1">
+                          Patterns: {generatedIdentity.sentence_structure.patterns.join(', ')}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <span className="font-semibold text-ink">Vocabulary:</span>
+                      <div className="mt-1 ml-2 text-ink/80">
+                        <div>Frequent Words: {generatedIdentity.vocabulary.frequent_words.join(', ')}</div>
+                        <div className="mt-1">Avoid Words: {generatedIdentity.vocabulary.avoid_words.join(', ')}</div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <span className="font-semibold text-ink">Values:</span>
+                      <span className="ml-2 text-ink/80">{generatedIdentity.values.join(', ')}</span>
+                    </div>
+                    
+                    {generatedIdentity.ethics.length > 0 && (
+                      <div>
+                        <span className="font-semibold text-ink">Ethics:</span>
+                        <span className="ml-2 text-ink/80">{generatedIdentity.ethics.join(', ')}</span>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <span className="font-semibold text-ink">Humour:</span>
+                      <span className="ml-2 text-ink/80">{generatedIdentity.humour}</span>
+                    </div>
+                    
+                    <div>
+                      <span className="font-semibold text-ink">Formatting:</span>
+                      <div className="mt-1 ml-2 text-ink/80">
+                        <div>Default: {generatedIdentity.formatting_preferences.default}</div>
+                        <div className="mt-1">Structure: {generatedIdentity.formatting_preferences.structure}</div>
+                      </div>
+                    </div>
+                    
+                    {generatedIdentity.rules.always.length > 0 && (
+                      <div>
+                        <span className="font-semibold text-ink">Always:</span>
+                        <ul className="mt-1 ml-2 list-disc list-inside text-ink/80">
+                          {generatedIdentity.rules.always.map((rule, idx) => (
+                            <li key={idx}>{rule}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {generatedIdentity.rules.never.length > 0 && (
+                      <div>
+                        <span className="font-semibold text-ink">Never:</span>
+                        <ul className="mt-1 ml-2 list-disc list-inside text-ink/80">
+                          {generatedIdentity.rules.never.map((rule, idx) => (
+                            <li key={idx}>{rule}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleRegenerate}
+                    disabled={isSaving}
+                  >
+                    Regenerate
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
 
           <div className="p-8 border-t border-ink/5 flex justify-between bg-white rounded-b-xl">
              <Button variant="ghost" onClick={handlePrev} disabled={step === 0 || isSaving}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
              </Button>
-             <Button onClick={handleNext} isLoading={isSaving} disabled={isSaving}>
-                {step === STEPS.length - 1 ? 'Initialize Identity' : 'Next Phase'} <ArrowRight className="ml-2 h-4 w-4" />
+             <Button onClick={handleNext} isLoading={isSaving || isGenerating} disabled={isSaving || isGenerating}>
+                {isGenerating ? 'Generating...' : step === STEPS.length - 1 ? 'Save & Complete' : step === STEPS.length - 2 ? 'Generate Identity' : 'Next Phase'} 
+                {!isGenerating && <ArrowRight className="ml-2 h-4 w-4" />}
              </Button>
           </div>
         </Card>

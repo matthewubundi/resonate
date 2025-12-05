@@ -7,6 +7,7 @@ import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
 import { Dashboard } from './pages/Dashboard';
 import { Transform } from './pages/Transform';
+import { HistoryPage } from './pages/History';
 import { Loader2 } from 'lucide-react';
 import { PageView } from './types';
 import { Card, CardHeader, CardTitle, CardContent, Input, TextArea, Button, JsonViewer, Chip } from './components/Components';
@@ -210,8 +211,11 @@ const AppContent: React.FC = () => {
       '/signup': 'signup',
       '/editor': 'editor',
       '/analytics': 'analytics',
+      '/history': 'history',
       '/settings': 'settings',
       '/onboarding': 'onboarding',
+      '/memory': 'memory',
+      '/personas': 'personas',
     };
 
     return routeMap[pathname || '/'] || 'landing';
@@ -302,7 +306,7 @@ const AppContent: React.FC = () => {
   // Protected route handler
   const handleNavigate = (page: PageView) => {
     // If trying to access protected pages without authentication, redirect to login
-    const protectedPages: PageView[] = ['dashboard', 'transform', 'editor', 'analytics', 'memory', 'personas', 'settings'];
+    const protectedPages: PageView[] = ['dashboard', 'transform', 'editor', 'analytics', 'history', 'memory', 'personas', 'settings'];
 
     if (protectedPages.includes(page) && !user) {
       router.push('/login');
@@ -325,6 +329,7 @@ const AppContent: React.FC = () => {
       'transform': '/transform',
       'editor': '/editor',
       'analytics': '/analytics',
+      'history': '/history',
       'settings': '/settings',
       'onboarding': '/onboarding',
       'loading': '/loading',
@@ -402,6 +407,8 @@ const AppContent: React.FC = () => {
         return <IdentityEditor />;
       case 'analytics':
         return <Analytics />;
+      case 'history':
+        return <HistoryPage onNavigate={handleNavigate} />;
       case 'settings':
         return <SettingsPage user={user} />;
       default:

@@ -10,6 +10,7 @@ export type PageView =
   | 'transform'
   | 'editor'
   | 'analytics'
+  | 'history'
   | 'memory'
   | 'personas'
   | 'settings';

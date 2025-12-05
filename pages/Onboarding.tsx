@@ -1,28 +1,254 @@
-import React, { useState } from 'react';
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, ArrowRight, Check, AlertCircle } from 'lucide-react';
 import { Button, Input, TextArea, Card, CardContent } from '../components/Components';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface OnboardingProps {
   onComplete: () => void;
   onBack: () => void;
 }
 
+interface OnboardingData {
+  // Step 0: Communication Style
+  professionalVoice: string;
+  writingGoal: string;
+  
+  // Step 1: Vocabulary & Tone
+  frequentWords: string;
+  hatedWords: string;
+  tone: 'formal' | 'conversational' | '';
+  
+  // Step 2: Values & Ethics
+  coreValue1: string;
+  coreValue2: string;
+  neverRule: string;
+  
+  // Step 3: Structure
+  formattingPreference: 'bullets' | 'paragraphs' | '';
+  
+  // Step 4: Writing Samples
+  sample1: string;
+  sample2: string;
+}
+
 const STEPS = ['Communication Style', 'Vocabulary & Tone', 'Values & Ethics', 'Structure', 'Writing Samples'];
 
-export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
-  const [step, setStep] = useState(0);
+const getStorageKey = (userId: string | undefined) => {
+  return userId ? `onboarding_${userId}` : 'onboarding_guest';
+};
 
-  const handleNext = () => {
+const getInitialFormData = (): OnboardingData => ({
+  professionalVoice: '',
+  writingGoal: '',
+  frequentWords: '',
+  hatedWords: '',
+  tone: '',
+  coreValue1: '',
+  coreValue2: '',
+  neverRule: '',
+  formattingPreference: '',
+  sample1: '',
+  sample2: '',
+});
+
+export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) => {
+  const { user } = useAuth();
+  const [step, setStep] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  const [formData, setFormData] = useState<OnboardingData>(getInitialFormData());
+
+  // Load saved data from localStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setIsInitialized(true);
+      return;
+    }
+
+    const storageKey = getStorageKey(user?.id);
+    const savedData = localStorage.getItem(storageKey);
+    
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.formData) {
+          setFormData(parsed.formData);
+        }
+        if (typeof parsed.step === 'number' && parsed.step >= 0 && parsed.step < STEPS.length) {
+          setStep(parsed.step);
+        }
+      } catch (err) {
+        console.error('Failed to parse saved onboarding data:', err);
+        // Clear corrupted data
+        localStorage.removeItem(storageKey);
+      }
+    }
+    setIsInitialized(true);
+  }, [user?.id]);
+
+  // Save data to localStorage whenever formData or step changes
+  useEffect(() => {
+    if (!isInitialized || typeof window === 'undefined') return;
+
+    const storageKey = getStorageKey(user?.id);
+    const dataToSave = {
+      formData,
+      step,
+      timestamp: Date.now(),
+    };
+    
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+    } catch (err) {
+      console.error('Failed to save onboarding data to localStorage:', err);
+    }
+  }, [formData, step, isInitialized, user?.id]);
+
+  // Clear guest data when user logs in (to prevent storage bloat)
+  useEffect(() => {
+    if (user?.id && typeof window !== 'undefined') {
+      const guestKey = 'onboarding_guest';
+      const guestData = localStorage.getItem(guestKey);
+      if (guestData) {
+        localStorage.removeItem(guestKey);
+      }
+    }
+  }, [user?.id]);
+
+  const updateField = (field: keyof OnboardingData, value: string | 'formal' | 'conversational' | 'bullets' | 'paragraphs') => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setError(null);
+  };
+
+  const validateStep = (): boolean => {
+    switch (step) {
+      case 0:
+        if (!formData.professionalVoice.trim() || !formData.writingGoal.trim()) {
+          setError('Please fill in all fields before continuing.');
+          return false;
+        }
+        return true;
+      
+      case 1:
+        if (!formData.frequentWords.trim() || !formData.hatedWords.trim() || !formData.tone) {
+          setError('Please fill in all fields and select a tone preference.');
+          return false;
+        }
+        return true;
+      
+      case 2:
+        if (!formData.coreValue1.trim() || !formData.coreValue2.trim() || !formData.neverRule.trim()) {
+          setError('Please fill in all fields before continuing.');
+          return false;
+        }
+        return true;
+      
+      case 3:
+        if (!formData.formattingPreference) {
+          setError('Please select a formatting preference.');
+          return false;
+        }
+        return true;
+      
+      case 4:
+        if (!formData.sample1.trim() || !formData.sample2.trim()) {
+          setError('Please provide at least 2 writing samples.');
+          return false;
+        }
+        return true;
+      
+      default:
+        return true;
+    }
+  };
+
+  const handleNext = async () => {
+    if (!validateStep()) {
+      return;
+    }
+
     if (step < STEPS.length - 1) {
       setStep(step + 1);
+      setError(null);
     } else {
+      // Final step - save onboarding data
+      await handleComplete();
+    }
+  };
+
+  const handleComplete = async () => {
+    if (!user) {
+      setError('You must be logged in to complete onboarding.');
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      // Save onboarding data to identities table (or create initial identity)
+      const identityJson = {
+        communicationStyle: {
+          professionalVoice: formData.professionalVoice,
+          writingGoal: formData.writingGoal,
+        },
+        vocabulary: {
+          frequentWords: formData.frequentWords.split(',').map(w => w.trim()).filter(w => w),
+          hatedWords: formData.hatedWords.split(',').map(w => w.trim()).filter(w => w),
+          tone: formData.tone,
+        },
+        values: {
+          coreValues: [formData.coreValue1, formData.coreValue2],
+          neverRule: formData.neverRule,
+        },
+        structure: {
+          formattingPreference: formData.formattingPreference,
+        },
+        writingSamples: [formData.sample1, formData.sample2],
+        createdAt: new Date().toISOString(),
+      };
+
+      // Create initial identity
+      const { error: identityError } = await supabase
+        .from('identities')
+        .insert({
+          user_id: user.id,
+          identity_json: identityJson,
+          is_active: true,
+          version_number: 1,
+        });
+
+      if (identityError) throw identityError;
+
+      // Mark onboarding as completed
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ onboarding_completed: true })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
+
+      // Clear saved onboarding data from localStorage
+      if (typeof window !== 'undefined') {
+        const storageKey = getStorageKey(user.id);
+        localStorage.removeItem(storageKey);
+      }
+
+      // Onboarding complete!
       onComplete();
+    } catch (err: any) {
+      setError(err.message || 'Failed to save onboarding data. Please try again.');
+      setIsSaving(false);
     }
   };
 
   const handlePrev = () => {
     if (step > 0) {
       setStep(step - 1);
+      setError(null);
     } else {
       onBack();
     }
@@ -52,28 +278,89 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
           </div>
 
           <CardContent className="flex-1 overflow-y-auto bg-paleslate">
+            {error && (
+              <div className="mb-4 p-3 bg-highlight/10 border border-highlight/20 rounded-lg flex items-center gap-2 text-sm text-ink">
+                <AlertCircle size={16} className="text-highlight flex-shrink-0" />
+                <span className="font-medium">{error}</span>
+              </div>
+            )}
+
             {step === 0 && (
               <div className="space-y-6">
-                <TextArea label="How would you describe your professional voice?" placeholder="e.g. Direct, authoritative, but friendly..." rows={4} />
-                <TextArea label="What is your primary goal when writing?" placeholder="e.g. To inform, to persuade, to entertain..." rows={3} />
+                <TextArea 
+                  label="How would you describe your professional voice?" 
+                  placeholder="e.g. Direct, authoritative, but friendly..." 
+                  rows={4}
+                  value={formData.professionalVoice}
+                  onChange={(e) => updateField('professionalVoice', e.target.value)}
+                  required
+                />
+                <TextArea 
+                  label="What is your primary goal when writing?" 
+                  placeholder="e.g. To inform, to persuade, to entertain..." 
+                  rows={3}
+                  value={formData.writingGoal}
+                  onChange={(e) => updateField('writingGoal', e.target.value)}
+                  required
+                />
               </div>
             )}
             
             {step === 1 && (
               <div className="space-y-6">
-                <Input label="3 words you use frequently" placeholder="e.g. Synergize, leverage, robust" />
-                <Input label="3 words you hate" placeholder="e.g. Utilized, bandwidth, touch-base" />
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-5 border border-ink/10 bg-white rounded-lg cursor-pointer hover:border-azure hover:shadow-sm transition-all">
-                    <h4 className="font-bold text-ink mb-1">Formal</h4>
-                    <p className="text-xs text-ink/60 font-medium">Strict grammar, no contractions. High precision.</p>
-                  </div>
-                   <div className="p-5 border border-azure bg-white rounded-lg cursor-pointer relative shadow-sm ring-1 ring-azure/20">
-                    <div className="flex justify-between">
-                      <h4 className="font-bold text-azure mb-1">Conversational</h4>
-                      <div className="bg-azure rounded-full p-0.5"><Check size={12} className="text-white"/></div>
+                <Input 
+                  label="3 words you use frequently" 
+                  placeholder="e.g. Synergize, leverage, robust" 
+                  value={formData.frequentWords}
+                  onChange={(e) => updateField('frequentWords', e.target.value)}
+                  required
+                />
+                <Input 
+                  label="3 words you hate" 
+                  placeholder="e.g. Utilized, bandwidth, touch-base" 
+                  value={formData.hatedWords}
+                  onChange={(e) => updateField('hatedWords', e.target.value)}
+                  required
+                />
+                <div>
+                  <label className="block text-sm font-semibold text-ink mb-3">Tone Preference</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div 
+                      className={`p-5 border rounded-lg cursor-pointer transition-all ${
+                        formData.tone === 'formal' 
+                          ? 'border-azure bg-white shadow-sm ring-1 ring-azure/20' 
+                          : 'border-ink/10 bg-white hover:border-azure hover:shadow-sm'
+                      }`}
+                      onClick={() => updateField('tone', 'formal')}
+                    >
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-bold text-ink mb-1">Formal</h4>
+                        {formData.tone === 'formal' && (
+                          <div className="bg-azure rounded-full p-0.5">
+                            <Check size={12} className="text-white"/>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-ink/60 font-medium">Strict grammar, no contractions. High precision.</p>
                     </div>
-                    <p className="text-xs text-ink/60 font-medium">Approachable, uses contractions. Natural flow.</p>
+                    <div 
+                      className={`p-5 border rounded-lg cursor-pointer transition-all ${
+                        formData.tone === 'conversational' 
+                          ? 'border-azure bg-white shadow-sm ring-1 ring-azure/20' 
+                          : 'border-ink/10 bg-white hover:border-azure hover:shadow-sm'
+                      }`}
+                      onClick={() => updateField('tone', 'conversational')}
+                    >
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-bold text-ink mb-1">Conversational</h4>
+                        {formData.tone === 'conversational' && (
+                          <div className="bg-azure rounded-full p-0.5">
+                            <Check size={12} className="text-white"/>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-ink/60 font-medium">Approachable, uses contractions. Natural flow.</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -81,9 +368,27 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
 
             {step === 2 && (
               <div className="space-y-6">
-                <Input label="Core Value 1" placeholder="e.g. Transparency" />
-                <Input label="Core Value 2" placeholder="e.g. Efficiency" />
-                <TextArea label="What is an absolute 'Never' rule for you?" placeholder="e.g. Never apologize for things out of my control..." />
+                <Input 
+                  label="Core Value 1" 
+                  placeholder="e.g. Transparency" 
+                  value={formData.coreValue1}
+                  onChange={(e) => updateField('coreValue1', e.target.value)}
+                  required
+                />
+                <Input 
+                  label="Core Value 2" 
+                  placeholder="e.g. Efficiency" 
+                  value={formData.coreValue2}
+                  onChange={(e) => updateField('coreValue2', e.target.value)}
+                  required
+                />
+                <TextArea 
+                  label="What is an absolute 'Never' rule for you?" 
+                  placeholder="e.g. Never apologize for things out of my control..." 
+                  value={formData.neverRule}
+                  onChange={(e) => updateField('neverRule', e.target.value)}
+                  required
+                />
               </div>
             )}
 
@@ -91,15 +396,47 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
               <div className="space-y-6">
                 <label className="block text-sm font-bold text-ink">Preferred Formatting</label>
                 <div className="space-y-3">
-                  <label className="flex items-center space-x-3 p-4 border border-azure bg-white rounded-lg cursor-pointer shadow-sm">
-                    <div className="h-4 w-4 rounded-full border border-azure bg-azure flex items-center justify-center">
+                  <label 
+                    className={`flex items-center space-x-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                      formData.formattingPreference === 'bullets'
+                        ? 'border-azure bg-white shadow-sm'
+                        : 'border-ink/10 bg-paleslate/50 hover:bg-white'
+                    }`}
+                    onClick={() => updateField('formattingPreference', 'bullets')}
+                  >
+                    <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                      formData.formattingPreference === 'bullets'
+                        ? 'border-azure bg-azure'
+                        : 'border-ink/30 bg-white'
+                    }`}>
+                      {formData.formattingPreference === 'bullets' && (
                         <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+                      )}
                     </div>
-                    <span className="text-ink font-semibold">Bullet points over paragraphs whenever possible</span>
+                    <span className={`font-semibold ${
+                      formData.formattingPreference === 'bullets' ? 'text-ink' : 'text-ink/70'
+                    }`}>Bullet points over paragraphs whenever possible</span>
                   </label>
-                  <label className="flex items-center space-x-3 p-4 border border-ink/10 bg-paleslate/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
-                     <div className="h-4 w-4 rounded-full border border-ink/30 bg-white"></div>
-                    <span className="text-ink/70 font-medium">Long, flowing paragraphs with detailed explanations</span>
+                  <label 
+                    className={`flex items-center space-x-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                      formData.formattingPreference === 'paragraphs'
+                        ? 'border-azure bg-white shadow-sm'
+                        : 'border-ink/10 bg-paleslate/50 hover:bg-white'
+                    }`}
+                    onClick={() => updateField('formattingPreference', 'paragraphs')}
+                  >
+                    <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                      formData.formattingPreference === 'paragraphs'
+                        ? 'border-azure bg-azure'
+                        : 'border-ink/30 bg-white'
+                    }`}>
+                      {formData.formattingPreference === 'paragraphs' && (
+                        <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <span className={`font-medium ${
+                      formData.formattingPreference === 'paragraphs' ? 'text-ink' : 'text-ink/70'
+                    }`}>Long, flowing paragraphs with detailed explanations</span>
                   </label>
                 </div>
               </div>
@@ -110,17 +447,29 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onBack }) =>
                 <p className="text-sm text-azure bg-azure/10 p-4 rounded-lg border border-azure/20 font-semibold">
                   Paste 2-3 examples of your best writing below. This data is critical for model fine-tuning.
                 </p>
-                <TextArea placeholder="Paste Sample 1..." rows={6} />
-                <TextArea placeholder="Paste Sample 2..." rows={6} />
+                <TextArea 
+                  placeholder="Paste Sample 1..." 
+                  rows={6}
+                  value={formData.sample1}
+                  onChange={(e) => updateField('sample1', e.target.value)}
+                  required
+                />
+                <TextArea 
+                  placeholder="Paste Sample 2..." 
+                  rows={6}
+                  value={formData.sample2}
+                  onChange={(e) => updateField('sample2', e.target.value)}
+                  required
+                />
               </div>
             )}
           </CardContent>
 
           <div className="p-8 border-t border-ink/5 flex justify-between bg-white rounded-b-xl">
-             <Button variant="ghost" onClick={handlePrev} disabled={step === 0}>
+             <Button variant="ghost" onClick={handlePrev} disabled={step === 0 || isSaving}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
              </Button>
-             <Button onClick={handleNext}>
+             <Button onClick={handleNext} isLoading={isSaving} disabled={isSaving}>
                 {step === STEPS.length - 1 ? 'Initialize Identity' : 'Next Phase'} <ArrowRight className="ml-2 h-4 w-4" />
              </Button>
           </div>

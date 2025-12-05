@@ -432,22 +432,9 @@ const InteractiveComparison = () => {
   return (
     <section id="comparison" className="py-24 px-6 bg-white overflow-hidden">
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-12 gap-6">
-          <div>
-            <h2 className="text-3xl font-extrabold text-slate-900 mb-2">The Difference is You</h2>
-            <p className="text-slate-600">Toggle Identity Preserver to see the transformation.</p>
-          </div>
-
-          <div
-            onClick={() => setIsActive(!isActive)}
-            className="cursor-pointer flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-full border border-slate-200 shadow-inner hover:bg-slate-100 transition-colors"
-          >
-            <span className={`text-sm font-bold ${!isActive ? 'text-slate-900' : 'text-slate-400'}`}>Generic AI</span>
-            <div className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${isActive ? 'bg-blue-600' : 'bg-slate-300'}`}>
-              <div className={`absolute top-1 left-1 bg-white w-6 h-6 rounded-full shadow-md transition-transform duration-300 ${isActive ? 'translate-x-6' : 'translate-x-0'}`}></div>
-            </div>
-            <span className={`text-sm font-bold ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>Preserved</span>
-          </div>
+        <div className="mb-12">
+          <h2 className="text-3xl font-extrabold text-slate-900 mb-2">The Difference is You</h2>
+          <p className="text-slate-600">Toggle Identity Preserver to see the transformation.</p>
         </div>
 
         {/* Comparison Visual Diagram */}
@@ -463,6 +450,20 @@ const InteractiveComparison = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Output Card */}
           <div className="relative md:col-span-2">
+            {/* Toggle inside the container */}
+            <div className="flex justify-end mb-4">
+              <div
+                onClick={() => setIsActive(!isActive)}
+                className="cursor-pointer flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-full border border-slate-200 shadow-inner hover:bg-slate-100 transition-colors"
+              >
+                <span className={`text-sm font-bold ${!isActive ? 'text-slate-900' : 'text-slate-400'}`}>Generic AI</span>
+                <div className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${isActive ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                  <div className={`absolute top-1 left-1 bg-white w-6 h-6 rounded-full shadow-md transition-transform duration-300 ${isActive ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                </div>
+                <span className={`text-sm font-bold ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>Preserved</span>
+              </div>
+            </div>
+            
             <AnimatePresence mode="wait">
               {isActive ? (
                 <motion.div

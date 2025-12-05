@@ -9,11 +9,11 @@ import { Dashboard } from './pages/Dashboard';
 import { Transform } from './pages/Transform';
 import { Loader2 } from 'lucide-react';
 import { PageView } from './types';
-import { DUMMY_JSON } from './constants';
 import { Card, CardHeader, CardTitle, CardContent, Input, TextArea, Button, JsonViewer, Chip } from './components/Components';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { User } from '@supabase/supabase-js';
+import { useOnboarding } from './hooks/useOnboarding';
 
 // --- Placeholder Pages for less critical UI ---
 
@@ -43,110 +43,114 @@ const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
   );
 };
 
-const IdentityEditor = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div className="lg:col-span-2 space-y-6">
-      <Card className="bg-white">
-        <CardHeader><CardTitle>Core Attributes</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <Input label="Identity Name" defaultValue="Professional Tech Lead" />
-          <TextArea label="Tone Description" defaultValue="Direct, Professional, Encouraging, Clear" />
-          <div>
-            <label className="text-sm font-bold mb-2 block text-ink">Vocabulary Whitelist</label>
-            <div className="flex flex-wrap gap-2">
-              {['optimize', 'scale', 'robust'].map(w => <Chip key={w} label={w} onRemove={() => { }} />)}
-              <button className="text-xs bg-paleslate border border-ink/10 px-3 py-1 rounded-full hover:border-azure text-ink/60 hover:text-azure transition-colors font-semibold">+ Add</button>
+const IdentityEditor = () => {
+  // TODO: Fetch identity data from database
+  const identityData = null;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2 space-y-6">
+        <Card className="bg-white">
+          <CardHeader><CardTitle>Core Attributes</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <Input label="Identity Name" defaultValue="" />
+            <TextArea label="Tone Description" defaultValue="" />
+            <div>
+              <label className="text-sm font-bold mb-2 block text-ink">Vocabulary Whitelist</label>
+              <div className="flex flex-wrap gap-2">
+                <button className="text-xs bg-paleslate border border-ink/10 px-3 py-1 rounded-full hover:border-azure text-ink/60 hover:text-azure transition-colors font-semibold">+ Add</button>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="bg-white">
-        <CardHeader><CardTitle>Rules Engine</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-start gap-4 p-4 bg-highlight/10 rounded-lg border border-highlight/20">
-            <div className="mt-1"><span className="px-2 py-0.5 bg-highlight text-ink text-xs font-bold rounded">NEVER</span></div>
-            <p className="text-sm text-ink/70 font-medium">Use passive aggression or undefined acronyms.</p>
-          </div>
-          <div className="flex items-start gap-4 p-4 bg-azure/5 rounded-lg border border-azure/10">
-            <div className="mt-1"><span className="px-2 py-0.5 bg-azure/10 text-azure text-xs font-bold rounded border border-azure/20">ALWAYS</span></div>
-            <p className="text-sm text-ink/70 font-medium">Provide context before requesting action.</p>
-          </div>
-          <Button variant="outline" size="sm" className="w-full border-dashed border-ink/20">Add New Rule</Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        <Card className="bg-white">
+          <CardHeader><CardTitle>Rules Engine</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <Button variant="outline" size="sm" className="w-full border-dashed border-ink/20">Add New Rule</Button>
+          </CardContent>
+        </Card>
+      </div>
+      <div>
+        <Card className="h-full bg-paleslate border-ink/10">
+          <CardHeader className="border-ink/5 bg-white rounded-t-xl">
+            <CardTitle className="text-ink flex justify-between items-center">
+              <span>JSON Preview</span>
+              <Button variant="ghost" size="sm" className="text-xs h-6 text-azure hover:text-azure-hover">Copy</Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {identityData ? (
+              <JsonViewer data={JSON.stringify(identityData, null, 2)} />
+            ) : (
+              <div className="p-8 text-center text-ink/60">
+                <p className="text-sm">No identity data to preview</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
-    <div>
-      <Card className="h-full bg-paleslate border-ink/10">
-        <CardHeader className="border-ink/5 bg-white rounded-t-xl">
-          <CardTitle className="text-ink flex justify-between items-center">
-            <span>JSON Preview</span>
-            <Button variant="ghost" size="sm" className="text-xs h-6 text-azure hover:text-azure-hover">Copy</Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <JsonViewer data={DUMMY_JSON} />
-        </CardContent>
-      </Card>
-    </div>
-  </div>
-);
+  );
+};
 
 const Analytics = () => {
-  const data = [
-    { name: 'Mon', score: 82 },
-    { name: 'Tue', score: 85 },
-    { name: 'Wed', score: 88 },
-    { name: 'Thu', score: 92 },
-    { name: 'Fri', score: 94 },
-    { name: 'Sat', score: 90 },
-    { name: 'Sun', score: 95 },
-  ];
+  // TODO: Fetch analytics data from database
+  const analyticsData: any[] = [];
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-ink">Performance Analytics</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {analyticsData.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="bg-white">
+            <CardHeader><CardTitle>Alignment Score Trend</CardTitle></CardHeader>
+            <CardContent className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={analyticsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <XAxis dataKey="name" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#FFFFFF', color: '#111111', borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                    itemStyle={{ color: '#2563EB' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#2563EB"
+                    strokeWidth={3}
+                    dot={{ fill: '#FFFFFF', stroke: '#2563EB', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, fill: '#2563EB' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="bg-white">
+            <CardHeader><CardTitle>Tone Consistency</CardTitle></CardHeader>
+            <CardContent className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analyticsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <XAxis dataKey="name" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
+                  <Bar dataKey="score" fill="#2563EB" radius={[4, 4, 0, 0]} opacity={0.9} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(37, 99, 235, 0.05)' }}
+                    contentStyle={{ backgroundColor: '#FFFFFF', color: '#111111', borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
         <Card className="bg-white">
-          <CardHeader><CardTitle>Alignment Score Trend</CardTitle></CardHeader>
-          <CardContent className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                <XAxis dataKey="name" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#FFFFFF', color: '#111111', borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                  itemStyle={{ color: '#2563EB' }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="score"
-                  stroke="#2563EB"
-                  strokeWidth={3}
-                  dot={{ fill: '#FFFFFF', stroke: '#2563EB', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, fill: '#2563EB' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          <CardContent className="p-12 text-center text-ink/60">
+            <p className="font-medium">No analytics data available</p>
+            <p className="text-sm mt-2">Analytics will appear here once you start using the system</p>
           </CardContent>
         </Card>
-        <Card className="bg-white">
-          <CardHeader><CardTitle>Tone Consistency</CardTitle></CardHeader>
-          <CardContent className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                <XAxis dataKey="name" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
-                <Bar dataKey="score" fill="#2563EB" radius={[4, 4, 0, 0]} opacity={0.9} />
-                <Tooltip
-                  cursor={{ fill: 'rgba(37, 99, 235, 0.05)' }}
-                  contentStyle={{ backgroundColor: '#FFFFFF', color: '#111111', borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+      )}
     </div>
   );
 };
@@ -207,6 +211,7 @@ const AppContent: React.FC = () => {
       '/editor': 'editor',
       '/analytics': 'analytics',
       '/settings': 'settings',
+      '/onboarding': 'onboarding',
     };
 
     return routeMap[pathname || '/'] || 'landing';
@@ -215,6 +220,7 @@ const AppContent: React.FC = () => {
   const [view, setView] = useState<PageView>(getInitialView());
   const [isDarkMode, setIsDarkMode] = useState(false); // Default to light
   const { user, signOut, loading } = useAuth();
+  const { onboardingCompleted, loading: onboardingLoading, refetch: refetchOnboarding } = useOnboarding(user);
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
@@ -224,14 +230,67 @@ const AppContent: React.FC = () => {
     setView(currentView);
   }, [pathname]);
 
+  // Check onboarding status and redirect if needed
+  useEffect(() => {
+    if (!loading && !onboardingLoading && user) {
+      // If user is authenticated but hasn't completed onboarding
+      if (onboardingCompleted === false) {
+        // Only redirect if not already on onboarding or public pages
+        const publicPages = ['landing', 'login', 'signup', 'onboarding', 'loading'];
+        if (!publicPages.includes(view)) {
+          router.push('/onboarding');
+          setView('onboarding');
+        }
+      }
+    }
+  }, [user, loading, onboardingLoading, onboardingCompleted, view, router]);
+
+  // Track if we're waiting for signup authentication
+  const [pendingSignup, setPendingSignup] = useState(false);
+
+  // Watch for user authentication after signup
+  useEffect(() => {
+    if (pendingSignup && user && !onboardingLoading) {
+      // User is now authenticated, check onboarding status
+      setPendingSignup(false);
+      if (onboardingCompleted === false) {
+        // New user needs onboarding
+        router.push('/onboarding');
+        setView('onboarding');
+      } else {
+        // User has completed onboarding, go to dashboard
+        router.push('/dashboard');
+      }
+    }
+  }, [user, pendingSignup, onboardingCompleted, onboardingLoading, router]);
+
   // Handle login
   const handleLogin = () => {
-    router.push('/dashboard');
+    // Check onboarding status after login
+    if (onboardingCompleted === false) {
+      router.push('/onboarding');
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   // Handle signup
   const handleSignup = () => {
-    setView('onboarding'); // Take new users through onboarding
+    // If user is already authenticated, check onboarding status
+    // This happens when email confirmation is disabled in Supabase
+    if (user) {
+      if (onboardingCompleted === false) {
+        router.push('/onboarding');
+      } else {
+        router.push('/dashboard');
+      }
+    } else {
+      // Auth state might still be updating after signup
+      // Set pending flag and wait for auth state to update via useEffect
+      setPendingSignup(true);
+      // Note: If email confirmation is required, the Signup component
+      // will show an error message and won't call onSignup()
+    }
   };
 
   // Handle logout
@@ -247,30 +306,38 @@ const AppContent: React.FC = () => {
 
     if (protectedPages.includes(page) && !user) {
       router.push('/login');
-    } else {
-      // Map page views to routes
-      const routeMap: Record<PageView, string> = {
-        'landing': '/',
-        'login': '/login',
-        'signup': '/signup',
-        'dashboard': '/dashboard',
-        'transform': '/transform',
-        'editor': '/editor',
-        'analytics': '/analytics',
-        'settings': '/settings',
-        'onboarding': '/onboarding',
-        'loading': '/loading',
-        'memory': '/memory',
-        'personas': '/personas',
-        'review': '/review',
-      };
-
-      router.push(routeMap[page] || '/');
+      return;
     }
+
+    // If user is authenticated but hasn't completed onboarding, redirect to onboarding
+    // (except if they're already going to onboarding or public pages)
+    if (user && onboardingCompleted === false && protectedPages.includes(page)) {
+      router.push('/onboarding');
+      return;
+    }
+
+    // Map page views to routes
+    const routeMap: Record<PageView, string> = {
+      'landing': '/',
+      'login': '/login',
+      'signup': '/signup',
+      'dashboard': '/dashboard',
+      'transform': '/transform',
+      'editor': '/editor',
+      'analytics': '/analytics',
+      'settings': '/settings',
+      'onboarding': '/onboarding',
+      'loading': '/loading',
+      'memory': '/memory',
+      'personas': '/personas',
+      'review': '/review',
+    };
+
+    router.push(routeMap[page] || '/');
   };
 
-  // Show loading screen while checking authentication
-  if (loading) {
+  // Show loading screen while checking authentication and onboarding status
+  if (loading || onboardingLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-paper via-paleslate to-azure/5">
         <div className="flex flex-col items-center gap-4">
@@ -303,9 +370,30 @@ const AppContent: React.FC = () => {
           />
         );
       case 'onboarding':
-        return <Onboarding onComplete={() => setView('loading')} onBack={() => setView('landing')} />;
+        return (
+          <Onboarding 
+            onComplete={async () => {
+              // Refetch onboarding status after completion
+              await refetchOnboarding();
+              // After onboarding completes, go to loading screen then dashboard
+              setView('loading');
+            }} 
+            onBack={() => {
+              if (user) {
+                // If logged in, go to dashboard (they can't skip onboarding)
+                router.push('/dashboard');
+              } else {
+                // If not logged in, go to landing
+                setView('landing');
+              }
+            }} 
+          />
+        );
       case 'loading':
-        return <LoadingScreen onComplete={() => setView('dashboard')} />;
+        return <LoadingScreen onComplete={() => {
+          setView('dashboard');
+          router.push('/dashboard');
+        }} />;
       case 'dashboard':
         return <Dashboard onNavigate={handleNavigate} />;
       case 'transform':

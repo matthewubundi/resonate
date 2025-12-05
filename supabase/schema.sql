@@ -7,7 +7,8 @@ create table profiles (
   id uuid references auth.users not null primary key,
   email text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  full_name text
+  full_name text,
+  onboarding_completed boolean default false not null
 );
 
 -- 2. Identities Table (Stores the active identity_json)

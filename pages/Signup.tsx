@@ -52,14 +52,22 @@ export const Signup: React.FC<SignupProps> = ({ onSignup, onNavigateToLogin, onB
 
         setIsLoading(true);
 
-        const { error: signUpError } = await signUp(formData.email, formData.password, formData.name);
+        const { error: signUpError, session } = await signUp(formData.email, formData.password, formData.name);
 
         if (signUpError) {
             setError(signUpError.message);
             setIsLoading(false);
         } else {
             setIsLoading(false);
-            onSignup();
+            // If session exists, user is automatically logged in (email confirmation disabled)
+            // If no session, user needs to confirm email first
+            if (session) {
+                // User is logged in, proceed to signup handler (which will navigate to dashboard)
+                onSignup();
+            } else {
+                // Email confirmation required
+                setError('Please check your email to confirm your account before signing in.');
+            }
         }
     };
 

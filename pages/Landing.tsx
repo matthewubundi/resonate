@@ -71,7 +71,7 @@ const ImagePlaceholder: React.FC<{
       .replace(/\bbg-\S+/g, '')
       .trim()
       .replace(/\s+/g, ' ');
-    
+
     return (
       <div className={`relative ${aspectRatio} ${cleanClassName} overflow-hidden`}>
         <Image
@@ -85,7 +85,7 @@ const ImagePlaceholder: React.FC<{
       </div>
     );
   }
-  
+
   // Placeholder UI when no src is provided
   return (
     <div className={`relative ${aspectRatio} ${className} rounded-xl overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200 flex items-center justify-center group`}>
@@ -124,10 +124,10 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
-              <Cpu className="text-white" size={20} />
+            <div className="h-9 w-9 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-blue-600/20">
+              <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={36} height={36} className="object-contain" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900">Resonate</span>
+            <span className="font-bold text-xl tracking-tight text-blue-600">Resonate</span>
           </div>
           <div className="flex items-center gap-6">
             <div className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
@@ -399,10 +399,10 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
       <footer className="bg-white border-t border-slate-200 py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-slate-900 flex items-center justify-center">
-              <Cpu className="text-white" size={12} />
+            <div className="h-6 w-6 rounded overflow-hidden flex items-center justify-center">
+              <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={24} height={24} className="object-contain" />
             </div>
-            <span className="font-bold text-slate-900">Resonate</span>
+            <span className="font-bold text-blue-600">Resonate</span>
           </div>
 
           <div className="flex gap-8 text-sm font-medium text-slate-500">
@@ -463,7 +463,7 @@ const InteractiveComparison = () => {
                 <span className={`text-sm font-bold ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>Preserved</span>
               </div>
             </div>
-            
+
             <AnimatePresence mode="wait">
               {isActive ? (
                 <motion.div

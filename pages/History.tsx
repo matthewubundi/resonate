@@ -173,3 +173,5 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
   );
 };
 
+
+

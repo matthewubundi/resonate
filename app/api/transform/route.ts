@@ -2,19 +2,47 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
 import { TRANSFORMATION_SYSTEM_PROMPT, EVALUATION_SYSTEM_PROMPT } from '@/lib/prompts';
+import { transformRateLimit } from '@/lib/ratelimit';
+import { transformSchema } from '@/lib/validation';
+import { sanitizeError } from '@/lib/errors';
+import { handleCors, corsHeaders } from '@/lib/cors';
+import { logger } from '@/lib/logger';
+import { z } from 'zod';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+export async function OPTIONS(req: Request) {
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  return new NextResponse(null, { status: 204 });
+}
+
 export async function POST(req: Request) {
   try {
+    // CORS Check
+    const corsError = handleCors(req);
+    if (corsError) return corsError;
+
+    // Rate Limiting
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const { success, reset } = await transformRateLimit.limit(ip);
+
+    if (!success) {
+      logger.warn('Rate limit exceeded', { ip, route: '/api/transform' });
+      return NextResponse.json({
+        error: 'Too many requests. Please try again later.',
+        resetAt: new Date(reset).toISOString()
+      }, { status: 429 });
+    }
+
     // Auth Check - supports both Bearer token and cookie auth with RLS
     const { supabase, user } = await getAuthenticatedClient(req);
 
-    const { inputText, temperature } = await req.json();
-
-    if (!inputText || !inputText.trim()) {
-      return NextResponse.json({ error: 'Input text is required' }, { status: 400 });
-    }
+    // Input Validation
+    const body = await req.json();
+    const validated = transformSchema.parse(body);
+    const { inputText, temperature } = validated;
 
     const sanitizedTemp = typeof temperature === 'number'
       ? Math.min(1.5, Math.max(0, temperature))
@@ -29,7 +57,7 @@ export async function POST(req: Request) {
       .single();
 
     if (idError) {
-      console.error('Identity query error:', idError);
+      logger.error('Identity query error', { userId: user.id, error: idError.message });
       return NextResponse.json({
         error: 'No active identity found',
         details: idError.message
@@ -65,10 +93,10 @@ export async function POST(req: Request) {
       if (!memoryError && memoryData && memoryData.length > 0) {
         memories = memoryData;
         memoryContext = memories.map((m: any) => `- ${m.content}`).join('\n');
-        console.log("Context Injected:", memoryContext);
+        logger.info('Context injected', { userId: user.id, memoryCount: memories.length });
       }
     } catch (memoryErr) {
-      console.error('Memory retrieval error:', memoryErr);
+      logger.error('Memory retrieval error', { userId: user.id, error: memoryErr });
       // Continue without memory if retrieval fails
     }
 
@@ -83,9 +111,9 @@ export async function POST(req: Request) {
     // Initialize history with System Prompt and User Input
     let conversationHistory: any[] = [
       { role: "system", content: TRANSFORMATION_SYSTEM_PROMPT },
-      { 
-        role: "user", 
-        content: `IDENTITY_PROFILE:\n${JSON.stringify(identityRecord.identity_json)}\n\nRELEVANT_MEMORIES:\n${memoryContext}\n\nINPUT_TEXT:\n${inputText}` 
+      {
+        role: "user",
+        content: `IDENTITY_PROFILE:\n${JSON.stringify(identityRecord.identity_json)}\n\nRELEVANT_MEMORIES:\n${memoryContext}\n\nINPUT_TEXT:\n${inputText}`
       }
     ];
 
@@ -115,7 +143,7 @@ export async function POST(req: Request) {
         evalData = JSON.parse(evalResponse.choices[0].message.content || "{}");
         finalScore = typeof evalData.score === 'number' ? evalData.score : 0;
       } catch (evalError) {
-        console.error('Evaluation error:', evalError);
+        logger.error('Evaluation error', { userId: user.id, error: evalError });
         evalData = { score: 0, reasoning: "Evaluation failed", suggestions: "" };
         finalScore = 0;
       }
@@ -127,7 +155,7 @@ export async function POST(req: Request) {
 
       // Prepare for Retry (Feedback Injection)
       if (attempts <= MAX_RETRIES) {
-        console.log(`Attempt ${attempts}: Score ${finalScore}. Retrying with feedback: ${evalData.suggestions}`);
+        logger.info('Retry with feedback', { userId: user.id, attempt: attempts, score: finalScore });
         conversationHistory.push({ role: "assistant", content: currentText });
         conversationHistory.push({
           role: "user",
@@ -150,21 +178,42 @@ export async function POST(req: Request) {
     });
 
     if (logError) {
-      console.error('Logging error:', logError);
+      logger.error('Logging error', { userId: user.id, error: logError });
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       output: currentText,
       evaluation: evalData,
       attempts: attempts,
       used_memory: memories.length > 0
     });
 
+    // Add CORS headers to response
+    const origin = req.headers.get('origin');
+    Object.entries(corsHeaders(origin)).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+
+    return response;
+
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      logger.warn('Validation failed', { errors: error.issues });
+      return NextResponse.json({
+        error: 'Validation failed',
+        details: error.issues
+      }, { status: 400 });
+    }
+
     if (error.message === 'Unauthorized') {
+      logger.warn('Unauthorized access attempt', {
+        ip: req.headers.get('x-forwarded-for') ?? 'unknown'
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    console.error('Transformation error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    const { message, status } = sanitizeError(error);
+    logger.error('Transformation error', { error: error.message, stack: error.stack });
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // --- BUTTONS ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -110,12 +112,18 @@ export const Chip: React.FC<{ label: string; onRemove?: () => void }> = ({ label
 export const JsonViewer: React.FC<{ data: string | object }> = ({ data }) => {
   const content = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 
-  // Minimal highlighting logic
-  const highlighted = content.replace(/"([^"]+)":/g, '<span class="text-ink font-bold">"$1"</span>:');
-
   return (
-    <pre className="overflow-auto rounded-lg bg-paleslate p-4 text-xs font-mono text-ink/70 border border-ink/5">
-      <code dangerouslySetInnerHTML={{ __html: highlighted }} />
-    </pre>
+    <SyntaxHighlighter
+      language="json"
+      style={vscDarkPlus}
+      customStyle={{
+        borderRadius: '0.5rem',
+        padding: '1rem',
+        fontSize: '0.75rem',
+        border: '1px solid rgba(0,0,0,0.05)',
+      }}
+    >
+      {content}
+    </SyntaxHighlighter>
   );
 };

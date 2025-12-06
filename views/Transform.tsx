@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Copy, RefreshCw, Sliders } from 'lucide-react';
 import { Button, Card, TextArea } from '../components/Components';
 import { supabase } from '../lib/supabase';
@@ -9,12 +9,98 @@ export const Transform: React.FC = () => {
   const [showDiff, setShowDiff] = useState(false);
   const [showParams, setShowParams] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [inputText, setInputText] = useState('');
-  const [outputText, setOutputText] = useState('');
-  const [alignmentScore, setAlignmentScore] = useState<number | null>(null);
-  const [reasoning, setReasoning] = useState<string[]>([]);
-  const [temperature, setTemperature] = useState<number>(0.7);
-  const [evaluation, setEvaluation] = useState<{ score: number; reasoning: string; suggestions?: string } | null>(null);
+
+  // Initialize state from sessionStorage if available
+  const [inputText, setInputText] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('transform_inputText') || '';
+    }
+    return '';
+  });
+
+  const [outputText, setOutputText] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('transform_outputText') || '';
+    }
+    return '';
+  });
+
+  const [alignmentScore, setAlignmentScore] = useState<number | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('transform_alignmentScore');
+      return saved ? parseFloat(saved) : null;
+    }
+    return null;
+  });
+
+  const [reasoning, setReasoning] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('transform_reasoning');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
+  const [temperature, setTemperature] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('transform_temperature');
+      return saved ? parseFloat(saved) : 0.7;
+    }
+    return 0.7;
+  });
+
+  const [evaluation, setEvaluation] = useState<{ score: number; reasoning: string; suggestions?: string } | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('transform_evaluation');
+      return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
+
+  // Persist state to sessionStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('transform_inputText', inputText);
+    }
+  }, [inputText]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('transform_outputText', outputText);
+    }
+  }, [outputText]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (alignmentScore !== null) {
+        sessionStorage.setItem('transform_alignmentScore', alignmentScore.toString());
+      } else {
+        sessionStorage.removeItem('transform_alignmentScore');
+      }
+    }
+  }, [alignmentScore]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('transform_reasoning', JSON.stringify(reasoning));
+    }
+  }, [reasoning]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('transform_temperature', temperature.toString());
+    }
+  }, [temperature]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (evaluation !== null) {
+        sessionStorage.setItem('transform_evaluation', JSON.stringify(evaluation));
+      } else {
+        sessionStorage.removeItem('transform_evaluation');
+      }
+    }
+  }, [evaluation]);
 
   const diffWords = (a: string, b: string) => {
     const aWords = a.trim().split(/\s+/).filter(Boolean);
@@ -75,9 +161,9 @@ export const Transform: React.FC = () => {
 
       const res = await fetch('/api/transform', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token} `,
         },
         body: JSON.stringify({ inputText, temperature: sanitizedTemperature })
       });
@@ -92,7 +178,7 @@ export const Transform: React.FC = () => {
 
       setOutputText(data.output);
       setReasoning(Array.isArray(data.reasoning) ? data.reasoning : []);
-      
+
       // Set evaluation data if available
       if (data.evaluation) {
         setEvaluation(data.evaluation);
@@ -114,6 +200,15 @@ export const Transform: React.FC = () => {
     setReasoning([]);
     setAlignmentScore(null);
     setEvaluation(null);
+
+    // Clear sessionStorage as well
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('transform_inputText');
+      sessionStorage.removeItem('transform_outputText');
+      sessionStorage.removeItem('transform_reasoning');
+      sessionStorage.removeItem('transform_alignmentScore');
+      sessionStorage.removeItem('transform_evaluation');
+    }
   };
 
   return (
@@ -121,18 +216,18 @@ export const Transform: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-ink">Transform Text</h1>
         <div className="flex gap-3">
-            <div className="flex items-center space-x-3 bg-white border border-ink/10 rounded-lg px-4 py-1.5 shadow-sm">
-                <span className="text-xs font-bold uppercase tracking-wider text-ink/60">Show Diffs</span>
-                <button 
-                  onClick={() => setShowDiff(!showDiff)}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none border border-transparent ${showDiff ? 'bg-azure' : 'bg-paleslate border-ink/20'}`}
-                >
-                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform shadow-sm ${showDiff ? 'translate-x-5' : 'translate-x-1'}`} />
-                </button>
-            </div>
-            <Button variant="secondary" size="sm" onClick={() => setShowParams(!showParams)}>
-              <Sliders size={16} className="mr-2"/> Tune Parameters
-            </Button>
+          <div className="flex items-center space-x-3 bg-white border border-ink/10 rounded-lg px-4 py-1.5 shadow-sm">
+            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">Show Diffs</span>
+            <button
+              onClick={() => setShowDiff(!showDiff)}
+              className={`relative inline - flex h - 5 w - 9 items - center rounded - full transition - colors focus: outline - none border border - transparent ${showDiff ? 'bg-azure' : 'bg-paleslate border-ink/20'} `}
+            >
+              <span className={`inline - block h - 3 w - 3 transform rounded - full bg - white transition - transform shadow - sm ${showDiff ? 'translate-x-5' : 'translate-x-1'} `} />
+            </button>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => setShowParams(!showParams)}>
+            <Sliders size={16} className="mr-2" /> Tune Parameters
+          </Button>
         </div>
       </div>
 
@@ -158,123 +253,121 @@ export const Transform: React.FC = () => {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
         {/* Input Column */}
         <Card className="flex flex-col h-full border border-ink/10 shadow-sm bg-paleslate overflow-hidden">
-           <div className="p-4 border-b border-ink/5 flex justify-between items-center bg-white rounded-t-xl flex-shrink-0">
-             <span className="text-sm font-bold text-ink/60 uppercase tracking-wide">Generic Input</span>
-             <Button variant="ghost" size="sm" className="text-xs" onClick={handleClear}>Clear Buffer</Button>
-           </div>
-           <div className="flex-1 p-0 min-h-0 flex flex-col">
-             <textarea 
-               className="flex-1 w-full resize-none border-none focus:ring-0 p-6 bg-transparent font-sans text-sm leading-7 text-ink/80 placeholder:text-ink/30 outline-none" 
-               placeholder="Paste generic AI text here..."
-               value={inputText}
-               onChange={(e) => setInputText(e.target.value)}
-             />
-           </div>
-           <div className="p-4 border-t border-ink/5 bg-white rounded-b-xl flex-shrink-0">
-             <Button 
-               onClick={handleTransform} 
-               isLoading={isProcessing} 
-               className="w-full py-6 text-base shadow-lg shadow-azure/10"
-               disabled={!inputText.trim()}
-             >
-                Inject Identity Matrix
-              </Button>
-           </div>
+          <div className="p-4 border-b border-ink/5 flex justify-between items-center bg-white rounded-t-xl flex-shrink-0">
+            <span className="text-sm font-bold text-ink/60 uppercase tracking-wide">Generic Input</span>
+            <Button variant="ghost" size="sm" className="text-xs" onClick={handleClear}>Clear Buffer</Button>
+          </div>
+          <div className="flex-1 p-0 min-h-0 flex flex-col">
+            <textarea
+              className="flex-1 w-full resize-none border-none focus:ring-0 p-6 bg-transparent font-sans text-sm leading-7 text-ink/80 placeholder:text-ink/30 outline-none"
+              placeholder="Paste generic AI text here..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+            />
+          </div>
+          <div className="p-4 border-t border-ink/5 bg-white rounded-b-xl flex-shrink-0">
+            <Button
+              onClick={handleTransform}
+              isLoading={isProcessing}
+              className="w-full py-6 text-base shadow-lg shadow-azure/10"
+              disabled={!inputText.trim()}
+            >
+              Inject Identity Matrix
+            </Button>
+          </div>
         </Card>
 
         {/* Output Column */}
         <Card className="flex flex-col h-full border border-azure/20 shadow-md shadow-azure/5 bg-white">
-           <div className="p-4 border-b border-ink/5 flex justify-between items-center bg-white rounded-t-xl">
-             <div className="flex items-center gap-3">
-                <span className="text-sm font-bold text-azure uppercase tracking-wide flex items-center gap-2">
-                   <span className="w-2 h-2 bg-azure rounded-full"></span> Identity Aligned
+          <div className="p-4 border-b border-ink/5 flex justify-between items-center bg-white rounded-t-xl">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-azure uppercase tracking-wide flex items-center gap-2">
+                <span className="w-2 h-2 bg-azure rounded-full"></span> Identity Aligned
+              </span>
+              {alignmentScore !== null && (
+                <span className={`flex h - 6 px - 3 items - center justify - center rounded - md border text - xs font - bold ${alignmentScore >= 8
+                  ? 'bg-green-50 border-green-200 text-green-700'
+                  : alignmentScore >= 6
+                    ? 'bg-yellow-50 border-yellow-200 text-yellow-700'
+                    : 'bg-red-50 border-red-200 text-red-700'
+                  } `}>
+                  {alignmentScore.toFixed(1)}/10
                 </span>
-                {alignmentScore !== null && (
-                  <span className={`flex h-6 px-3 items-center justify-center rounded-md border text-xs font-bold ${
-                    alignmentScore >= 8 
-                      ? 'bg-green-50 border-green-200 text-green-700' 
-                      : alignmentScore >= 6
-                      ? 'bg-yellow-50 border-yellow-200 text-yellow-700'
-                      : 'bg-red-50 border-red-200 text-red-700'
-                  }`}>
-                    {alignmentScore.toFixed(1)}/10
-                  </span>
+              )}
+            </div>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" onClick={handleTransform}><RefreshCw size={14} /></Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={!outputText}
+                onClick={() => outputText && navigator.clipboard.writeText(outputText)}
+              >
+                <Copy size={14} />
+              </Button>
+            </div>
+          </div>
+          <div className="flex-1 p-6 bg-white rounded-b-xl overflow-y-auto relative">
+            {isProcessing ? (
+              <div className="h-full flex flex-col items-center justify-center text-ink/40">
+                <div className="relative mb-4">
+                  <div className="h-12 w-12 rounded-full border-t-2 border-b-2 border-azure animate-spin"></div>
+                </div>
+                <p className="text-sm font-bold tracking-widest uppercase">Applying linguistic signature...</p>
+              </div>
+            ) : outputText ? (
+              <div className="prose prose-sm max-w-none text-ink">
+                <p className="leading-7 text-base font-medium">
+                  {outputText}
+                </p>
+
+                {/* Evaluation Score Panel */}
+                {evaluation && evaluation.score !== null && (
+                  <div className="mt-8 p-5 bg-slate-900 rounded-xl border border-slate-800 shadow-xl">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`text - 3xl font - bold ${evaluation.score >= 8
+                        ? 'text-green-400'
+                        : evaluation.score >= 6
+                          ? 'text-yellow-400'
+                          : 'text-red-400'
+                        } `}>
+                        {evaluation.score.toFixed(1)}/10
+                      </div>
+                      <div className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Alignment Score</div>
+                    </div>
+                    {evaluation.reasoning && (
+                      <p className="text-sm text-slate-400 border-t border-slate-700 pt-3 mt-3 leading-relaxed">
+                        {evaluation.reasoning}
+                      </p>
+                    )}
+                    {evaluation.suggestions && (
+                      <div className="mt-3 pt-3 border-t border-slate-700">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Suggestions</p>
+                        <p className="text-sm text-slate-400 leading-relaxed">{evaluation.suggestions}</p>
+                      </div>
+                    )}
+                  </div>
                 )}
-             </div>
-             <div className="flex gap-1">
-                <Button variant="ghost" size="sm" onClick={handleTransform}><RefreshCw size={14}/></Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  disabled={!outputText} 
-                  onClick={() => outputText && navigator.clipboard.writeText(outputText)}
-                >
-                  <Copy size={14}/>
-                </Button>
-             </div>
-           </div>
-           <div className="flex-1 p-6 bg-white rounded-b-xl overflow-y-auto relative">
-             {isProcessing ? (
-               <div className="h-full flex flex-col items-center justify-center text-ink/40">
-                 <div className="relative mb-4">
-                     <div className="h-12 w-12 rounded-full border-t-2 border-b-2 border-azure animate-spin"></div>
-                 </div>
-                 <p className="text-sm font-bold tracking-widest uppercase">Applying linguistic signature...</p>
-               </div>
-             ) : outputText ? (
-               <div className="prose prose-sm max-w-none text-ink">
-                 <p className="leading-7 text-base font-medium">
-                   {outputText}
-                 </p>
-                 
-                 {/* Evaluation Score Panel */}
-                 {evaluation && evaluation.score !== null && (
-                   <div className="mt-8 p-5 bg-slate-900 rounded-xl border border-slate-800 shadow-xl">
-                     <div className="flex items-center gap-3 mb-3">
-                       <div className={`text-3xl font-bold ${
-                         evaluation.score >= 8 
-                           ? 'text-green-400' 
-                           : evaluation.score >= 6
-                           ? 'text-yellow-400'
-                           : 'text-red-400'
-                       }`}>
-                         {evaluation.score.toFixed(1)}/10
-                       </div>
-                       <div className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Alignment Score</div>
-                     </div>
-                     {evaluation.reasoning && (
-                       <p className="text-sm text-slate-400 border-t border-slate-700 pt-3 mt-3 leading-relaxed">
-                         {evaluation.reasoning}
-                       </p>
-                     )}
-                     {evaluation.suggestions && (
-                       <div className="mt-3 pt-3 border-t border-slate-700">
-                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Suggestions</p>
-                         <p className="text-sm text-slate-400 leading-relaxed">{evaluation.suggestions}</p>
-                       </div>
-                     )}
-                   </div>
-                 )}
-                 
-                 {reasoning.length > 0 && (
-                   <div className="mt-8 p-5 bg-paleslate rounded-xl border border-ink/5">
-                      <h4 className="text-xs font-bold text-azure uppercase tracking-wide mb-3 flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-azure"></span> Reasoning Engine
-                      </h4>
-                      <ul className="text-sm text-ink/70 space-y-2 list-none font-medium">
-                          {reasoning.map((reason, idx) => (
-                            <li key={idx} className="flex gap-2"><span className="text-azure/60">•</span> {reason}</li>
-                          ))}
-                      </ul>
-                   </div>
-                 )}
-               </div>
-             ) : (
-               <div className="h-full flex flex-col items-center justify-center text-ink/40">
-                 <p className="text-sm font-medium">Transformed text will appear here</p>
-                 <p className="text-xs mt-2">Paste text and click "Inject Identity Matrix" to transform</p>
-               </div>
-             )}
+
+                {reasoning.length > 0 && (
+                  <div className="mt-8 p-5 bg-paleslate rounded-xl border border-ink/5">
+                    <h4 className="text-xs font-bold text-azure uppercase tracking-wide mb-3 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-azure"></span> Reasoning Engine
+                    </h4>
+                    <ul className="text-sm text-ink/70 space-y-2 list-none font-medium">
+                      {reasoning.map((reason, idx) => (
+                        <li key={idx} className="flex gap-2"><span className="text-azure/60">•</span> {reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-ink/40">
+                <p className="text-sm font-medium">Transformed text will appear here</p>
+                <p className="text-xs mt-2">Paste text and click "Inject Identity Matrix" to transform</p>
+              </div>
+            )}
 
             {showDiff && outputText && !isProcessing && (
               <div className="mt-6">
@@ -301,7 +394,7 @@ export const Transform: React.FC = () => {
                 <p className="text-xs text-ink/50 mt-2">Additions shown in blue, removals in red strike-through.</p>
               </div>
             )}
-           </div>
+          </div>
         </Card>
       </div>
     </div>

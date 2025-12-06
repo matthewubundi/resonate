@@ -11,16 +11,12 @@ export const ResonateLoader: React.FC<ResonateLoaderProps> = ({ onComplete, clas
     useEffect(() => {
         document.body.style.overflow = 'hidden';
 
-        // If onComplete is provided, we might want to trigger it after some time?
-        // The previous implementation had a 3s timer.
-        // If the integration controls the unmounting, then this effect cleanup handles the scroll unlock.
-        // If this component is responsible for timing out, we should add that logic here.
-        // Assuming the parent controls visibility mostly, but for the 'loading' view in App.tsx, it had a self-contained timer.
-
+        // If onComplete is provided, trigger it after a shorter duration
+        // Reduced from 3s to 1.5s for better UX
         if (onComplete) {
             const timer = setTimeout(() => {
                 onComplete();
-            }, 3000); // Keep the approx 3s duration from the original implementation
+            }, 1500); // Faster loading for better UX
             return () => clearTimeout(timer);
         }
 

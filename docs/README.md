@@ -1,191 +1,41 @@
 # Documentation
 
-This directory contains all project documentation for the Resonate application.
+This directory contains one-source-of-truth documentation for the Resonate application.
 
-## 📚 Available Documentation
+## 📚 Structure
 
-### Architecture & Design
-- **[SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md)** - Comprehensive system architecture document covering all technical aspects of the application
+The documentation is organized into the following sections:
 
-### Authentication (Root Level)
-- **[AUTH_ARCHITECTURE.md](./AUTH_ARCHITECTURE.md)** - Detailed authentication architecture and flows
-- **[AUTH_IMPLEMENTATION.md](./AUTH_IMPLEMENTATION.md)** - Authentication implementation guide
-- **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)** - Supabase configuration and setup instructions
+### 1. General
+- **README** (This file): High-level overview of the documentation structure.
 
-## 📋 Documentation Standards
+### 2. Architecture (`/docs/architecture`)
+- **System Architecture**: High-level system design, Next.js + Supabase integration, and component relationships.
+- **Auth Architecture**: Detailed authentication flows (Magic Link, OAuth) and security measures.
+- **Supabase Setup**: Prerequisite setup guide for database connectivity.
 
-When adding new documentation to this folder, please follow these guidelines:
+### 3. API Reference (`/docs/api`)
+- **API Specification**: Definitions for `/api/transform`, `/api/onboarding`, and `/api/docs` endpoints.
+- **Database Schema**: Comprehensive reference for `users`, `identities`, `identity_versions`, and `transform_logs` tables.
 
-### File Naming & Automation
-**Important**: The documentation site automatically categorizes files based on their names.
-- Files with `architecture` or `system` -> **Architecture** category
-- Files with `auth` or `supabase` -> **Authentication** category
-- Files with `product` or `requirement` -> **Product** category
-- All others -> **General** category
+### 4. AI Logic (`/docs/ai-logic`)
+- **Identity JSON Schema**: The strict JSON definition (v1.0) used for all identity profiles.
+- **Prompt Registry**: Versioned source code for the "Extraction", "Transformation", and "Evaluation" prompts.
+- **Evaluation Framework**: The "8/10 Threshold" logic and the scoring rubric used by the Auditor agent.
 
-Title in the sidebar is taken from the first `# Heading` in your file.
+### 5. Design System (`/docs/design`)
+- **UI Kit**: Usage guidelines for our Azure Blue/Slate palette, Inter typography, and functional components.
 
-- Use `UPPERCASE_WITH_UNDERSCORES.md` for major documents
-- Use `lowercase-with-hyphens.md` for guides and tutorials
-- Be descriptive and specific
-
-### Document Structure
-All major documents should include:
-1. **Title and metadata** (version, date, status)
-2. **Table of contents** (for documents > 100 lines)
-3. **Executive summary** or introduction
-4. **Main content** with clear headings
-5. **Related documentation** links
-6. **Document control** (version history)
-
-### Markdown Formatting
-- Use ATX-style headers (`#`, `##`, `###`)
-- Include code blocks with language specification
-- Use tables for structured data
-- Add diagrams using ASCII art or Mermaid
-- Include links to related documents
-
-## 🗂️ Planned Documentation
-
-Future documentation to be added:
-
-### Development
-- [ ] **CONTRIBUTING.md** - Contribution guidelines
-- [ ] **DEVELOPMENT_GUIDE.md** - Local development setup
-- [ ] **CODE_STYLE.md** - Coding standards and conventions
-- [ ] **TESTING_GUIDE.md** - Testing strategies and practices
-
-### API & Integration
-- [ ] **API_REFERENCE.md** - API endpoints and usage
-- [ ] **INTEGRATION_GUIDE.md** - Third-party integrations
-- [ ] **WEBHOOKS.md** - Webhook documentation
-
-### Features
-- [ ] **FEATURE_SPECIFICATIONS.md** - Detailed feature specs
-- [ ] **USER_GUIDE.md** - End-user documentation
-- [ ] **AI_MODEL_GUIDE.md** - AI/ML model documentation
-
-### Operations
-- [ ] **DEPLOYMENT_GUIDE.md** - Deployment procedures
-- [ ] **MONITORING_GUIDE.md** - Monitoring and alerting
-- [ ] **TROUBLESHOOTING.md** - Common issues and solutions
-- [ ] **SECURITY_POLICY.md** - Security guidelines
-
-### Project Management
-- [ ] **ROADMAP.md** - Product roadmap
-- [ ] **CHANGELOG.md** - Version history and changes
-- [ ] **RELEASE_NOTES.md** - Release documentation
-
-## 📝 Document Templates
-
-### Feature Specification Template
-```markdown
-# Feature: [Feature Name]
-
-## Overview
-Brief description of the feature
-
-## User Stories
-- As a [user type], I want [goal] so that [benefit]
-
-## Requirements
-### Functional Requirements
-- Requirement 1
-- Requirement 2
-
-### Non-Functional Requirements
-- Performance requirements
-- Security requirements
-
-## Design
-### UI/UX Design
-- Wireframes
-- User flows
-
-### Technical Design
-- Architecture
-- Data models
-- API endpoints
-
-## Implementation Plan
-1. Step 1
-2. Step 2
-
-## Testing Strategy
-- Unit tests
-- Integration tests
-- E2E tests
-
-## Success Metrics
-- Metric 1
-- Metric 2
-```
-
-### API Documentation Template
-```markdown
-# API: [Endpoint Name]
-
-## Endpoint
-`METHOD /path/to/endpoint`
-
-## Description
-What this endpoint does
-
-## Authentication
-Required authentication level
-
-## Request
-### Headers
-- Header 1
-- Header 2
-
-### Parameters
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| param1 | string | Yes | Description |
-
-### Body
-```json
-{
-  "example": "request"
-}
-```
-
-## Response
-### Success (200)
-```json
-{
-  "example": "response"
-}
-```
-
-### Error Codes
-- 400: Bad Request
-- 401: Unauthorized
-- 404: Not Found
-```
-
-## 🔄 Documentation Maintenance
-
-### Review Schedule
-- **Monthly**: Review for accuracy
-- **Quarterly**: Major updates and improvements
-- **On Release**: Update version-specific documentation
-
-### Ownership
-- **Architecture docs**: Lead Developer
-- **API docs**: Backend Team
-- **User guides**: Product Team
-- **Operations docs**: DevOps Team
-
-## 📞 Contact
-
-For questions about documentation or to suggest improvements:
-- Create an issue in the project repository
-- Contact the development team
-- Submit a pull request with improvements
+### 6. Planning (`/docs/planning`)
+- **Roadmap**: The "Living Plan" tracking our progress through Phase 1 (Foundation), Phase 2 (UX), and Phase 3 (AI).
+- **Product Requirements (PRD)**: The original detailed functional specification for the MVP.
 
 ---
 
-**Last Updated**: December 4, 2025  
-**Maintained By**: Development Team
+## 🚀 How to Use
+
+The full documentation is available within the app at `/documentation`.
+
+- **Developers**: Start with **API Reference** and **Database Schema** to understand the data layer.
+- **Prompt Engineers**: Focus on the **AI Logic** folder to tweak the "Identity Engine".
+- **Designers**: Refer to the **Design System** for consistency.

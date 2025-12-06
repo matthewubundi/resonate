@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Book, FileText, ChevronRight, Home, Menu, X } from 'lucide-react';
+import { Book, FileText, ChevronRight, Home, Menu, X, Terminal, Database, Palette, Brain, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface DocFile {
     name: string;
     title: string;
     content: string;
-    category: 'architecture' | 'auth' | 'product' | 'general';
+    category: 'architecture' | 'api' | 'ai-logic' | 'design' | 'planning' | 'general';
 }
 
 const Documentation: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
@@ -42,9 +42,11 @@ const Documentation: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
     const categories = {
         general: { label: 'General', icon: Book },
-        architecture: { label: 'Architecture & Design', icon: FileText },
-        auth: { label: 'Authentication', icon: FileText },
-        product: { label: 'Product', icon: FileText },
+        architecture: { label: 'Architecture', icon: FileText },
+        api: { label: 'API Reference', icon: Terminal },
+        'ai-logic': { label: 'AI Logic', icon: Brain },
+        design: { label: 'Design System', icon: Palette },
+        planning: { label: 'Planning', icon: Calendar },
     };
 
     const groupedDocs = docs.reduce((acc, doc) => {
@@ -89,7 +91,7 @@ const Documentation: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div className="flex gap-8">
                     {/* Sidebar Navigation - Desktop */}
                     <aside className="hidden lg:block w-64 shrink-0">
-                        <nav className="sticky top-24 space-y-6">
+                        <nav className="sticky top-24 space-y-6 max-h-[calc(100vh-7rem)] overflow-y-auto pb-10 pr-2">
                             {Object.entries(categories).map(([key, { label, icon: Icon }]) => {
                                 const categoryDocs = groupedDocs[key] || [];
                                 if (categoryDocs.length === 0) return null;
@@ -210,34 +212,6 @@ const Documentation: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             <article className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-h1:text-4xl prose-h1:mb-4 prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:border prose-pre:border-slate-800 prose-ul:list-disc prose-ol:list-decimal prose-li:text-slate-600 prose-strong:text-slate-900 prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r prose-table:border-collapse prose-th:bg-slate-100 prose-th:border prose-th:border-slate-200 prose-th:px-4 prose-th:py-2 prose-td:border prose-td:border-slate-200 prose-td:px-4 prose-td:py-2">
                                 <ReactMarkdown
                                     components={{
-                                        // Prevent p tags from wrapping pre/code blocks
-                                        p: ({ node, children, ...props }: any) => {
-                                            // Check if children contain pre or code blocks
-                                            const hasCodeBlock = React.Children.toArray(children).some(
-                                                (child: any) => child?.type === 'pre' || child?.props?.node?.tagName === 'pre'
-                                            );
-
-                                            if (hasCodeBlock) {
-                                                return <>{children}</>;
-                                            }
-
-                                            return <p {...props}>{children}</p>;
-                                        },
-                                        // Custom rendering for code blocks
-                                        code: ({ node, inline, className, children, ...props }: any) => {
-                                            if (inline) {
-                                                return (
-                                                    <code className={className} {...props}>
-                                                        {children}
-                                                    </code>
-                                                );
-                                            }
-                                            return (
-                                                <pre className={className}>
-                                                    <code {...props}>{children}</code>
-                                                </pre>
-                                            );
-                                        },
                                         // Add smooth scroll to anchor links
                                         a: ({ node, children, href, ...props }: any) => {
                                             if (href?.startsWith('#')) {

@@ -1,6 +1,6 @@
-# **RESONATE – PRODUCT REQUIREMENTS DOCUMENT (PRD)**
+# PRODUCT REQUIREMENTS DOCUMENT (PRD)
 
-**Version:** 1.0
+**Version:** 1.1
 **Owner:** Matt Schramm
 **Status:** Draft
 **Last Updated:** 2025-12-03
@@ -34,6 +34,12 @@ This aligns with Ubundi’s broader goal: **embedding human identity into automa
 * **Responsible:** Clear rules, no misalignment
 * **Flexible:** Supports multiple personas and evolutions
 * **Transparent:** Users can inspect, edit, and improve their identity_json
+
+## **1.5 Design Aesthetics**
+
+* **Philosophy:** Premium, Calm, Hypnotic, Structured.
+* **Visuals:** High-end SaaS aesthetic with Azure Blue accents (`#2563EB`), glassmorphism, smooth gradients, and subtle micro-animations.
+* **Experience:** Interactive elements with hover effects, fluid transitions, and a "living" interface feel.
 
 ---
 
@@ -76,7 +82,10 @@ This aligns with Ubundi’s broader goal: **embedding human identity into automa
 * Memory store (optional)
 * Multi-persona system
 * Versioning
+
 * Baseline analytics
+* **Public Landing Page** (Hero, Features, Onboarding preview, JSON transparency)
+* **Documentation Page** (Markdown-based docs viewer)
 
 ## **3.2 Out of Scope (for initial release)**
 
@@ -245,7 +254,12 @@ Input text
 ### **Threshold**
 
 Default: 8/10 minimum
+
 If score < threshold → run correction loop
+
+### **Visual Representation**
+* Display "Confidence Score" (e.g., "9.2/10 Match") to the user.
+* Highlight the verification step to differentiate from standard LLM outputs.
 
 ---
 
@@ -314,6 +328,20 @@ If score < threshold → run correction loop
 
 ---
 
+# **5.10 Public Website Features**
+
+### **Landing Page**
+* **Hero Section:** "Connected mesh" or "network" animation (Azure Blue particles).
+* **3-Step Onboarding Display:** Visual explanation of "The Interview," "The Extraction," and "The Filter."
+* **Under the Hood:** "Transparency" section featuring a floating JSON code snippet to show how identity is structured.
+
+### **Documentation**
+* Dedicated `/docs` route.
+* Renders markdown files (e.g., Design System, Architecture) using `react-markdown`.
+* Styled to match the premium application UI.
+
+---
+
 # **6. TECHNICAL REQUIREMENTS**
 
 ---
@@ -322,7 +350,10 @@ If score < threshold → run correction loop
 
 ### **Tech Stack**
 
-* Next.js or Vite + React
+### **Tech Stack**
+
+* **Vite + React**
+* TypeScript
 * TypeScript
 * TailwindCSS for UI
 * React Query for data fetching

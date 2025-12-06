@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Layout } from './components/Layout';
-import { Landing } from './pages/Landing';
+import { Landing } from './views/Landing';
 import { ResonateLoader } from './components/ResonateLoader';
-import { Login } from './pages/Login';
-import { Signup } from './pages/Signup';
-import { Onboarding } from './pages/Onboarding';
-import { Dashboard } from './pages/Dashboard';
-import { Transform } from './pages/Transform';
-import { HistoryPage } from './pages/History';
-import { AnalyticsPage } from './pages/Analytics';
-import Documentation from './pages/Documentation';
+import { Login } from './views/Login';
+import { Signup } from './views/Signup';
+import { Onboarding } from './views/Onboarding';
+import { Dashboard } from './views/Dashboard';
+import { Transform } from './views/Transform';
+import { HistoryPage } from './views/History';
+import { AnalyticsPage } from './views/Analytics';
+import Documentation from './views/Documentation';
 
 import { PageView } from './types';
 import { Card, CardHeader, CardTitle, CardContent, Input, TextArea, Button, JsonViewer, Chip } from './components/Components';

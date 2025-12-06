@@ -1,6 +1,6 @@
 'use client';
 
-import Documentation from '@/pages/Documentation';
+import Documentation from '@/views/Documentation';
 import { useRouter } from 'next/navigation';
 
 export default function DocumentationPage() {

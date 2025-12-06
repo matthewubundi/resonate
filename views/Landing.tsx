@@ -546,7 +546,8 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
       description: "Answer 8-12 simple questions about your style, values, and humor.",
       icon: Users,
       color: "blue",
-      gradient: "from-blue-500 to-cyan-500",
+      badgeColor: "bg-blue-600",
+      iconBg: "bg-blue-50 text-blue-600",
       visual: null
     },
     {
@@ -555,7 +556,8 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
       description: "Our engine creates your unique identity_json file—a portable digital fingerprint.",
       icon: Cpu,
       color: "purple",
-      gradient: "from-purple-500 to-pink-500",
+      badgeColor: "bg-purple-600",
+      iconBg: "bg-purple-50 text-purple-600",
       visual: null
     },
     {
@@ -564,25 +566,26 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
       description: "Paste text anywhere. We rewrite it instantly to match your voice, with automated scoring.",
       icon: Sparkles,
       color: "orange",
-      gradient: "from-orange-500 to-amber-500",
+      badgeColor: "bg-orange-500",
+      iconBg: "bg-orange-50 text-orange-600",
       visual: (
-        <div className="mt-6 bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-orange-100 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-orange-100 to-transparent opacity-50 rounded-bl-full -mr-4 -mt-4"></div>
+        <div className="mt-8 bg-white rounded-xl p-4 border border-slate-100 shadow-lg relative overflow-hidden transform group-hover:scale-105 transition-transform duration-300">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-orange-50 to-transparent opacity-50 rounded-bl-full -mr-4 -mt-4"></div>
           <div className="flex justify-between items-center mb-3 relative z-10">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Confidence Score</span>
-            <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
+            <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
               <CheckCircle2 size={10} className="text-green-600" />
               <span className="text-xs font-bold text-green-700">9.2/10 Match</span>
             </div>
           </div>
           <div className="space-y-2 relative z-10">
-            <div className="flex gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-slate-200 mt-1.5 flex-shrink-0"></div>
-              <div className="h-1.5 bg-slate-100 rounded-full w-3/4"></div>
+            <div className="flex gap-2 items-center">
+              <div className="h-2 w-2 rounded-full bg-slate-200 shrink-0"></div>
+              <div className="h-2 bg-slate-100 rounded-full w-3/4"></div>
             </div>
-            <div className="flex gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-slate-200 mt-1.5 flex-shrink-0"></div>
-              <div className="h-1.5 bg-slate-100 rounded-full w-full"></div>
+            <div className="flex gap-2 items-center">
+              <div className="h-2 w-2 rounded-full bg-slate-200 shrink-0"></div>
+              <div className="h-2 bg-slate-100 rounded-full w-full"></div>
             </div>
           </div>
         </div>
@@ -590,37 +593,30 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
     }
   ];
 
-  const getColorClasses = (color: string) => {
-    const colorMap: Record<string, { bg: string; border: string; text: string; iconBg: string }> = {
-      blue: { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-600", iconBg: "bg-blue-100" },
-      purple: { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-600", iconBg: "bg-purple-100" },
-      orange: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-600", iconBg: "bg-orange-100" }
-    };
-    return colorMap[color] || colorMap.blue;
-  };
-
   return (
-    <section className="py-24 px-6 bg-white">
+    <section className="py-32 px-6 bg-slate-50 border-y border-slate-200">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 font-display tracking-tight">
               Get Started in <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">3 Simple Steps</span>
             </h2>
-            <p className="text-lg text-slate-600">
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
               No complex coding. No lengthy setup. Just answer a few questions and you're ready to preserve your identity.
             </p>
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          {/* Connector Line (Desktop) */}
+          <div className="hidden md:block absolute top-[180px] left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-blue-100 via-purple-100 to-orange-100 z-0"></div>
+
           {steps.map((step, index) => {
-            const colors = getColorClasses(step.color);
             const Icon = step.icon;
 
             return (
@@ -630,39 +626,33 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.15 }}
-                whileHover={{ y: -8, transition: { type: "spring", stiffness: 300 } }}
-                className="relative group"
+                className="relative z-10"
               >
-                {/* Connecting Arrow (hidden on mobile, shown between cards on desktop) */}
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
-                    <ChevronRight className="text-slate-300 group-hover:text-blue-500 transition-colors" size={32} />
+                <div className="group h-full">
+                  {/* Card Container */}
+                  <div className="h-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-100 transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center">
+
+                    {/* Number Badge */}
+                    <div className={`absolute top-6 right-6 w-10 h-10 rounded-full ${step.badgeColor} flex items-center justify-center text-white font-bold shadow-md`}>
+                      {step.number}
+                    </div>
+
+                    {/* Icon */}
+                    <div className={`h-20 w-20 rounded-3xl ${step.iconBg} flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm`}>
+                      <Icon size={36} strokeWidth={1.5} />
+                    </div>
+
+                    {/* Content */}
+                    <h3 className="text-2xl font-bold text-slate-900 mb-4">{step.title}</h3>
+                    <p className="text-slate-600 leading-relaxed mb-6">{step.description}</p>
+
+                    {/* Visual */}
+                    {step.visual && (
+                      <div className="w-full mt-auto">
+                        {step.visual}
+                      </div>
+                    )}
                   </div>
-                )}
-
-                <div className={`relative h-full p-8 rounded-3xl border-2 ${colors.border} ${colors.bg} hover:bg-white transition-all shadow-lg hover:shadow-2xl overflow-hidden`}>
-                  {/* Gradient overlay on hover */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${step.gradient} opacity-0 group-hover:opacity-5 transition-opacity`}></div>
-
-                  {/* Step Number Badge */}
-                  <div className={`absolute top-6 right-6 h-12 w-12 rounded-full bg-gradient-to-br ${step.gradient} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
-                    {step.number}
-                  </div>
-
-                  {/* Icon */}
-                  <div className={`h-16 w-16 rounded-2xl ${colors.iconBg} flex items-center justify-center ${colors.text} mb-6 group-hover:scale-110 transition-transform`}>
-                    <Icon size={32} />
-                  </div>
-
-                  {/* Content */}
-                  <h3 className="text-2xl font-bold text-slate-900 mb-3">{step.title}</h3>
-                  <p className="text-slate-600 leading-relaxed">{step.description}</p>
-
-                  {/* Step Visual (e.g. for Evaluation Engine) */}
-                  {step.visual}
-
-                  {/* Decorative element */}
-                  <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r ${step.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left`}></div>
                 </div>
               </motion.div>
             );
@@ -675,10 +665,13 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.6 }}
-          className="text-center mt-12"
+          className="text-center mt-16"
         >
-          <p className="text-slate-600 mb-6 font-medium">Ready to preserve your unique voice?</p>
-          <button onClick={onSignup} className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-full shadow-xl shadow-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/40 transition-all hover:scale-105 active:scale-95">
+          <p className="text-slate-500 mb-8 font-medium">Ready to preserve your unique voice?</p>
+          <button
+            onClick={onSignup}
+            className="group relative inline-flex items-center gap-3 px-8 py-4 bg-blue-600 text-white font-bold rounded-full shadow-lg shadow-blue-500/25 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-500/30 transition-all active:scale-95"
+          >
             <span>Start Your Interview</span>
             <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
           </button>

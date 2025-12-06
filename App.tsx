@@ -932,31 +932,46 @@ const AppContent: React.FC = () => {
 
   // Track if we're waiting for signup authentication
   const [pendingSignup, setPendingSignup] = useState(false);
+  // Track if we're showing post-auth loading
+  const [postAuthLoading, setPostAuthLoading] = useState(false);
 
   // Watch for user authentication after signup
   useEffect(() => {
     if (pendingSignup && user && !onboardingLoading) {
       // User is now authenticated, check onboarding status
       setPendingSignup(false);
-      if (onboardingCompleted === false) {
-        // New user needs onboarding
-        router.push('/onboarding');
-        setView('onboarding');
-      } else {
-        // User has completed onboarding, go to dashboard
-        router.push('/dashboard');
-      }
+      setPostAuthLoading(true);
+      
+      setTimeout(() => {
+        setPostAuthLoading(false);
+        if (onboardingCompleted === false) {
+          // New user needs onboarding
+          router.push('/onboarding');
+          setView('onboarding');
+        } else {
+          // User has completed onboarding, go to dashboard
+          router.push('/dashboard');
+          setView('dashboard');
+        }
+      }, 4000);
     }
   }, [user, pendingSignup, onboardingCompleted, onboardingLoading, router]);
 
   // Handle login
   const handleLogin = () => {
-    // Check onboarding status after login
-    if (onboardingCompleted === false) {
-      router.push('/onboarding');
-    } else {
-      router.push('/dashboard');
-    }
+    setPostAuthLoading(true);
+    
+    setTimeout(() => {
+      setPostAuthLoading(false);
+      // Check onboarding status after login
+      if (onboardingCompleted === false) {
+        router.push('/onboarding');
+        setView('onboarding');
+      } else {
+        router.push('/dashboard');
+        setView('dashboard');
+      }
+    }, 4000);
   };
 
   // Handle signup
@@ -964,11 +979,18 @@ const AppContent: React.FC = () => {
     // If user is already authenticated, check onboarding status
     // This happens when email confirmation is disabled in Supabase
     if (user) {
-      if (onboardingCompleted === false) {
-        router.push('/onboarding');
-      } else {
-        router.push('/dashboard');
-      }
+      setPostAuthLoading(true);
+      
+      setTimeout(() => {
+        setPostAuthLoading(false);
+        if (onboardingCompleted === false) {
+          router.push('/onboarding');
+          setView('onboarding');
+        } else {
+          router.push('/dashboard');
+          setView('dashboard');
+        }
+      }, 4000);
     } else {
       // Auth state might still be updating after signup
       // Set pending flag and wait for auth state to update via useEffect
@@ -1025,6 +1047,11 @@ const AppContent: React.FC = () => {
 
   // Show loading screen while checking authentication and onboarding status
   if (loading || onboardingLoading) {
+    return <ResonateLoader />;
+  }
+
+  // Show loading screen after login/signup before navigation
+  if (postAuthLoading) {
     return <ResonateLoader />;
   }
 

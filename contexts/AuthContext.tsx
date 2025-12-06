@@ -29,10 +29,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setLoading(false);
         });
 
-        // Listen for auth changes
+        // Listen for auth changes - only respond to meaningful events
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            // Ignore TOKEN_REFRESHED events to prevent page reloads when tabbing back
+            // These events fire on visibility change and don't need UI updates
+            if (event === 'TOKEN_REFRESHED') {
+                return;
+            }
+            
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);

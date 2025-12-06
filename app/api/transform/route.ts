@@ -1,53 +1,15 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { createClient } from '@/utils/supabase/server';
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { getAuthenticatedClient } from '@/utils/supabase/server';
 import { TRANSFORMATION_SYSTEM_PROMPT, EVALUATION_SYSTEM_PROMPT } from '@/lib/prompts';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: Request) {
-  // 1. Auth Check - support both Authorization header and cookies
-  const authHeader = req.headers.get('authorization');
-  let user;
-  let supabase;
-
-  if (authHeader?.startsWith('Bearer ')) {
-    // Client-side session: use token from Authorization header
-    const token = authHeader.substring(7);
-    const cookieSupabase = await createClient();
-
-    // Verify the user first
-    const { data: { user: tokenUser }, error } = await cookieSupabase.auth.getUser(token);
-    if (error || !tokenUser) {
-      console.error('Auth error with Bearer token:', error);
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    user = tokenUser;
-
-    // Create a client with service role for server-side queries (bypasses RLS)
-    // We've already verified the user, so this is safe
-    supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
-  } else {
-    // Server-side session: use cookies
-    supabase = await createClient();
-    const { data: { user: cookieUser } } = await supabase.auth.getUser();
-    if (!cookieUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    user = cookieUser;
-  }
-
   try {
+    // Auth Check - supports both Bearer token and cookie auth with RLS
+    const { supabase, user } = await getAuthenticatedClient(req);
+
     const { inputText, temperature } = await req.json();
 
     if (!inputText || !inputText.trim()) {
@@ -58,7 +20,7 @@ export async function POST(req: Request) {
       ? Math.min(1.5, Math.max(0, temperature))
       : 0.7;
 
-    // 2. Fetch the Active Identity
+    // Fetch the Active Identity (RLS ensures user can only see their own)
     const { data: identityRecord, error: idError } = await supabase
       .from('identities')
       .select('identity_json')
@@ -80,48 +42,45 @@ export async function POST(req: Request) {
       }, { status: 404 });
     }
 
-    // ---------------------------------------------------------
-    // 2. NEW: MEMORY RETRIEVAL LAYER
-    // ---------------------------------------------------------
+    // Memory Retrieval Layer
     let memoryContext = "No relevant memories found.";
     let memories: any[] = [];
 
     try {
-      // A. Create an embedding for the INPUT text to find related facts
+      // Create an embedding for the INPUT text to find related facts
       const embeddingResp = await openai.embeddings.create({
         model: "text-embedding-3-small",
         input: inputText.replace(/\n/g, ' ')
       });
       const embedding = embeddingResp.data[0].embedding;
 
-      // B. Search Supabase for similar memories (Threshold 0.5 ensures relevance)
+      // Search Supabase for similar memories using RPC function
       const { data: memoryData, error: memoryError } = await supabase.rpc('match_memories', {
         query_embedding: embedding,
         match_threshold: 0.0,
-        match_count: 3, // Only get top 3 most relevant facts
+        match_count: 3,
         p_user_id: user.id
       });
 
       if (!memoryError && memoryData && memoryData.length > 0) {
         memories = memoryData;
         memoryContext = memories.map((m: any) => `- ${m.content}`).join('\n');
-        console.log("Context Injected:", memoryContext); // For debugging
+        console.log("Context Injected:", memoryContext);
       }
     } catch (memoryErr) {
       console.error('Memory retrieval error:', memoryErr);
       // Continue without memory if retrieval fails
     }
-    // ---------------------------------------------------------
 
-    // 3. Transformation with Self-Healing Loop
+    // Transformation with Self-Healing Loop
     const startTime = Date.now();
     let currentText = inputText;
     let finalScore = 0;
     let attempts = 0;
-    const MAX_RETRIES = 2; // Prevent infinite loops
+    const MAX_RETRIES = 2;
     let evalData: any = {};
 
-    // Initialize history with System Prompt and User Input (including Identity and Memory)
+    // Initialize history with System Prompt and User Input
     let conversationHistory: any[] = [
       { role: "system", content: TRANSFORMATION_SYSTEM_PROMPT },
       { 
@@ -130,19 +89,19 @@ export async function POST(req: Request) {
       }
     ];
 
-    // --- THE CORRECTION LOOP ---
+    // The Correction Loop
     while (attempts <= MAX_RETRIES) {
       attempts++;
 
-      // A. Generate Rewrite
+      // Generate Rewrite
       const rewriteResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini", // Fast & Cheap
+        model: "gpt-4o-mini",
         messages: conversationHistory,
         temperature: sanitizedTemp,
       });
       currentText = rewriteResponse.choices[0].message.content || "";
 
-      // B. Audit (Evaluate)
+      // Audit (Evaluate)
       try {
         const evalResponse = await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -161,18 +120,15 @@ export async function POST(req: Request) {
         finalScore = 0;
       }
 
-      // C. Check Threshold (PRD Goal: >= 8.0)
+      // Check Threshold (Goal: >= 8.0)
       if (finalScore >= 8.0) {
-        break; // Success!
+        break;
       }
 
-      // D. Prepare for Retry (Feedback Injection)
+      // Prepare for Retry (Feedback Injection)
       if (attempts <= MAX_RETRIES) {
         console.log(`Attempt ${attempts}: Score ${finalScore}. Retrying with feedback: ${evalData.suggestions}`);
-
-        // Add the AI's own output to history
         conversationHistory.push({ role: "assistant", content: currentText });
-        // Add the Auditor's complaints to history
         conversationHistory.push({
           role: "user",
           content: `CRITICAL FEEDBACK: The alignment score was only ${finalScore}/10. Reasoning: ${evalData.reasoning}. \n\nFix the text specifically to address: ${evalData.suggestions}.`
@@ -182,8 +138,7 @@ export async function POST(req: Request) {
 
     const processingTime = Date.now() - startTime;
 
-    // 4. Log Final Result to Supabase
-    // Note: We use the final attempt's output and score.
+    // Log Final Result to Supabase (RLS ensures user can only insert their own)
     const { error: logError } = await supabase.from('transformations').insert({
       user_id: user.id,
       input_text: inputText,
@@ -191,7 +146,6 @@ export async function POST(req: Request) {
       model_used: 'gpt-4o-mini',
       alignment_score: finalScore,
       processing_time_ms: processingTime,
-      // We log raw output as the final text since we aren't enforcing JSON output anymore
       raw_llm_output: currentText
     });
 
@@ -203,12 +157,14 @@ export async function POST(req: Request) {
       output: currentText,
       evaluation: evalData,
       attempts: attempts,
-      used_memory: memories.length > 0 // Let frontend know if we used memory
+      used_memory: memories.length > 0
     });
 
   } catch (error: any) {
+    if (error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     console.error('Transformation error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

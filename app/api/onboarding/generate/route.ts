@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { createClient } from '@/utils/supabase/server';
+import { getAuthenticatedClient } from '@/utils/supabase/server';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -52,34 +52,14 @@ You will receive a JSON object containing:
 `;
 
 export async function POST(req: Request) {
-  // 1. Check Auth - support both Authorization header and cookies
-  const authHeader = req.headers.get('authorization');
-  let user;
-  
-  if (authHeader?.startsWith('Bearer ')) {
-    // Client-side session: use token from Authorization header
-    const token = authHeader.substring(7);
-    const supabase = await createClient();
-    const { data: { user: tokenUser }, error } = await supabase.auth.getUser(token);
-    if (error || !tokenUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    user = tokenUser;
-  } else {
-    // Server-side session: use cookies
-    const supabase = await createClient();
-    const { data: { user: cookieUser } } = await supabase.auth.getUser();
-    if (!cookieUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    user = cookieUser;
-  }
-
   try {
-    // 2. Receive YOUR current JSON format
+    // Auth Check - supports both Bearer token and cookie auth with RLS
+    await getAuthenticatedClient(req);
+
+    // Receive raw input
     const rawInput = await req.json();
 
-    // 3. Call OpenAI to Convert Raw Input -> Identity JSON
+    // Call OpenAI to Convert Raw Input -> Identity JSON
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -91,12 +71,14 @@ export async function POST(req: Request) {
 
     const identityProfile = JSON.parse(completion.choices[0].message.content || '{}');
 
-    // 4. Return the Profile (Don't save yet - Frontend should show "Review" screen)
+    // Return the Profile (Don't save yet - Frontend should show "Review" screen)
     return NextResponse.json({ data: identityProfile });
 
   } catch (error: any) {
+    if (error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     console.error('Error generating identity profile:', error);
     return NextResponse.json({ error: error.message || 'Failed to generate identity profile' }, { status: 500 });
   }
 }
-

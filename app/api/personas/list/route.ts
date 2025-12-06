@@ -6,22 +6,25 @@ export async function GET(req: Request) {
     // Auth Check - supports both Bearer token and cookie auth with RLS
     const { supabase, user } = await getAuthenticatedClient(req);
 
-    // RLS ensures user can only see their own memories
+    // RLS ensures user can only see their own identities
     const { data, error } = await supabase
-      .from('memories')
-      .select('id, content, created_at')
+      .from('identities')
+      .select('id, identity_json, is_active, created_at, name')
       .eq('user_id', user.id)
-      .eq('is_active', true)
+      .order('is_active', { ascending: false })
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return NextResponse.json({ data: data || [] });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ personas: data || [] });
 
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    console.error('Memory fetch error:', error);
+    console.error('Personas list error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -11,6 +11,7 @@ import { Transform } from './views/Transform';
 import { HistoryPage } from './views/History';
 import { AnalyticsPage } from './views/Analytics';
 import { Memory } from './views/Memory';
+import { Personas } from './views/Personas';
 import Documentation from './views/Documentation';
 
 import { PageView } from './types';
@@ -1113,6 +1114,8 @@ const AppContent: React.FC = () => {
         return <HistoryPage onNavigate={handleNavigate} />;
       case 'memory':
         return <Memory />;
+      case 'personas':
+        return <Personas onNavigate={handleNavigate} />;
       case 'settings':
         return <SettingsPage user={user} />;
       case 'documentation':

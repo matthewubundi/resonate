@@ -100,3 +100,34 @@ create policy "Users can delete own identities"
   on identities for delete
   using (auth.uid() = user_id);
 
+-- 14. Enable the Vector Extension (Crucial for AI memory)
+create extension if not exists vector;
+
+-- 15. Create the Memories Table
+-- Stores user memories with vector embeddings for AI-powered retrieval
+create table memories (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users not null,
+  content text not null,
+  embedding vector(1536), -- Stores the OpenAI vector representation
+  is_active boolean default true,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 16. Enable Row Level Security on memories table
+alter table memories enable row level security;
+
+-- 17. Policy: Users can see their own memories
+create policy "Users can see their own memories"
+  on memories for select
+  using (auth.uid() = user_id);
+
+-- 18. Policy: Users can insert their own memories
+create policy "Users can insert their own memories"
+  on memories for insert
+  with check (auth.uid() = user_id);
+
+-- 19. Policy: Users can delete their own memories
+create policy "Users can delete their own memories"
+  on memories for delete
+  using (auth.uid() = user_id);

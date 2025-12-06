@@ -93,7 +93,7 @@ export const ResonateLoader: React.FC<ResonateLoaderProps> = ({ onComplete, clas
 
                 {/* Text/Loading Status (Optional, kept minimal for 'calm' feel) */}
                 <motion.div
-                    className="absolute -bottom-16 text-azure font-medium tracking-[0.2em] text-sm uppercase"
+                    className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-center text-azure font-medium tracking-[0.2em] text-sm uppercase"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: [0.5, 1, 0.5], y: 0 }}
                     transition={{ duration: 2, repeat: Infinity }}

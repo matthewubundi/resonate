@@ -80,6 +80,39 @@ export async function POST(req: Request) {
       }, { status: 404 });
     }
 
+    // ---------------------------------------------------------
+    // 2. NEW: MEMORY RETRIEVAL LAYER
+    // ---------------------------------------------------------
+    let memoryContext = "No relevant memories found.";
+    let memories: any[] = [];
+
+    try {
+      // A. Create an embedding for the INPUT text to find related facts
+      const embeddingResp = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: inputText.replace(/\n/g, ' ')
+      });
+      const embedding = embeddingResp.data[0].embedding;
+
+      // B. Search Supabase for similar memories (Threshold 0.5 ensures relevance)
+      const { data: memoryData, error: memoryError } = await supabase.rpc('match_memories', {
+        query_embedding: embedding,
+        match_threshold: 0.0,
+        match_count: 3, // Only get top 3 most relevant facts
+        p_user_id: user.id
+      });
+
+      if (!memoryError && memoryData && memoryData.length > 0) {
+        memories = memoryData;
+        memoryContext = memories.map((m: any) => `- ${m.content}`).join('\n');
+        console.log("Context Injected:", memoryContext); // For debugging
+      }
+    } catch (memoryErr) {
+      console.error('Memory retrieval error:', memoryErr);
+      // Continue without memory if retrieval fails
+    }
+    // ---------------------------------------------------------
+
     // 3. Transformation with Self-Healing Loop
     const startTime = Date.now();
     let currentText = inputText;
@@ -88,10 +121,13 @@ export async function POST(req: Request) {
     const MAX_RETRIES = 2; // Prevent infinite loops
     let evalData: any = {};
 
-    // Initialize history with System Prompt and User Input (including Identity)
+    // Initialize history with System Prompt and User Input (including Identity and Memory)
     let conversationHistory: any[] = [
       { role: "system", content: TRANSFORMATION_SYSTEM_PROMPT },
-      { role: "user", content: `IDENTITY:\n${JSON.stringify(identityRecord.identity_json)}\n\nINPUT:\n${inputText}` }
+      { 
+        role: "user", 
+        content: `IDENTITY_PROFILE:\n${JSON.stringify(identityRecord.identity_json)}\n\nRELEVANT_MEMORIES:\n${memoryContext}\n\nINPUT_TEXT:\n${inputText}` 
+      }
     ];
 
     // --- THE CORRECTION LOOP ---
@@ -166,7 +202,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       output: currentText,
       evaluation: evalData,
-      attempts: attempts
+      attempts: attempts,
+      used_memory: memories.length > 0 // Let frontend know if we used memory
     });
 
   } catch (error: any) {

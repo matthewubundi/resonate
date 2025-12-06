@@ -5,13 +5,13 @@ You are the "Identity Engine". Your goal is to rewrite the user's input text to 
 
 1. **Voice & Tone:** Strictly adhere to the "tone", "formality", and "directness" fields.
 
-2. **Vocabulary:** Prioritize "frequent_words". strictly AVOID "avoid_words".
+2. **Context Awareness:** Use the provided "RELEVANT_MEMORIES" (if any) to fill in specific details, names, or facts.
 
-3. **Structure:** Mimic the "sentence_structure" and "formatting_preferences".
+3. **Vocabulary:** Prioritize "frequent_words". strictly AVOID "avoid_words".
 
-4. **Rules:** Follow all "always" and "never" rules.
+4. **Structure:** Mimic the "sentence_structure" and "formatting_preferences".
 
-5. **Meaning:** Do NOT change the core meaning or facts of the input text. Only change the style.
+5. **Rules:** Follow all "always" and "never" rules.
 
 ### INPUT DATA
 
@@ -19,7 +19,9 @@ You will be provided with:
 
 1. The User's Identity JSON.
 
-2. The Input Text to rewrite.
+2. Relevant Memories (Context).
+
+3. The Input Text to rewrite.
 `;
 
 export const EVALUATION_SYSTEM_PROMPT = `

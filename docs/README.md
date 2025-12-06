@@ -16,7 +16,15 @@ This directory contains all project documentation for the Resonate application.
 
 When adding new documentation to this folder, please follow these guidelines:
 
-### File Naming
+### File Naming & Automation
+**Important**: The documentation site automatically categorizes files based on their names.
+- Files with `architecture` or `system` -> **Architecture** category
+- Files with `auth` or `supabase` -> **Authentication** category
+- Files with `product` or `requirement` -> **Product** category
+- All others -> **General** category
+
+Title in the sidebar is taken from the first `# Heading` in your file.
+
 - Use `UPPERCASE_WITH_UNDERSCORES.md` for major documents
 - Use `lowercase-with-hyphens.md` for guides and tutorials
 - Be descriptive and specific

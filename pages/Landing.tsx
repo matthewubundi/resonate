@@ -21,6 +21,7 @@ import Image from 'next/image';
 import HeroImage from '../assets/Hero.png';
 import IntegrationImage from '../assets/Integration.png';
 import ArchitectureImage from '../assets/Architecture.png';
+import HeroBackground from '../components/HeroBackground';
 
 // --- Shared Framer Motion Variants ---
 const fadeInUp = {
@@ -102,7 +103,7 @@ const ImagePlaceholder: React.FC<{
   );
 };
 
-export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = ({ onLogin, onSignup }) => {
+export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void; onNavigate?: (page: string) => void }> = ({ onLogin, onSignup, onNavigate }) => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -124,9 +125,7 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-blue-600/20">
-              <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={36} height={36} className="object-contain" />
-            </div>
+            <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={36} height={36} className="object-contain" />
             <span className="font-bold text-xl tracking-tight text-blue-600">Resonate</span>
           </div>
           <div className="flex items-center gap-6">
@@ -153,7 +152,9 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
         <div className="absolute top-20 right-0 -mr-20 -mt-20 w-96 h-96 bg-blue-100/50 rounded-full blur-3xl opacity-50 -z-10" />
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-purple-100/50 rounded-full blur-3xl opacity-50 -z-10" />
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <HeroBackground />
+
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
 
           {/* Hero Content */}
           <div className="max-w-2xl">
@@ -207,7 +208,7 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
               </button>
               <button
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => onNavigate?.('documentation')}
                 className="inline-flex h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-8 font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-all active:scale-95"
               >
                 View Documentation
@@ -256,6 +257,9 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
           </div>
         </div>
       </section>
+
+      {/* --- 3-Step Onboarding Section --- */}
+      <ThreeStepOnboarding onSignup={onSignup} />
 
       {/* --- Interactive Comparison Section --- */}
       <InteractiveComparison />
@@ -362,6 +366,9 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
         </div>
       </section>
 
+      {/* --- JSON Preview Section ("Under the Hood") --- */}
+      <JSONPreviewSection />
+
       {/* --- Use Cases Section --- */}
       <section className="py-24 px-6 bg-slate-50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto">
@@ -395,30 +402,41 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void }> = 
         </div>
       </section>
 
-      {/* --- Footer --- */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded overflow-hidden flex items-center justify-center">
-              <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={24} height={24} className="object-contain" />
+      <footer className="bg-white border-t border-slate-200 pt-16 pb-12 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12 mb-16">
+          {/* Left Side: Brand */}
+          <div className="max-w-xl">
+            <div className="flex items-center gap-3 mb-6">
+              <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={48} height={48} className="object-contain" />
+              <span className="font-bold text-2xl tracking-tight text-blue-600">Resonate</span>
             </div>
-            <span className="font-bold text-blue-600">Resonate</span>
+            <p className="text-slate-500 text-lg leading-relaxed mb-8">
+              The ultimate identity layer for generative AI. Preserve your linguistic fingerprint and protect your personal brand.
+            </p>
+            <div className="flex items-center gap-2 px-3 py-1.5 w-fit rounded-full bg-emerald-50 border border-emerald-100">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-xs font-bold text-emerald-700">System Online</span>
+            </div>
           </div>
 
-          <div className="flex gap-8 text-sm font-medium text-slate-500">
-            <a href="#" className="hover:text-slate-900">Product</a>
-            <a href="#" className="hover:text-slate-900">Company</a>
-            <a href="#" className="hover:text-slate-900">Resources</a>
-            <a href="#" className="hover:text-slate-900">Legal</a>
-          </div>
-
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-xs font-bold text-emerald-700">System Online</span>
+          {/* Right Side: Product Links */}
+          <div className="flex flex-col md:items-end">
+            <h3 className="font-bold text-slate-900 text-lg mb-6">Product</h3>
+            <ul className="space-y-4 text-base text-slate-600 flex flex-col md:items-end">
+              <li><a href="#features" className="hover:text-blue-600 transition-colors">Features</a></li>
+              <li><a href="#comparison" className="hover:text-blue-600 transition-colors">The Difference</a></li>
+              <li><button onClick={() => onNavigate?.('documentation')} className="hover:text-blue-600 transition-colors">Documentation</button></li>
+              <li><button onClick={onSignup} className="hover:text-blue-600 transition-colors">Get Started</button></li>
+              <li><button onClick={onLogin} className="hover:text-blue-600 transition-colors">Log In</button></li>
+            </ul>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-8 text-center text-xs text-slate-400">
-          © 2024 Resonate Inc. All rights reserved.
+
+        <div className="max-w-7xl mx-auto border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
+          <p>© 2024 Resonate Inc. All rights reserved.</p>
+          <div className="flex gap-6">
+            <span>Made with precision for writers.</span>
+          </div>
         </div>
       </footer>
     </div>
@@ -512,6 +530,227 @@ const InteractiveComparison = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// --- Sub-Component: Three-Step Onboarding ---
+const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) => {
+  const steps = [
+    {
+      number: 1,
+      title: "The Interview",
+      description: "Answer 8-12 simple questions about your style, values, and humor.",
+      icon: Users,
+      color: "blue",
+      gradient: "from-blue-500 to-cyan-500",
+      visual: null
+    },
+    {
+      number: 2,
+      title: "The Extraction",
+      description: "Our engine creates your unique identity_json file—a portable digital fingerprint.",
+      icon: Cpu,
+      color: "purple",
+      gradient: "from-purple-500 to-pink-500",
+      visual: null
+    },
+    {
+      number: 3,
+      title: "The Filter",
+      description: "Paste text anywhere. We rewrite it instantly to match your voice, with automated scoring.",
+      icon: Sparkles,
+      color: "orange",
+      gradient: "from-orange-500 to-amber-500",
+      visual: (
+        <div className="mt-6 bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-orange-100 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-orange-100 to-transparent opacity-50 rounded-bl-full -mr-4 -mt-4"></div>
+          <div className="flex justify-between items-center mb-3 relative z-10">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Confidence Score</span>
+            <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
+              <CheckCircle2 size={10} className="text-green-600" />
+              <span className="text-xs font-bold text-green-700">9.2/10 Match</span>
+            </div>
+          </div>
+          <div className="space-y-2 relative z-10">
+            <div className="flex gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-slate-200 mt-1.5 flex-shrink-0"></div>
+              <div className="h-1.5 bg-slate-100 rounded-full w-3/4"></div>
+            </div>
+            <div className="flex gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-slate-200 mt-1.5 flex-shrink-0"></div>
+              <div className="h-1.5 bg-slate-100 rounded-full w-full"></div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  const getColorClasses = (color: string) => {
+    const colorMap: Record<string, { bg: string; border: string; text: string; iconBg: string }> = {
+      blue: { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-600", iconBg: "bg-blue-100" },
+      purple: { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-600", iconBg: "bg-purple-100" },
+      orange: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-600", iconBg: "bg-orange-100" }
+    };
+    return colorMap[color] || colorMap.blue;
+  };
+
+  return (
+    <section className="py-24 px-6 bg-white">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">
+              Get Started in <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">3 Simple Steps</span>
+            </h2>
+            <p className="text-lg text-slate-600">
+              No complex coding. No lengthy setup. Just answer a few questions and you're ready to preserve your identity.
+            </p>
+          </motion.div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {steps.map((step, index) => {
+            const colors = getColorClasses(step.color);
+            const Icon = step.icon;
+
+            return (
+              <motion.div
+                key={step.number}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
+                whileHover={{ y: -8, transition: { type: "spring", stiffness: 300 } }}
+                className="relative group"
+              >
+                {/* Connecting Arrow (hidden on mobile, shown between cards on desktop) */}
+                {index < steps.length - 1 && (
+                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
+                    <ChevronRight className="text-slate-300 group-hover:text-blue-500 transition-colors" size={32} />
+                  </div>
+                )}
+
+                <div className={`relative h-full p-8 rounded-3xl border-2 ${colors.border} ${colors.bg} hover:bg-white transition-all shadow-lg hover:shadow-2xl overflow-hidden`}>
+                  {/* Gradient overlay on hover */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${step.gradient} opacity-0 group-hover:opacity-5 transition-opacity`}></div>
+
+                  {/* Step Number Badge */}
+                  <div className={`absolute top-6 right-6 h-12 w-12 rounded-full bg-gradient-to-br ${step.gradient} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                    {step.number}
+                  </div>
+
+                  {/* Icon */}
+                  <div className={`h-16 w-16 rounded-2xl ${colors.iconBg} flex items-center justify-center ${colors.text} mb-6 group-hover:scale-110 transition-transform`}>
+                    <Icon size={32} />
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="text-2xl font-bold text-slate-900 mb-3">{step.title}</h3>
+                  <p className="text-slate-600 leading-relaxed">{step.description}</p>
+
+                  {/* Step Visual (e.g. for Evaluation Engine) */}
+                  {step.visual}
+
+                  {/* Decorative element */}
+                  <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r ${step.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left`}></div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* CTA Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="text-center mt-12"
+        >
+          <p className="text-slate-600 mb-6 font-medium">Ready to preserve your unique voice?</p>
+          <button onClick={onSignup} className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-full shadow-xl shadow-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/40 transition-all hover:scale-105 active:scale-95">
+            <span>Start Your Interview</span>
+            <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
+          </button>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// --- Sub-Component: JSON Preview Section ---
+const JSONPreviewSection = () => {
+  return (
+    <section className="py-24 px-6 bg-slate-900 text-white overflow-hidden relative">
+      {/* Background decoration */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black opacity-40 z-0"></div>
+
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider mb-6">
+            <Code2 size={14} />
+            Under the Hood
+          </div>
+          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
+            Your Identity, <span className="text-blue-500">Structured.</span>
+          </h2>
+          <p className="text-lg text-slate-400 mb-8 leading-relaxed">
+            You own the data. Edit your rules, banned words, and tone anytime. We believe in radical transparency—no black box magic, just your rules applied perfectly.
+          </p>
+
+          {/* Feature list key points */}
+          <div className="space-y-4">
+            {[
+              "Full JSON portability",
+              "Edit via UI or direct code",
+              "Version control your persona"
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="h-6 w-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                  <CheckCircle2 size={14} />
+                </div>
+                <span className="text-slate-300 font-medium">{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Code Block Visual */}
+        <div className="relative">
+          {/* Glow effect */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20"></div>
+
+          <div className="relative bg-[#1e1e1e] rounded-xl border border-white/10 shadow-2xl overflow-hidden font-mono text-sm leading-relaxed">
+            {/* Header */}
+            <div className="flex items-center px-4 py-3 bg-[#2d2d2d] border-b border-white/5">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">JSON</span>
+            </div>
+
+            {/* Code Content */}
+            <div className="p-8 overflow-x-auto text-slate-300">
+              <pre className="leading-loose">
+                <code>
+                  {`{`}
+                  <span className="text-orange-400">"tone"</span>: <span className="text-green-400">"Empathetic but direct"</span>,
+                  <span className="text-orange-400">"vocabulary"</span>: {`{`}
+                  <span className="text-orange-400">"avoid"</span>: [<span className="text-green-400">"synergy"</span>, <span className="text-green-400">"leverage"</span>],
+                  <span className="text-orange-400">"prefer"</span>: [<span className="text-green-400">"help"</span>, <span className="text-green-400">"use"</span>]
+                  {`}`},
+                  <span className="text-orange-400">"values"</span>: [<span className="text-green-400">"transparency"</span>, <span className="text-green-400">"brevity"</span>]
+                  {`}`}
+                </code>
+              </pre>
+            </div>
           </div>
         </div>
       </div>

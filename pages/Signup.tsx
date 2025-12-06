@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '../components/Components';
 import { Cpu, Mail, Lock, User, ArrowLeft, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -124,9 +125,7 @@ export const Signup: React.FC<SignupProps> = ({ onSignup, onNavigateToLogin, onB
                 <Card className="bg-white shadow-xl border-ink/10">
                     <CardHeader className="text-center space-y-4 pb-6">
                         <div className="flex justify-center">
-                            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-azure to-azure-hover flex items-center justify-center shadow-lg">
-                                <Cpu size={28} className="text-white" />
-                            </div>
+                            <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={56} height={56} className="object-contain" />
                         </div>
                         <div>
                             <CardTitle className="text-2xl mb-2">Create Account</CardTitle>

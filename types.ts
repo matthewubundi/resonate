@@ -13,7 +13,8 @@ export type PageView =
   | 'history'
   | 'memory'
   | 'personas'
-  | 'settings';
+  | 'settings'
+  | 'documentation';
 
 export interface NavItem {
   id: PageView;

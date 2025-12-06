@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Layout } from './components/Layout';
 import { Landing } from './pages/Landing';
+import { ResonateLoader } from './components/ResonateLoader';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
@@ -9,7 +10,8 @@ import { Dashboard } from './pages/Dashboard';
 import { Transform } from './pages/Transform';
 import { HistoryPage } from './pages/History';
 import { AnalyticsPage } from './pages/Analytics';
-import { Loader2 } from 'lucide-react';
+import Documentation from './pages/Documentation';
+
 import { PageView } from './types';
 import { Card, CardHeader, CardTitle, CardContent, Input, TextArea, Button, JsonViewer, Chip } from './components/Components';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
@@ -21,31 +23,7 @@ import { Copy, Check, AlertCircle, X } from 'lucide-react';
 
 // --- Placeholder Pages for less critical UI ---
 
-const LoadingScreen = ({ onComplete }: { onComplete: () => void }) => {
-  useEffect(() => {
-    const timer = setTimeout(onComplete, 3000);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
 
-  return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-paper text-ink relative overflow-hidden">
-      <div className="relative z-10 flex flex-col items-center">
-        <div className="relative mb-8">
-          <div className="h-24 w-24 rounded-full border-t-4 border-b-4 border-azure animate-spin"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl font-bold text-ink">I</span>
-          </div>
-        </div>
-        <h2 className="text-2xl font-bold text-ink tracking-tight">Analysing patterns...</h2>
-        <p className="text-ink/50 mt-2 text-sm tracking-widest uppercase font-bold">Extracting linguistic DNA</p>
-
-        <div className="w-64 h-1 bg-paleslate mt-8 rounded-full overflow-hidden">
-          <div className="h-full bg-azure animate-[width_2s_ease-in-out_infinite]"></div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 interface GeneratedIdentity {
   tone: string;
@@ -142,7 +120,7 @@ const IdentityEditor = () => {
 
   const handleCopy = async () => {
     if (!editableData) return;
-    
+
     try {
       await navigator.clipboard.writeText(JSON.stringify(editableData, null, 2));
       setCopySuccess(true);
@@ -374,7 +352,7 @@ const IdentityEditor = () => {
                       className="mb-4"
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
                       label="Tone"
@@ -403,7 +381,7 @@ const IdentityEditor = () => {
                       />
                     )}
                   </div>
-                  
+
                   <div>
                     <TextArea
                       label="Tone Description"
@@ -413,7 +391,7 @@ const IdentityEditor = () => {
                       rows={4}
                     />
                   </div>
-                  
+
                   <div className="space-y-4 pt-2">
                     <div>
                       <label className="text-sm font-bold mb-3 block text-ink">Vocabulary</label>
@@ -460,7 +438,7 @@ const IdentityEditor = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="pt-2">
                       <label className="text-sm font-bold mb-3 block text-ink">Core Values</label>
                       {editableData.values && editableData.values.length > 0 && (
@@ -481,7 +459,7 @@ const IdentityEditor = () => {
                         <Button size="sm" onClick={addValue} className="shrink-0">Add</Button>
                       </div>
                     </div>
-                    
+
                     <div className="pt-2">
                       <label className="text-sm font-bold mb-3 block text-ink">Ethics</label>
                       {editableData.ethics && editableData.ethics.length > 0 && (
@@ -546,10 +524,10 @@ const IdentityEditor = () => {
                                 placeholder="Enter always rule..."
                               />
                             </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => removeRule('always', idx)} 
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeRule('always', idx)}
                               className="h-8 w-8 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <X size={16} className="text-highlight" />
@@ -571,7 +549,7 @@ const IdentityEditor = () => {
                       <Button size="sm" onClick={() => addRule('always')} className="shrink-0">Add</Button>
                     </div>
                   </div>
-                  
+
                   <div className="pt-2">
                     <label className="text-sm font-bold mb-3 block text-ink">Never Rules</label>
                     <div className="space-y-3 mb-4">
@@ -594,10 +572,10 @@ const IdentityEditor = () => {
                                 placeholder="Enter never rule..."
                               />
                             </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => removeRule('never', idx)} 
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeRule('never', idx)}
                               className="h-8 w-8 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <X size={16} className="text-highlight" />
@@ -633,9 +611,9 @@ const IdentityEditor = () => {
             <CardHeader className="border-b border-ink/5 bg-white rounded-t-xl">
               <CardTitle className="text-lg text-ink flex justify-between items-center">
                 <span>JSON Preview</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-7 w-7 p-0 text-azure hover:text-azure-hover hover:bg-azure/10"
                   onClick={handleCopy}
                   disabled={!editableData}
@@ -917,6 +895,7 @@ const AppContent: React.FC = () => {
       '/onboarding': 'onboarding',
       '/memory': 'memory',
       '/personas': 'personas',
+      '/documentation': 'documentation',
     };
 
     return routeMap[pathname || '/'] || 'landing';
@@ -941,7 +920,7 @@ const AppContent: React.FC = () => {
       // If user is authenticated but hasn't completed onboarding
       if (onboardingCompleted === false) {
         // Only redirect if not already on onboarding or public pages
-        const publicPages = ['landing', 'login', 'signup', 'onboarding', 'loading'];
+        const publicPages = ['landing', 'login', 'signup', 'onboarding', 'loading', 'documentation'];
         if (!publicPages.includes(view)) {
           router.push('/onboarding');
           setView('onboarding');
@@ -1037,6 +1016,7 @@ const AppContent: React.FC = () => {
       'memory': '/memory',
       'personas': '/personas',
       'review': '/review',
+      'documentation': '/documentation',
     };
 
     router.push(routeMap[page] || '/');
@@ -1044,21 +1024,14 @@ const AppContent: React.FC = () => {
 
   // Show loading screen while checking authentication and onboarding status
   if (loading || onboardingLoading) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-paper via-paleslate to-azure/5">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 size={48} className="text-azure animate-spin" />
-          <p className="text-ink/60 font-medium">Loading...</p>
-        </div>
-      </div>
-    );
+    return <ResonateLoader />;
   }
 
   // Routing Logic
   const renderView = () => {
     switch (view) {
       case 'landing':
-        return <Landing onLogin={() => handleNavigate('login')} onSignup={() => handleNavigate('signup')} />;
+        return <Landing onLogin={() => handleNavigate('login')} onSignup={() => handleNavigate('signup')} onNavigate={handleNavigate} />;
       case 'login':
         return (
           <Login
@@ -1077,13 +1050,13 @@ const AppContent: React.FC = () => {
         );
       case 'onboarding':
         return (
-          <Onboarding 
+          <Onboarding
             onComplete={async () => {
               // Refetch onboarding status after completion
               await refetchOnboarding();
               // After onboarding completes, go to loading screen then dashboard
               setView('loading');
-            }} 
+            }}
             onBack={() => {
               if (user) {
                 // If logged in, go to dashboard (they can't skip onboarding)
@@ -1092,11 +1065,11 @@ const AppContent: React.FC = () => {
                 // If not logged in, go to landing
                 setView('landing');
               }
-            }} 
+            }}
           />
         );
       case 'loading':
-        return <LoadingScreen onComplete={() => {
+        return <ResonateLoader onComplete={() => {
           setView('dashboard');
           router.push('/dashboard');
         }} />;
@@ -1112,13 +1085,15 @@ const AppContent: React.FC = () => {
         return <HistoryPage onNavigate={handleNavigate} />;
       case 'settings':
         return <SettingsPage user={user} />;
+      case 'documentation':
+        return <Documentation onBack={() => handleNavigate('landing')} />;
       default:
         return <div className="p-8 text-center text-ink">Page: {view} (Placeholder)</div>;
     }
   };
 
   // Wrapper for logged-in pages
-  if (view === 'landing' || view === 'login' || view === 'signup' || view === 'onboarding' || view === 'loading') {
+  if (view === 'landing' || view === 'login' || view === 'signup' || view === 'onboarding' || view === 'loading' || view === 'documentation') {
     return (
       <div className="bg-paper min-h-screen text-ink font-sans selection:bg-azure/20 selection:text-azure">
         {renderView()}

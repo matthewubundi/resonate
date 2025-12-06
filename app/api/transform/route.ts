@@ -11,12 +11,12 @@ export async function POST(req: Request) {
   const authHeader = req.headers.get('authorization');
   let user;
   let supabase;
-  
+
   if (authHeader?.startsWith('Bearer ')) {
     // Client-side session: use token from Authorization header
     const token = authHeader.substring(7);
     const cookieSupabase = await createClient();
-    
+
     // Verify the user first
     const { data: { user: tokenUser }, error } = await cookieSupabase.auth.getUser(token);
     if (error || !tokenUser) {
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     user = tokenUser;
-    
+
     // Create a client with service role for server-side queries (bypasses RLS)
     // We've already verified the user, so this is safe
     supabase = createSupabaseClient(
@@ -68,110 +68,110 @@ export async function POST(req: Request) {
 
     if (idError) {
       console.error('Identity query error:', idError);
-      console.error('User ID:', user.id);
-      return NextResponse.json({ 
-        error: 'No active identity found', 
-        details: idError.message 
+      return NextResponse.json({
+        error: 'No active identity found',
+        details: idError.message
       }, { status: 404 });
     }
 
     if (!identityRecord) {
-      console.error('No identity record found for user:', user.id);
-      return NextResponse.json({ 
-        error: 'No active identity found. Please complete onboarding first.' 
+      return NextResponse.json({
+        error: 'No active identity found. Please complete onboarding first.'
       }, { status: 404 });
     }
 
-    // 3. Perform Transformation
+    // 3. Transformation with Self-Healing Loop
     const startTime = Date.now();
-    
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // Using mini for speed/cost as per PRD [cite: 227]
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: `${TRANSFORMATION_SYSTEM_PROMPT}\n\nReturn a JSON object with:\n- "output": rewritten text as a string\n- "reasoning": an array of 3-5 short bullet reasons describing how the identity was applied.\nDo not include any additional fields.` },
-        { 
-          role: "user", 
-          content: `IDENTITY_PROFILE:\n${JSON.stringify(identityRecord.identity_json)}\n\nINPUT_TEXT:\n${inputText}` 
-        }
-      ],
-      temperature: sanitizedTemp,
-    });
+    let currentText = inputText;
+    let finalScore = 0;
+    let attempts = 0;
+    const MAX_RETRIES = 2; // Prevent infinite loops
+    let evalData: any = {};
 
-    const rawContent = completion.choices[0].message.content || '';
-    let parsed: any = {};
-    try {
-      parsed = JSON.parse(rawContent);
-    } catch (e) {
-      console.warn('Failed to parse LLM JSON output, falling back to raw string.', e);
-      parsed = { output: rawContent, reasoning: [] };
+    // Initialize history with System Prompt and User Input (including Identity)
+    let conversationHistory: any[] = [
+      { role: "system", content: TRANSFORMATION_SYSTEM_PROMPT },
+      { role: "user", content: `IDENTITY:\n${JSON.stringify(identityRecord.identity_json)}\n\nINPUT:\n${inputText}` }
+    ];
+
+    // --- THE CORRECTION LOOP ---
+    while (attempts <= MAX_RETRIES) {
+      attempts++;
+
+      // A. Generate Rewrite
+      const rewriteResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini", // Fast & Cheap
+        messages: conversationHistory,
+        temperature: sanitizedTemp,
+      });
+      currentText = rewriteResponse.choices[0].message.content || "";
+
+      // B. Audit (Evaluate)
+      try {
+        const evalResponse = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: EVALUATION_SYSTEM_PROMPT },
+            { role: "user", content: `IDENTITY:\n${JSON.stringify(identityRecord.identity_json)}\n\nTEXT_TO_AUDIT:\n${currentText}` }
+          ],
+          response_format: { type: "json_object" }
+        });
+
+        evalData = JSON.parse(evalResponse.choices[0].message.content || "{}");
+        finalScore = typeof evalData.score === 'number' ? evalData.score : 0;
+      } catch (evalError) {
+        console.error('Evaluation error:', evalError);
+        evalData = { score: 0, reasoning: "Evaluation failed", suggestions: "" };
+        finalScore = 0;
+      }
+
+      // C. Check Threshold (PRD Goal: >= 8.0)
+      if (finalScore >= 8.0) {
+        break; // Success!
+      }
+
+      // D. Prepare for Retry (Feedback Injection)
+      if (attempts <= MAX_RETRIES) {
+        console.log(`Attempt ${attempts}: Score ${finalScore}. Retrying with feedback: ${evalData.suggestions}`);
+
+        // Add the AI's own output to history
+        conversationHistory.push({ role: "assistant", content: currentText });
+        // Add the Auditor's complaints to history
+        conversationHistory.push({
+          role: "user",
+          content: `CRITICAL FEEDBACK: The alignment score was only ${finalScore}/10. Reasoning: ${evalData.reasoning}. \n\nFix the text specifically to address: ${evalData.suggestions}.`
+        });
+      }
     }
 
-    const transformedText = parsed.output || parsed.transformed_text || rawContent;
-    const reasoning = Array.isArray(parsed.reasoning) ? parsed.reasoning.filter(Boolean) : [];
     const processingTime = Date.now() - startTime;
 
-    // 4. STAGE 2: EVALUATE (The Auditor)
-    // We check if the Author did a good job
-    let evaluationData: any = null;
-    let alignmentScore: number | null = null;
-
-    try {
-      const evalResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: EVALUATION_SYSTEM_PROMPT },
-          { 
-            role: "user", 
-            content: `IDENTITY:\n${JSON.stringify(identityRecord.identity_json)}\n\nTEXT_TO_AUDIT:\n${transformedText}` 
-          }
-        ],
-        response_format: { type: "json_object" }
-      });
-
-      const evalContent = evalResponse.choices[0].message.content || '{}';
-      try {
-        evaluationData = JSON.parse(evalContent);
-        alignmentScore = typeof evaluationData.score === 'number' 
-          ? Math.min(10, Math.max(0, evaluationData.score)) 
-          : null;
-      } catch (e) {
-        console.warn('Failed to parse evaluation JSON output', e);
-        evaluationData = { score: null, reasoning: 'Evaluation parsing failed', suggestions: '' };
-      }
-    } catch (evalError: any) {
-      console.error('Evaluation error:', evalError);
-      // Don't fail the request if evaluation fails, just log the error
-      evaluationData = { score: null, reasoning: 'Evaluation failed', suggestions: '' };
-    }
-
-    // 5. Log to Database (PRD Requirement 6.5)
-    const { error: logError } = await supabase
-      .from('transformations')
-      .insert({
-        user_id: user.id,
-        input_text: inputText,
-        raw_llm_output: rawContent,
-        final_output: transformedText,
-        alignment_score: alignmentScore,
-        model_used: 'gpt-4o-mini',
-        processing_time_ms: processingTime
-      });
+    // 4. Log Final Result to Supabase
+    // Note: We use the final attempt's output and score.
+    const { error: logError } = await supabase.from('transformations').insert({
+      user_id: user.id,
+      input_text: inputText,
+      final_output: currentText,
+      model_used: 'gpt-4o-mini',
+      alignment_score: finalScore,
+      processing_time_ms: processingTime,
+      // We log raw output as the final text since we aren't enforcing JSON output anymore
+      raw_llm_output: currentText
+    });
 
     if (logError) {
       console.error('Logging error:', logError);
-      // Don't fail the request if logging fails, just log the error
     }
 
-    return NextResponse.json({ 
-      output: transformedText, 
-      reasoning,
-      evaluation: evaluationData 
+    return NextResponse.json({
+      output: currentText,
+      evaluation: evalData,
+      attempts: attempts
     });
 
   } catch (error: any) {
     console.error('Transformation error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to transform text' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 

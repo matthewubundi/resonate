@@ -18,7 +18,8 @@ export type PageView =
   | 'check-email'
   | 'verified'
   | 'terms'
-  | 'privacy';
+  | 'privacy'
+  | 'reset-password';
 
 export interface NavItem {
   id: PageView;

@@ -24,6 +24,7 @@ const Settings = React.lazy(() => import('./views/Settings').then(module => ({ d
 const TermsOfService = React.lazy(() => import('./views/TermsOfService').then(module => ({ default: module.TermsOfService })));
 const PrivacyPolicy = React.lazy(() => import('./views/PrivacyPolicy').then(module => ({ default: module.PrivacyPolicy })));
 const IdentityEditor = React.lazy(() => import('./views/IdentityEditor').then(module => ({ default: module.IdentityEditor })));
+const ResetPassword = React.lazy(() => import('./views/ResetPassword').then(module => ({ default: module.ResetPassword })));
 
 
 
@@ -45,6 +46,7 @@ const AppContent: React.FC = () => {
       '/editor': 'editor',
       '/analytics': 'analytics',
       '/history': 'history',
+      '/auth/reset-password': 'reset-password',
       '/settings': 'settings',
       '/onboarding': 'onboarding',
       '/memory': 'memory',
@@ -205,6 +207,7 @@ const AppContent: React.FC = () => {
       'documentation': '/documentation',
       'check-email': '/check-email',
       'verified': '/verified',
+      'reset-password': '/auth/reset-password',
       'terms': '/terms',
       'privacy': '/privacy',
     };
@@ -273,6 +276,10 @@ const AppContent: React.FC = () => {
             }}
           />
         );
+      case 'reset-password':
+        return (
+          <ResetPassword onNavigate={handleNavigate} />
+        );
       case 'onboarding':
         return (
           <Onboarding
@@ -325,8 +332,9 @@ const AppContent: React.FC = () => {
     }
   };
 
+
   // Wrapper for logged-in pages
-  if (view === 'landing' || view === 'login' || view === 'signup' || view === 'onboarding' || view === 'loading' || view === 'documentation' || view === 'check-email' || view === 'verified' || view === 'terms' || view === 'privacy') {
+  if (view === 'landing' || view === 'login' || view === 'signup' || view === 'onboarding' || view === 'loading' || view === 'documentation' || view === 'check-email' || view === 'verified' || view === 'terms' || view === 'privacy' || view === 'reset-password') {
     return (
       <div className="bg-paper min-h-screen text-ink font-sans selection:bg-azure/20 selection:text-azure">
         <Suspense fallback={<ResonateLoader />}>

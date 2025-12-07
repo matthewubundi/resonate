@@ -32,6 +32,7 @@ const config: Config = {
         highlight: { // Yellow
           DEFAULT: '#EAB308',
           light: '#FEF9C3',
+          dark: '#854D0E',
         },
         gunmetal: {
           DEFAULT: '#1E1E2E',

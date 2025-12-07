@@ -50,6 +50,8 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
   const [copySuccess, setCopySuccess] = useState(false);
   const [isIdentityExpanded, setIsIdentityExpanded] = useState(false);
 
+  const [userName, setUserName] = useState('');
+
   // Fetch identity and transformation history on mount
   const fetchData = async () => {
     if (!user) {
@@ -58,8 +60,24 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
       return;
     }
 
+    // Set initial name from metadata while loading
+    if (user.user_metadata?.full_name) {
+      setUserName(user.user_metadata.full_name);
+    }
+
     setError(null);
     try {
+      // 0. Fetch Profile for Name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.full_name) {
+        setUserName(profile.full_name);
+      }
+
       // 1. Fetch Active Identity
       const { data: idData, error: idError } = await supabase
         .from('identities')
@@ -67,6 +85,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
         .eq('user_id', user.id)
         .eq('is_active', true)
         .single();
+
 
       if (idData && !idError) {
         setIdentity(idData.identity_json as IdentityProfile);
@@ -228,7 +247,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-ink">
-            Good morning, Matt.
+            Good morning, {userName ? userName.split(' ')[0] : 'User'}.
           </h1>
           <p className="text-ink/60 text-lg">What are we rewriting today?</p>
         </div>

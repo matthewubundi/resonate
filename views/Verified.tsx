@@ -1,93 +1,115 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, CardHeader, CardTitle, CardContent } from '../components/Components';
-import { Check, ShieldCheck, ArrowRight } from 'lucide-react';
-import Confetti from 'react-confetti';
+import { Card, CardHeader, CardContent } from '../components/Components';
+import { Check, Fingerprint, Lock, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface VerifiedProps {
     onNavigateToDashboard: () => void;
 }
 
-export const Verified: React.FC<VerifiedProps> = ({ onNavigateToDashboard }) => {
+export const Verified: React.FC<VerifiedProps> = () => {
     const { user } = useAuth();
-    const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-    const [showConfetti, setShowConfetti] = useState(true);
+    const [scanState, setScanState] = useState<'waiting' | 'scanning' | 'complete'>('waiting');
 
     useEffect(() => {
-        // Set initial window size
-        setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-
-        // Handle window resize
-        const handleResize = () => {
-            setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-        };
-
-        window.addEventListener('resize', handleResize);
-
-        // Stop confetti after 5 seconds
-        const timer = setTimeout(() => setShowConfetti(false), 5000);
+        // Start scanning sequence
+        const scanTimer = setTimeout(() => setScanState('scanning'), 500);
+        const completeTimer = setTimeout(() => setScanState('complete'), 2000);
 
         return () => {
-            window.removeEventListener('resize', handleResize);
-            clearTimeout(timer);
+            clearTimeout(scanTimer);
+            clearTimeout(completeTimer);
         };
     }, []);
 
+    const handleCloseWindow = () => {
+        window.close();
+        // Fallback if window.close() is blocked
+        alert("Please close this tab to continue.");
+    };
+
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-paper via-paleslate to-azure/5 p-4 overflow-hidden">
-            {showConfetti && <Confetti width={windowSize.width} height={windowSize.height} recycle={false} numberOfPieces={200} colors={['#2563EB', '#1e40af', '#60a5fa', '#3b82f6', '#93c5fd']} />}
+        <div className="min-h-screen w-full flex items-center justify-center bg-paleslate p-4 relative overflow-hidden">
+            {/* Vignette */}
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.03)_100%)]"></div>
 
-            {/* Background decoration */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-20 right-10 w-72 h-72 bg-azure/5 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-20 left-10 w-96 h-96 bg-highlight/10 rounded-full blur-3xl"></div>
-            </div>
+            <div className="relative w-full max-w-sm z-10">
+                <Card className="bg-paper shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-slate-200 overflow-hidden">
+                    {/* Visual Anchor: Dot Grid Pattern */}
+                    <div className="absolute top-0 left-0 right-0 h-32 opacity-[0.03]"
+                        style={{
+                            backgroundImage: 'radial-gradient(#000 1px, transparent 1px)',
+                            backgroundSize: '16px 16px'
+                        }}
+                    ></div>
 
-            <div className="relative w-full max-w-md z-10">
-                <Card className="bg-white shadow-xl border-ink/10 animate-fade-in-up">
-                    <CardHeader className="text-center space-y-4 pb-6">
-                        <div className="flex justify-center">
-                            <div className="relative">
-                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-2 animate-bounce-soft">
-                                    <ShieldCheck size={40} className="text-green-600" />
+                    <CardHeader className="text-center space-y-6 pt-12 pb-2 relative z-10">
+                        {/* Animated Icon Container */}
+                        <div className="flex justify-center mb-4">
+                            <div className="relative w-20 h-20 flex items-center justify-center">
+                                {/* Base Grey Icon */}
+                                <Fingerprint
+                                    size={64}
+                                    className="text-slate-200 absolute inset-0 m-auto"
+                                    strokeWidth={1.5}
+                                />
+
+                                {/* Scanning Azure Icon (Clipped) */}
+                                <div
+                                    className={`absolute inset-0 m-auto w-16 h-16 overflow-hidden transition-all duration-[1500ms] ease-in-out ${scanState === 'waiting' ? 'h-0 opacity-0' : 'h-16 opacity-100'
+                                        }`}
+                                >
+                                    <Fingerprint
+                                        size={64}
+                                        className="text-azure"
+                                        strokeWidth={1.5}
+                                    />
                                 </div>
-                                <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-sm">
-                                    <div className="bg-azure text-white p-1 rounded-full">
+
+                                {/* Mint Success Badge */}
+                                <div
+                                    className={`absolute -bottom-1 -right-1 bg-paper p-1 rounded-full shadow-md border border-slate-100 transition-all duration-500 delay-300 transform ${scanState === 'complete' ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
+                                        }`}
+                                >
+                                    <div className="bg-[#4ADE80] text-white p-1 rounded-full">
                                         <Check size={12} strokeWidth={4} />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <CardTitle className="text-2xl mb-2 text-ink">Email Verified!</CardTitle>
-                            <p className="text-sm text-ink/60 font-medium">
-                                Your identity has been authenticated.<br />
-                                You're all set to start using Resonate.
-                            </p>
+
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-semibold text-ink tracking-tight">
+                                Identity Authenticated
+                            </h2>
+                            <div className="flex justify-center">
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-paleslate rounded-full border border-slate-200">
+                                    <Lock size={12} className="text-ink/40" />
+                                    <span className="font-mono text-xs text-ink/60">
+                                        {user?.email || "verified-user@example.com"}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </CardHeader>
 
-                    <CardContent className="space-y-6">
-                        <div className="bg-paleslate/30 rounded-lg p-4 border border-ink/5">
-                            <p className="text-xs text-center text-ink/70 leading-relaxed">
-                                {user?.email ? (
-                                    <>
-                                        Verified account for <span className="font-bold text-ink">{user.email}</span>.
-                                    </>
-                                ) : (
-                                    "Your email address has been successfully confirmed."
-                                )}
+                    <CardContent className="space-y-8 pb-10 text-center relative z-10">
+                        <div className="space-y-4 px-4">
+                            <p className="text-sm text-ink/60 leading-relaxed">
+                                Secure connection established. You may now close this tab and <span className="font-semibold text-ink">return to the application</span>.
                             </p>
                         </div>
 
-                        <Button
-                            onClick={onNavigateToDashboard}
-                            size="lg"
-                            className="w-full group"
-                        >
-                            Continue to Dashboard
-                            <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Button>
+                        {/* Optional Close Button (for user convenience, though browser might block) */}
+                        <div>
+                            <button
+                                onClick={handleCloseWindow}
+                                className="text-xs text-ink/40 hover:text-ink/70 transition-colors inline-flex items-center gap-1.5 py-2 px-4 rounded-md hover:bg-paleslate"
+                            >
+                                <X size={12} />
+                                Close Window
+                            </button>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

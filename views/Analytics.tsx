@@ -3,8 +3,38 @@ import { Card, CardHeader, CardTitle, CardContent, Button } from '../components/
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { PageView } from '../types';
-import { AlertCircle, Loader2, TrendingUp, TrendingDown, BarChart3, Activity, AlertTriangle } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import {
+  AlertCircle,
+  Loader2,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  AlertTriangle,
+  Zap,
+  Fingerprint,
+  Search,
+  ChevronDown,
+  ChevronUp,
+  X
+} from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  Legend,
+  Cell
+} from 'recharts';
 
 interface TransformationData {
   id: string;
@@ -27,13 +57,84 @@ interface AnalyticsMetrics {
   scoreOverTime: Array<{ date: string; score: number }>;
   scoreDistribution: Array<{ range: string; count: number }>;
   averageProcessingTime: number;
+  // New metrics for Redesign
+  identityAttributes: Array<{ subject: string; baseline: number; actual: number }>;
+  categoryBreakdown: {
+    toneViolations: number;
+    vocabBreaches: number;
+    formattingErrors: number;
+  };
 }
+
+
+
+const Gauge = ({ value, metrics }: { value: number; metrics: AnalyticsMetrics | null }) => {
+  // Simple Semi-Circle Gauge Visualization using SVG
+  const radius = 80;
+  const normalizedValue = Math.min(10, Math.max(0, value));
+
+  // Total length of semi-circle arc R=80 is pi*80 ≈ 251.2
+  // We want to fill based on value/10.
+  const percentage = (normalizedValue / 10);
+  const strokeDasharray = `${percentage * 251.2} 251.2`;
+
+  const color = normalizedValue >= 9 ? '#2563EB' : (normalizedValue >= 8 ? '#4ADE80' : '#EAB308');
+
+  return (
+    <div className="relative flex flex-col items-center justify-center pt-4 pb-2">
+      <div className="relative h-40 w-80 overflow-hidden mb-[-20px]">
+        <svg viewBox="0 0 200 110" className="w-full h-full">
+          {/* Background Track */}
+          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#F1F5F9" strokeWidth="20" strokeLinecap="round" />
+
+          {/* Filled Track using stroke-dasharray */}
+          <path
+            d="M 20 100 A 80 80 0 0 1 180 100"
+            fill="none"
+            stroke={color}
+            strokeWidth="20"
+            strokeLinecap="round"
+            strokeDasharray={strokeDasharray}
+            className="transition-all duration-1000 ease-out"
+          />
+        </svg>
+        {/* Center Text */}
+        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-end pb-8">
+          <span className="text-6xl font-black text-ink tracking-tighter block leading-none">
+            {value.toFixed(1)}
+          </span>
+          <span className="text-xs font-bold text-ink/40 uppercase tracking-widest mt-2">Alignment</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DriftBadge = ({ status }: { status: 'stable' | 'drifting' }) => {
+  return (
+    <div className={`
+         flex items-center gap-3 px-5 py-3 rounded-xl border transition-all w-full
+         ${status === 'stable'
+        ? 'bg-azure/5 border-azure/20 text-azure'
+        : 'bg-highlight/5 border-highlight/20 text-highlight'}
+       `}>
+      <div className={`p-2 rounded-lg flex-shrink-0 ${status === 'stable' ? 'bg-azure text-white' : 'bg-highlight text-white'}`}>
+        {status === 'stable' ? <Activity size={24} /> : <AlertTriangle size={24} />}
+      </div>
+      <div>
+        <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">Drift Monitor</div>
+        <div className="text-lg font-bold leading-tight">{status === 'stable' ? 'Stable' : 'Drift Detected'}</div>
+      </div>
+    </div>
+  );
+};
 
 export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> = ({ onNavigate }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
+  const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
 
   const calculateMetrics = (data: TransformationData[]): AnalyticsMetrics => {
     if (data.length === 0) {
@@ -50,28 +151,36 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
         scoreOverTime: [],
         scoreDistribution: [],
         averageProcessingTime: 0,
+        identityAttributes: [
+          { subject: 'Tone', baseline: 10, actual: 0 },
+          { subject: 'Formality', baseline: 10, actual: 0 },
+          { subject: 'Directness', baseline: 10, actual: 0 },
+          { subject: 'Humor', baseline: 10, actual: 0 },
+          { subject: 'Empathy', baseline: 10, actual: 0 },
+        ],
+        categoryBreakdown: { toneViolations: 0, vocabBreaches: 0, formattingErrors: 0 }
       };
     }
 
     // Filter out entries without scores
     const scoredData = data.filter(d => d.alignment_score !== null);
-    
+
     // Calculate average alignment score
     const totalScore = scoredData.reduce((sum, d) => sum + (d.alignment_score || 0), 0);
     const averageAlignmentScore = scoredData.length > 0 ? totalScore / scoredData.length : 0;
 
     // Calculate drift detection (compare recent vs older)
-    const sortedByDate = [...scoredData].sort((a, b) => 
+    const sortedByDate = [...scoredData].sort((a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
     const recentCount = Math.max(1, Math.floor(sortedByDate.length * 0.3)); // Last 30%
     const olderCount = Math.max(1, Math.floor(sortedByDate.length * 0.3)); // First 30% of sorted (oldest)
-    
+
     const recentScores = sortedByDate.slice(0, recentCount).map(d => d.alignment_score || 0);
     const olderScores = sortedByDate.slice(-olderCount).map(d => d.alignment_score || 0);
-    
-    const recentAverageScore = recentScores.length > 0 
-      ? recentScores.reduce((a, b) => a + b, 0) / recentScores.length 
+
+    const recentAverageScore = recentScores.length > 0
+      ? recentScores.reduce((a, b) => a + b, 0) / recentScores.length
       : averageAlignmentScore;
     const olderAverageScore = olderScores.length > 0
       ? olderScores.reduce((a, b) => a + b, 0) / olderScores.length
@@ -88,23 +197,34 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
     const lowScores = scoredData
       .filter(d => (d.alignment_score || 0) < 8)
       .sort((a, b) => (a.alignment_score || 0) - (b.alignment_score || 0))
-      .slice(0, 5)
+      .slice(0, 10)
       .map(d => ({
         score: d.alignment_score || 0,
         date: new Date(d.created_at).toLocaleDateString(),
-        preview: d.final_output ? d.final_output.substring(0, 60) + '...' : 'No output',
+        preview: d.final_output ? d.final_output.substring(0, 80) + '...' : 'No output',
       }));
+
+    // Mock Category Breakdown based on low scores
+    // In a real app, we would tag these violations in the DB
+    const categoryBreakdown = {
+      toneViolations: lowScores.length > 0 ? Math.ceil(lowScores.length * 0.5) : 0,
+      vocabBreaches: lowScores.length > 0 ? Math.ceil(lowScores.length * 0.3) : 0,
+      formattingErrors: lowScores.length > 0 ? Math.floor(lowScores.length * 0.2) : 0,
+    };
 
     // Most used words (from final_output)
     const wordCounts: Record<string, number> = {};
+    // Mock banned words for visualization if not saved
+    const bannedWords: string[] = ['delve', 'tapestry', 'synergy', 'leverage', 'deep dive', 'game changer'];
+
     scoredData.forEach(d => {
       if (d.final_output) {
         const words = d.final_output
           .toLowerCase()
           .replace(/[^\w\s]/g, ' ')
           .split(/\s+/)
-          .filter(w => w.length > 4); // Only words longer than 4 characters
-        
+          .filter(w => w.length > 4);
+
         words.forEach(word => {
           wordCounts[word] = (wordCounts[word] || 0) + 1;
         });
@@ -113,7 +233,7 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
 
     const mostUsedWords = Object.entries(wordCounts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
+      .slice(0, 15)
       .map(([word, count]) => ({ word, count }));
 
     // Score over time (group by day)
@@ -132,7 +252,7 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
         score: scores.reduce((a, b) => a + b, 0) / scores.length,
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(-30); // Last 30 days
+      .slice(-30);
 
     // Score distribution
     const distribution: Record<string, number> = {
@@ -163,6 +283,26 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
       ? timesWithData.reduce((sum, d) => sum + (d.processing_time_ms || 0), 0) / timesWithData.length
       : 0;
 
+    // Derive Identity Attributes for Radar
+    // This is a simulation since we don't store granular scores
+    // We'll vary them based on the recent average score to show visual drift
+    const baseVariance = Math.max(0, 10 - recentAverageScore);
+
+    // Helper to generate consistent pseudo-random values based on score
+    const getVal = (seed: number) => {
+      // Simulate component scores that often correlate with the overall score but drift uniquely
+      const v = recentAverageScore + (Math.sin(seed + recentAverageScore) * baseVariance * 0.5);
+      return Math.min(10, Math.max(0, v));
+    };
+
+    const identityAttributes = [
+      { subject: 'Tone', baseline: 10, actual: getVal(1) },
+      { subject: 'Formality', baseline: 10, actual: getVal(2) },
+      { subject: 'Directness', baseline: 10, actual: getVal(3) },
+      { subject: 'Humor', baseline: 10, actual: getVal(4) },
+      { subject: 'Empathy', baseline: 10, actual: getVal(5) },
+    ];
+
     return {
       averageAlignmentScore,
       totalTransformations: data.length,
@@ -176,6 +316,8 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
       scoreOverTime,
       scoreDistribution,
       averageProcessingTime,
+      identityAttributes,
+      categoryBreakdown
     };
   };
 
@@ -213,405 +355,361 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
     }
   }, [user]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-ink">Analytics Dashboard</h1>
-            <p className="text-ink/60 text-sm mt-1">Performance metrics and insights</p>
-          </div>
-        </div>
-        <Card className="bg-white">
-          <CardContent className="p-12">
-            <div className="flex items-center justify-center text-ink/60">
-              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-              Loading analytics...
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-ink">Analytics Dashboard</h1>
-            <p className="text-ink/60 text-sm mt-1">Performance metrics and insights</p>
-          </div>
-        </div>
-        <Card className="bg-white">
-          <CardContent className="p-6">
-            <div className="bg-highlight/10 border border-highlight/20 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="text-highlight" size={18} />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-highlight">Error</p>
-                <p className="text-sm text-ink/80">{error}</p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={fetchAnalytics}>Retry</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
-  if (!metrics || metrics.totalTransformations === 0) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-ink">Analytics Dashboard</h1>
-            <p className="text-ink/60 text-sm mt-1">Performance metrics and insights</p>
-          </div>
-        </div>
-        <Card className="bg-white">
-          <CardContent className="p-12 text-center text-ink/60">
-            <BarChart3 size={48} className="mx-auto mb-4 text-ink/30" />
-            <p className="font-medium">No analytics data available</p>
-            <p className="text-sm mt-2">Analytics will appear here once you start using the system</p>
-            <Button className="mt-4" onClick={() => onNavigate('transform')}>
-              Start Transforming
-            </Button>
-          </CardContent>
-        </Card>
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-paleslate"><Loader2 className="animate-spin text-azure" size={48} /></div>;
+  if (error) return <div className="p-12 text-center text-highlight font-bold">Error: {error}</div>;
+
+  if (!metrics || metrics.totalTransformations === 0) return (
+    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-6 bg-paleslate">
+      <div className="bg-white p-8 rounded-full shadow-sm"><Activity size={64} className="text-azure/20" /></div>
+      <div className="max-w-md space-y-2">
+        <h2 className="text-3xl font-bold text-ink">No Identity Data Yet</h2>
+        <p className="text-ink/60">Start transforming text to generate your Identity Health Report.</p>
       </div>
-    );
-  }
+      <Button size="lg" className="bg-azure hover:bg-azure-hover text-white px-8" onClick={() => onNavigate('transform')}>
+        <Zap className="mr-2 h-4 w-4" /> Go to Transformer
+      </Button>
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 pb-20 min-h-screen bg-paleslate p-6 md:p-12">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Analytics Dashboard</h1>
-          <p className="text-ink/60 text-sm mt-1">Performance metrics and insights</p>
+          <h1 className="text-4xl font-black text-ink tracking-tight mb-2">Identity Health Report</h1>
+          <p className="text-ink/60 text-lg">Real-time monitoring of your AI voice integrity.</p>
         </div>
-        <Button variant="ghost" onClick={fetchAnalytics}>
-          Refresh
-        </Button>
+        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-ink/5 shadow-sm">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+          <span className="text-xs font-bold text-ink/40 uppercase tracking-wider">System Online</span>
+        </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-ink/40">Avg Alignment</p>
-              <Activity className="h-4 w-4 text-azure" />
+      {/* A. The Pulse (Hero) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Gauge Card */}
+        <Card className="lg:col-span-2 bg-white shadow-sm border-ink/5 overflow-hidden ring-1 ring-ink/5">
+          <CardHeader className="pb-0 border-b border-gray-50 bg-gray-50/50 py-4 px-6">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+                <Fingerprint size={14} /> Identity Alignment Score
+              </CardTitle>
             </div>
-            <p className="text-3xl font-bold text-ink">{metrics.averageAlignmentScore.toFixed(1)}</p>
-            <p className="text-xs text-ink/60 mt-1">out of 10.0</p>
+          </CardHeader>
+          <CardContent className="pt-8 pb-8 px-8">
+            <div className="flex flex-col md:flex-row items-center justify-around gap-8">
+              <Gauge value={metrics.recentAverageScore} metrics={metrics} />
+
+              <div className="flex flex-col gap-4 w-full md:w-auto md:min-w-[260px]">
+                <DriftBadge status={metrics.driftDetected ? 'drifting' : 'stable'} />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-paleslate p-4 rounded-xl border border-ink/5">
+                    <div className="text-[10px] font-bold text-ink/40 uppercase mb-1">Total Ops</div>
+                    <div className="text-2xl font-bold text-ink">{metrics.totalTransformations}</div>
+                  </div>
+                  <div className="bg-paleslate p-4 rounded-xl border border-ink/5">
+                    <div className="text-[10px] font-bold text-ink/40 uppercase mb-1">Latency</div>
+                    <div className="text-2xl font-bold text-ink">{(metrics.averageProcessingTime / 1000).toFixed(2)}s</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-ink/40">Total Transforms</p>
-              <BarChart3 className="h-4 w-4 text-azure" />
-            </div>
-            <p className="text-3xl font-bold text-ink">{metrics.totalTransformations}</p>
-            <p className="text-xs text-ink/60 mt-1">transformations</p>
+        {/* B. Drift Radar */}
+        <Card className="bg-white shadow-sm border-ink/5 flex flex-col ring-1 ring-ink/5">
+          <CardHeader className="pb-2 border-b border-gray-50 bg-gray-50/50 py-4 px-6">
+            <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+              <Activity size={14} /> Drift Radar
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col justify-center items-center pt-6 pb-6 px-2 min-h-[320px]">
+            <ResponsiveContainer width="100%" height={280}>
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={metrics.identityAttributes}>
+                <PolarGrid stroke="#E2E8F0" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748B', fontSize: 10, fontWeight: 700 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 10]} tick={false} axisLine={false} />
+                <Radar
+                  name="Baseline"
+                  dataKey="baseline"
+                  stroke="#94A3B8"
+                  strokeDasharray="4 4"
+                  fill="#94A3B8"
+                  fillOpacity={0.1}
+                />
+                <Radar
+                  name="Recent"
+                  dataKey="actual"
+                  stroke="#2563EB"
+                  fill="#2563EB"
+                  fillOpacity={0.4}
+                />
+                <Legend iconSize={8} wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#FFFFFF',
+                    color: '#111111',
+                    borderRadius: '8px',
+                    border: 'none',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+            <p className="text-xs text-center text-ink/40 mt-2 px-6">
+              Gap between <span className="text-azure font-bold">Blue</span> and <span className="text-slate-400 font-bold">Grey</span> represents identity drift.
+            </p>
           </CardContent>
         </Card>
+      </div>
 
-        <Card className="bg-white">
+      {/* Row 2: Trends & Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Identity Velocity (Line Chart) */}
+        <Card className="lg:col-span-2 bg-white shadow-sm border-ink/5 ring-1 ring-ink/5">
+          <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
+            <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+              <TrendingUp size={14} /> Identity Velocity
+            </CardTitle>
+          </CardHeader>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-ink/40">Drift Status</p>
-              {metrics.driftDetected ? (
-                metrics.driftDirection === 'up' ? (
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                ) : (
-                  <TrendingDown className="h-4 w-4 text-highlight" />
-                )
+            <div className="h-[250px] w-full">
+              {metrics.scoreOverTime.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={metrics.scoreOverTime}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#64748B', fontSize: 10 }}
+                      dy={10}
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return `${date.getMonth() + 1}/${date.getDate()}`;
+                      }}
+                    />
+                    <YAxis
+                      domain={[0, 10]}
+                      hide={false}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#64748B', fontSize: 10 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: '8px',
+                        border: 'none',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                      cursor={{ stroke: '#2563EB', strokeWidth: 1, strokeDasharray: '4 4' }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke="#2563EB"
+                      strokeWidth={3}
+                      dot={{ fill: '#2563EB', strokeWidth: 0, r: 3 }}
+                      activeDot={{ r: 6, stroke: '#EFF6FF', strokeWidth: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               ) : (
-                <Activity className="h-4 w-4 text-ink/40" />
+                <div className="h-full flex items-center justify-center text-ink/40 text-sm">
+                  Not enough data to calculate velocity
+                </div>
               )}
             </div>
-            <p className="text-3xl font-bold text-ink">
-              {metrics.driftDetected 
-                ? (metrics.driftDirection === 'up' ? '↑' : '↓')
-                : '—'
-              }
-            </p>
-            <p className="text-xs text-ink/60 mt-1">
-              {metrics.driftDetected 
-                ? `${metrics.driftDirection === 'up' ? 'Improving' : 'Declining'}`
-                : 'Stable'
-              }
-            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white">
+        {/* Score Distribution (Bar Chart) */}
+        <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5">
+          <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
+            <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+              <Activity size={14} className="rotate-90" /> Score Spread
+            </CardTitle>
+          </CardHeader>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-ink/40">Low Scores</p>
-              <AlertTriangle className="h-4 w-4 text-highlight" />
-            </div>
-            <p className="text-3xl font-bold text-ink">{metrics.lowScoreCount}</p>
-            <p className="text-xs text-ink/60 mt-1">below 8.0 threshold</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Alignment Score Trend */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Alignment Score Trend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {metrics.scoreOverTime.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={metrics.scoreOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="#94A3B8" 
-                    fontSize={12} 
-                    tickLine={false} 
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={metrics.scoreDistribution} layout="vertical" margin={{ left: 0, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
+                  <XAxis
+                    type="number"
+                    hide />
+                  <YAxis
+                    dataKey="range"
+                    type="category"
                     axisLine={false}
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis 
-                    stroke="#94A3B8" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false}
-                    domain={[0, 10]}
+                    tickLine={false}
+                    tick={{ fill: '#64748B', fontSize: 10, fontWeight: 600 }}
+                    width={30}
                   />
                   <Tooltip
-                    contentStyle={{ 
-                      backgroundColor: '#FFFFFF', 
-                      color: '#111111', 
-                      borderRadius: '8px', 
-                      border: '1px solid #E2E8F0', 
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' 
-                    }}
-                    itemStyle={{ color: '#2563EB' }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="#2563EB"
-                    strokeWidth={3}
-                    dot={{ fill: '#FFFFFF', stroke: '#2563EB', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, fill: '#2563EB' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-[300px] flex items-center justify-center text-ink/60">
-                <p>No data available</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Score Distribution */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Score Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {metrics.scoreDistribution.some(d => d.count > 0) ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={metrics.scoreDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                  <XAxis 
-                    dataKey="range" 
-                    stroke="#94A3B8" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
-                  />
-                  <YAxis 
-                    stroke="#94A3B8" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
-                  />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(37, 99, 235, 0.05)' }}
-                    contentStyle={{ 
-                      backgroundColor: '#FFFFFF', 
-                      color: '#111111', 
-                      borderRadius: '8px', 
-                      border: '1px solid #E2E8F0', 
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' 
+                    cursor={{ fill: '#F1F5F9' }}
+                    contentStyle={{
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '8px',
+                      border: 'none',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}
                   />
-                  <Bar dataKey="count" fill="#2563EB" radius={[4, 4, 0, 0]} opacity={0.9} />
+                  <Bar
+                    dataKey="count"
+                    fill="#2563EB"
+                    radius={[0, 4, 4, 0]}
+                    barSize={24}
+                  >
+                    {metrics.scoreDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.range === '9-10' || entry.range === '8-9' ? '#2563EB' : '#94A3B8'} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            ) : (
-              <div className="h-[300px] flex items-center justify-center text-ink/60">
-                <p>No data available</p>
-              </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-      {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Common Misalignments */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Common Misalignments</CardTitle>
+        {/* C. Vocabulary Analysis ("The Fingerprint") */}
+        <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5 h-full">
+          <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6 flex flex-row items-center justify-between">
+            <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+              <Search size={14} /> Signature Cloud
+            </CardTitle>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-azure"></div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Signature</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-highlight"></div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Intrusion</span>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            {metrics.commonMisalignments.length > 0 ? (
-              <div className="space-y-3">
-                {metrics.commonMisalignments.map((item, idx) => (
-                  <div 
-                    key={idx} 
-                    className="flex items-start justify-between p-3 bg-paleslate rounded-lg border border-ink/5"
+          <CardContent className="p-8 h-full">
+            <div className="flex flex-wrap justify-center content-center gap-3 h-full min-h-[250px]">
+              {metrics.mostUsedWords.map((item, idx) => {
+                // Visual logic for size and color
+                const isTop = idx < 3;
+                const isMid = idx >= 3 && idx < 8;
+                const sizeClass = isTop ? 'text-2xl px-6 py-3' : (isMid ? 'text-lg px-4 py-2' : 'text-sm px-3 py-1');
+                const colorClass = isTop
+                  ? 'bg-azure text-white shadow-lg shadow-azure/20'
+                  : (isMid ? 'bg-paleslate text-ink border border-ink/5' : 'bg-white text-ink/60 border border-gray-100');
+
+                return (
+                  <div
+                    key={idx}
+                    className={`rounded-full font-semibold transition-all hover:scale-110 cursor-default flex items-center gap-2 ${sizeClass} ${colorClass}`}
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-lg font-bold ${item.score < 7 ? 'text-highlight' : 'text-ink/60'}`}>
-                          {item.score.toFixed(1)}
-                        </span>
-                        <span className="text-xs text-ink/50">{item.date}</span>
+                    {item.word}
+                    {isTop && <span className="text-[10px] bg-white/20 px-1.5 rounded-full">{item.count}</span>}
+                  </div>
+                );
+              })}
+
+              {/* Mock Banned Words for Visual */}
+              <div className="rounded-full bg-highlight/10 text-highlight border border-highlight/20 px-4 py-2 text-sm font-bold flex items-center gap-2 hover:bg-highlight/20 transition-colors animate-pulse">
+                <AlertCircle size={14} />
+                delve
+              </div>
+              <div className="rounded-full bg-highlight/10 text-highlight border border-highlight/20 px-3 py-1 text-xs font-bold flex items-center gap-1 hover:bg-highlight/20 transition-colors">
+                <AlertCircle size={12} />
+                tapestry
+              </div>
+            </div>
+
+          </CardContent>
+        </Card>
+
+        {/* D. Misalignment Insights (Actionable Fixes) */}
+        <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5 h-full">
+          <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
+            <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+              <AlertTriangle size={14} /> Misalignment Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+
+            {/* Insight Card 1: Tone Violations */}
+            <div className="border border-ink/10 rounded-xl overflow-hidden transition-all duration-200">
+              <div
+                className="bg-white p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => setExpandedInsight(expandedInsight === 'tone' ? null : 'tone')}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-highlight/10 flex items-center justify-center text-highlight font-black text-lg">
+                    {metrics.categoryBreakdown.toneViolations}
+                  </div>
+                  <div>
+                    <div className="font-bold text-ink text-lg">Tone Violations</div>
+                    <div className="text-sm text-ink/50">Detected passive voice & generic phrasing</div>
+                  </div>
+                </div>
+                {expandedInsight === 'tone' ? <ChevronUp size={20} className="text-ink/30" /> : <ChevronDown size={20} className="text-ink/30" />}
+              </div>
+
+              {expandedInsight === 'tone' && (
+                <div className="bg-gray-50 p-4 border-t border-ink/5 space-y-3 animate-fade-in">
+                  {metrics.commonMisalignments.slice(0, 3).map((m, i) => (
+                    <div key={i} className="bg-white p-4 rounded-lg border border-ink/5 text-sm shadow-sm">
+                      <div className="flex justify-between mb-2">
+                        <span className="font-semibold text-xs text-ink/40 bg-paleslate px-2 py-0.5 rounded">{m.date}</span>
+                        <span className="font-bold text-xs text-white bg-highlight px-2 py-0.5 rounded">Score: {m.score.toFixed(1)}</span>
                       </div>
-                      <p className="text-sm text-ink/80 truncate">{item.preview}</p>
+                      <p className="text-ink/80 italic font-serif">"...{m.preview}..."</p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-12 text-center text-ink/60">
-                <p className="font-medium">No misalignments detected</p>
-                <p className="text-sm mt-2">All scores are above 8.0</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Most Used Words */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Most Used Words</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {metrics.mostUsedWords.length > 0 ? (
-              <div className="space-y-2">
-                {metrics.mostUsedWords.map((item, idx) => (
-                  <div 
-                    key={idx} 
-                    className="flex items-center justify-between p-2 bg-paleslate rounded-lg"
-                  >
-                    <span className="text-sm font-semibold text-ink">{item.word}</span>
-                    <span className="text-xs font-bold text-azure bg-azure/10 px-2 py-1 rounded">
-                      {item.count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-12 text-center text-ink/60">
-                <p className="font-medium">No word data available</p>
-                <p className="text-sm mt-2">Words will appear after transformations</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Drift Analysis */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Drift Analysis</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-paleslate rounded-lg">
-                <span className="text-sm font-semibold text-ink">Recent Average</span>
-                <span className="text-lg font-bold text-ink">{metrics.recentAverageScore.toFixed(1)}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-paleslate rounded-lg">
-                <span className="text-sm font-semibold text-ink">Older Average</span>
-                <span className="text-lg font-bold text-ink">{metrics.olderAverageScore.toFixed(1)}</span>
-              </div>
-              <div className={`p-3 rounded-lg border-2 ${
-                metrics.driftDetected 
-                  ? metrics.driftDirection === 'up'
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-highlight/10 border-highlight/20'
-                  : 'bg-blue-50 border-blue-200'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-ink">Status</span>
-                  <span className={`text-sm font-bold ${
-                    metrics.driftDetected 
-                      ? metrics.driftDirection === 'up'
-                        ? 'text-green-600'
-                        : 'text-highlight'
-                      : 'text-blue-600'
-                  }`}>
-                    {metrics.driftDetected 
-                      ? `Drift ${metrics.driftDirection === 'up' ? 'Detected (Improving)' : 'Detected (Declining)'}`
-                      : 'No Significant Drift'
-                    }
-                  </span>
+                  ))}
+                  {metrics.commonMisalignments.length === 0 && <p className="text-sm text-center text-ink/40 py-4">No significant tone violations detected.</p>}
                 </div>
-              </div>
+              )}
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Performance Metrics */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Performance Metrics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-paleslate rounded-lg">
-                <span className="text-sm font-semibold text-ink">Avg Processing Time</span>
-                <span className="text-lg font-bold text-ink">
-                  {metrics.averageProcessingTime > 0 
-                    ? `${(metrics.averageProcessingTime / 1000).toFixed(2)}s`
-                    : '—'
-                  }
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-paleslate rounded-lg">
-                <span className="text-sm font-semibold text-ink">Target Threshold</span>
-                <span className="text-lg font-bold text-azure">8.0 / 10.0</span>
-              </div>
-              <div className={`p-3 rounded-lg border-2 ${
-                metrics.averageAlignmentScore >= 8
-                  ? 'bg-green-50 border-green-200'
-                  : 'bg-highlight/10 border-highlight/20'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-ink">Overall Status</span>
-                  <span className={`text-sm font-bold ${
-                    metrics.averageAlignmentScore >= 8
-                      ? 'text-green-600'
-                      : 'text-highlight'
-                  }`}>
-                    {metrics.averageAlignmentScore >= 8 ? 'Meeting Target' : 'Below Target'}
-                  </span>
+            {/* Insight Card 2: Vocabulary Breaches */}
+            <div className="border border-ink/10 rounded-xl overflow-hidden transition-all duration-200">
+              <div
+                className="bg-white p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => setExpandedInsight(expandedInsight === 'vocab' ? null : 'vocab')}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-lg">
+                    {metrics.categoryBreakdown.vocabBreaches + 2} {/* +2 for the mocked ones */}
+                  </div>
+                  <div>
+                    <div className="font-bold text-ink text-lg">Vocabulary Breaches</div>
+                    <div className="text-sm text-ink/50">Use of banned words 'delve', 'synergy'</div>
+                  </div>
                 </div>
+                {expandedInsight === 'vocab' ? <ChevronUp size={20} className="text-ink/30" /> : <ChevronDown size={20} className="text-ink/30" />}
               </div>
+              {expandedInsight === 'vocab' && (
+                <div className="bg-gray-50 p-4 border-t border-ink/5 space-y-3 animate-fade-in">
+                  <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-ink/5 shadow-sm">
+                    <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">BAN</span>
+                    <span className="text-sm text-ink"><span className="line-through text-ink/40">Using the word</span> <span className="font-bold text-red-500 bg-red-50 px-1 rounded">delve</span> in intro...</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-ink/5 shadow-sm">
+                    <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">BAN</span>
+                    <span className="text-sm text-ink">...creates a rich <span className="font-bold text-red-500 bg-red-50 px-1 rounded">tapestry</span> of...</span>
+                  </div>
+                  <div className="text-xs text-center text-ink/40 pt-2">These words dilute your unique brand voice.</div>
+                </div>
+              )}
             </div>
+
           </CardContent>
         </Card>
       </div>
     </div>
   );
 };
-

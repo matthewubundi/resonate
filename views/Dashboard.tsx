@@ -67,40 +67,46 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
 
     setError(null);
     try {
-      // 0. Fetch Profile for Name
-      const { data: profile } = await supabase
+      // Parallel Fetching for Speed
+      const profilePromise = supabase
         .from('profiles')
         .select('full_name')
         .eq('id', user.id)
         .single();
 
-      if (profile?.full_name) {
-        setUserName(profile.full_name);
-      }
-
-      // 1. Fetch Active Identity
-      const { data: idData, error: idError } = await supabase
+      const identityPromise = supabase
         .from('identities')
         .select('identity_json')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .single();
 
+      const transformationsPromise = supabase
+        .from('transformations')
+        .select('id, input_text, final_output, alignment_score, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
 
+      const [
+        { data: profile },
+        { data: idData, error: idError },
+        { data: transData, error: transError }
+      ] = await Promise.all([profilePromise, identityPromise, transformationsPromise]);
+
+      // 0. Set Name
+      if (profile?.full_name) {
+        setUserName(profile.full_name);
+      }
+
+      // 1. Set Identity
       if (idData && !idError) {
         setIdentity(idData.identity_json as IdentityProfile);
       } else if (idError && idError.code !== 'PGRST116') {
         throw new Error('Failed to load identity profile');
       }
 
-      // 2. Fetch Recent Transformations
-      const { data: transData, error: transError } = await supabase
-        .from('transformations')
-        .select('id, input_text, final_output, alignment_score, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(3); // Updated limit to 3 for the grid
-
+      // 2. Set Transformations
       if (transData && !transError) {
         setTransformations(transData as TransformationLog[]);
       } else if (transError) {

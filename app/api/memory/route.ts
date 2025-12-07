@@ -6,13 +6,16 @@ export async function GET(req: Request) {
     // Auth Check - supports both Bearer token and cookie auth with RLS
     const { supabase, user } = await getAuthenticatedClient(req);
 
+    const url = new URL(req.url);
+    const limit = parseInt(url.searchParams.get('limit') || '50');
+
     // RLS ensures user can only see their own memories
     const { data, error } = await supabase
       .from('memories')
-      .select('id, content, created_at')
+      .select('id, content, created_at, is_active')
       .eq('user_id', user.id)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
     if (error) throw error;
     return NextResponse.json({ data: data || [] });

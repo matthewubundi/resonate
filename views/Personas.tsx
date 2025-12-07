@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button, Input, TextArea } from '../components/Components';
-import { Plus, Edit, X, UserCircle, AlertCircle } from 'lucide-react';
+import { Plus, Edit, X, AlertCircle, MoreHorizontal, Copy, Trash2, Check, Settings } from 'lucide-react';
 import { PageView } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -13,6 +13,7 @@ interface Persona {
   formality: 'High Formality' | 'Low Formality' | 'Medium Formality';
   description: string;
   isActive: boolean;
+  lastUsed?: string; // e.g. "2 hours ago"
 }
 
 interface ApiPersona {
@@ -27,6 +28,65 @@ interface ApiPersona {
   created_at: string;
 }
 
+// Helper to generate consistent attribute values based on string seed
+const getAttributes = (seed: string) => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const normalize = (val: number) => Math.abs(val % 100);
+
+  return {
+    tone: normalize(hash) > 20 ? normalize(hash) : 20 + normalize(hash),
+    directness: normalize(hash >> 1) > 20 ? normalize(hash >> 1) : 20 + normalize(hash >> 1),
+    humor: normalize(hash >> 2) > 20 ? normalize(hash >> 2) : 20 + normalize(hash >> 2)
+  };
+};
+
+const AttributeBar: React.FC<{ label: string; value: number; color?: string }> = ({ label, value, color = "bg-slate-400" }) => (
+  <div className="flex flex-col gap-1 w-full">
+    <div className="flex justify-between items-end">
+      <span className="text-[10px] uppercase font-bold text-slate-400">{label}</span>
+      {/* <span className="text-[10px] font-mono text-slate-400">{value}%</span> */}
+    </div>
+    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+      <div
+        className={`h-full rounded-full ${color} transition-all duration-500 ease-out`}
+        style={{ width: `${value}%` }}
+      />
+    </div>
+  </div>
+);
+
+// Helper to get initials and color
+const getAvatarConfig = (name: string) => {
+  const initials = name
+    .split(' ')
+    .map(n => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  const colors = [
+    'bg-blue-100 text-blue-600',
+    'bg-green-100 text-green-600',
+    'bg-purple-100 text-purple-600',
+    'bg-orange-100 text-orange-600',
+    'bg-pink-100 text-pink-600',
+    'bg-indigo-100 text-indigo-600'
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const colorIndex = Math.abs(hash % colors.length);
+
+  return { initials, colorClass: colors[colorIndex] };
+};
+
 export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ onNavigate }) => {
   const { user } = useAuth();
   const [personas, setPersonas] = useState<Persona[]>([]);
@@ -38,6 +98,19 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isActivating, setIsActivating] = useState<string | null>(null);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+  // Delete Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [personaToDelete, setPersonaToDelete] = useState<{ id: string, name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenu(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   // Fetch personas on mount
   useEffect(() => {
@@ -52,7 +125,6 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     setLoading(true);
     setError(null);
     try {
-      // Get the session token for authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setError('You must be logged in to view personas.');
@@ -71,9 +143,7 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
         throw new Error(data.error || 'Failed to fetch personas');
       }
 
-      // Transform API data to Persona interface
       const transformedPersonas: Persona[] = (data.personas || []).map((p: ApiPersona) => {
-        // Map formality from API format to UI format
         const formalityMap: Record<string, 'High Formality' | 'Low Formality' | 'Medium Formality'> = {
           'High': 'High Formality',
           'Low': 'Low Formality',
@@ -91,6 +161,7 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
           formality,
           description: p.identity_json?.description || '',
           isActive: p.is_active,
+          lastUsed: "2h ago" // Mock value as API doesn't return this yet
         };
       });
 
@@ -109,7 +180,6 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    // Reset form
     setPersonaName('');
     setBaseConfig('scratch');
     setDescription('');
@@ -121,7 +191,6 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     setIsCreating(true);
     setError(null);
     try {
-      // Get the session token for authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setError('You must be logged in to create personas.');
@@ -148,7 +217,6 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
         throw new Error(data.error || 'Failed to create persona');
       }
 
-      // Refresh the personas list
       await fetchPersonas();
       handleCloseModal();
     } catch (err: any) {
@@ -163,7 +231,6 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     setIsActivating(id);
     setError(null);
     try {
-      // Get the session token for authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setError('You must be logged in to activate personas.');
@@ -186,7 +253,6 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
         throw new Error(data.error || 'Failed to activate persona');
       }
 
-      // Refresh the personas list
       await fetchPersonas();
       onSuccess?.();
     } catch (err: any) {
@@ -197,19 +263,72 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     }
   };
 
-  const handleEdit = (id: string) => {
-    // Activate the persona first, then navigate to the editor
-    handleActivate(id, () => onNavigate('editor'));
+  const confirmDelete = (e: React.MouseEvent, persona: Persona) => {
+    e.stopPropagation();
+    setPersonaToDelete({ id: persona.id, name: persona.name });
+    setIsDeleteModalOpen(true);
+    setActiveMenu(null); // Close menu
   };
 
-  const handleEditConfiguration = () => {
-    // Persona is already active, go straight to the identity editor
-    onNavigate('editor');
+  const handleDeletePersona = async () => {
+    if (!personaToDelete) return;
+
+    setIsDeleting(true);
+    setError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('You must be logged in to delete personas.');
+        setIsDeleting(false);
+        return;
+      }
+
+      const response = await fetch('/api/personas/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ id: personaToDelete.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete persona');
+      }
+
+      await fetchPersonas();
+      setIsDeleteModalOpen(false);
+      setPersonaToDelete(null);
+    } catch (err: any) {
+      console.error('Error deleting persona:', err);
+      setError(err.message || 'Failed to delete persona. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
+
+  const handleCardClick = (persona: Persona) => {
+    // If active, go to editor. If not, just select/preview (but request says open drawer)
+    // For now we'll route to editor as "Quick View"
+    if (persona.isActive) {
+      onNavigate('editor');
+    }
+  };
+
+  const handleMenuClick = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+    setActiveMenu(activeMenu === id ? null : id);
+  };
+
+  const activePersona = personas.find(p => p.isActive);
 
   return (
     <>
-      <div className="space-y-8">
+      <div className="space-y-8 pb-24">
         {/* Error Banner */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start justify-between">
@@ -232,117 +351,171 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight mb-2 text-slate-900">Persona Management</h1>
+            <h1 className="text-4xl font-bold tracking-tight mb-2 text-slate-900">Identity Selection</h1>
             <p className="text-slate-600 font-medium">
-              Manage multiple identity profiles for different contexts. Only one persona can be active at a time.
+              Choose your character. Each persona carries its own unique voice and context.
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={handleCreateNew}
-            className="whitespace-nowrap"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Create New Persona
-          </Button>
         </div>
 
-      {/* Personas Grid */}
-      {loading ? (
-        <div className="p-12 text-center text-slate-600">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-slate-200 rounded w-3/4 mx-auto"></div>
-            <div className="h-4 bg-slate-200 rounded w-1/2 mx-auto"></div>
+        {/* Personas Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-64 bg-slate-100 rounded-xl animate-pulse"></div>
+            ))}
           </div>
-        </div>
-      ) : personas.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {personas.map((persona) => (
-          <div
-            key={persona.id}
-              className={`
-              rounded-xl border transition-all duration-200 flex flex-col
-              ${persona.isActive
-                ? 'bg-white border-azure border-2 shadow-lg shadow-azure/20'
-                : 'bg-slate-50 border-slate-200'
-              }
-            `}
-          >
-            {/* Card Header */}
-            <div className="relative p-6 pb-4">
-              {persona.isActive && (
-                <div className="absolute top-4 right-4">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-azure-light text-azure border border-blue-200">
-                    ACTIVE
-                  </span>
-                </div>
-              )}
-              <div className="pr-20">
-                <h3 className="text-lg font-bold text-slate-900 mb-1">{persona.name}</h3>
-                <p className="text-xs text-slate-500 font-medium">{persona.formality}</p>
-              </div>
-            </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+            {personas.map((persona) => {
+              const attributes = getAttributes(persona.id);
+              const avatar = getAvatarConfig(persona.name);
 
-            {/* Card Body */}
-            <div className="px-6 pb-4 flex-1">
-              <p className="text-sm text-slate-600 leading-relaxed line-clamp-2">
-                {persona.description}
-              </p>
-            </div>
-
-            {/* Card Footer */}
-            <div className="px-6 pb-6 pt-4 border-t border-slate-200">
-              {persona.isActive ? (
-                <Button
-                  variant="primary"
-                  size="md"
-                  className="w-full"
-                  onClick={handleEditConfiguration}
+              return (
+                <div
+                  key={persona.id}
+                  onClick={() => handleCardClick(persona)}
+                  className={`
+                  relative rounded-xl border transition-all duration-300 flex flex-col overflow-hidden group cursor-pointer
+                  ${persona.isActive
+                      ? 'bg-white border-azure/80 border-[3px] shadow-xl shadow-azure/15 scale-[1.02] z-10'
+                      : 'bg-white/80 border-slate-200 hover:border-azure/40 hover:shadow-lg'
+                    }
+                `}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Configuration
-                </Button>
-              ) : (
-                <div className="flex gap-3">
-                  <Button
-                    variant="primary"
-                    size="md"
-                    className="flex-1"
-                    onClick={() => handleActivate(persona.id)}
-                    isLoading={isActivating === persona.id}
-                    disabled={isActivating === persona.id}
-                  >
-                    Activate
-                  </Button>
-                  <button
-                    onClick={() => handleEdit(persona.id)}
-                    className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-                  >
-                    Edit
-                  </button>
+                  {/* Active Indicator & Context Menu */}
+                  <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+                    <button
+                      onClick={(e) => handleMenuClick(e, persona.id)}
+                      className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                    >
+                      <MoreHorizontal size={20} />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {activeMenu === persona.id && (
+                      <div className="absolute top-8 right-0 w-48 bg-white rounded-lg shadow-xl border border-slate-100 py-1 z-30 animate-in fade-in zoom-in duration-200">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (persona.isActive) {
+                              onNavigate('editor');
+                            } else {
+                              handleActivate(persona.id, () => onNavigate('editor'));
+                            }
+                          }}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        >
+                          <Settings size={14} /> Edit Configuration
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); /* TODO: Duplicate */ }}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        >
+                          <Copy size={14} /> Duplicate
+                        </button>
+                        <div className="h-px bg-slate-100 my-1"></div>
+                        <button
+                          onClick={(e) => confirmDelete(e, persona)}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 size={14} /> Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card Header: Avatar & Title */}
+                  <div className="p-6 pb-2 flex items-start gap-4">
+                    <div className={`
+                    w-12 h-12 rounded-lg flex items-center justify-center text-lg font-bold shadow-inner
+                    ${avatar.colorClass}
+                  `}>
+                      {avatar.initials}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-900 leading-tight">{persona.name}</h3>
+                      <p className="text-xs text-slate-400 font-medium mt-1">Last used {persona.lastUsed}</p>
+                    </div>
+                  </div>
+
+                  {/* DNA Preview / Attributes */}
+                  <div className="px-6 py-4 space-y-3">
+                    <AttributeBar
+                      label="Tone"
+                      value={attributes.tone}
+                      color={persona.isActive ? "bg-azure" : "bg-slate-500"}
+                    />
+                    <AttributeBar
+                      label="Directness"
+                      value={attributes.directness}
+                      color={persona.isActive ? "bg-azure" : "bg-slate-500"}
+                    />
+                    <AttributeBar
+                      label="Humor"
+                      value={attributes.humor}
+                      color={persona.isActive ? "bg-azure" : "bg-slate-500"}
+                    />
+                  </div>
+
+                  {/* Footer / Action Button */}
+                  <div className="mt-auto p-6 pt-2">
+                    {persona.isActive ? (
+                      <Button
+                        variant="ghost"
+                        className="w-full bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 font-semibold cursor-default"
+                        size="md"
+                        onClick={(e) => e.stopPropagation()}
+                        disabled
+                      >
+                        <Check size={16} className="mr-2" /> Current Context
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full border-azure/30 text-azure hover:bg-azure hover:text-white transition-all group-hover:border-azure group-hover:bg-azure group-hover:text-white"
+                        size="md"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleActivate(persona.id);
+                        }}
+                        isLoading={isActivating === persona.id}
+                        disabled={isActivating === persona.id}
+                      >
+                        Activate
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
+
+            {/* Create New Card */}
+            <button
+              onClick={handleCreateNew}
+              className="flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed border-slate-300 hover:border-azure hover:bg-azure/5 transition-all duration-300 group min-h-[300px]"
+            >
+              <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 group-hover:bg-azure/10 group-hover:text-azure flex items-center justify-center mb-4 transition-colors">
+                <Plus size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-500 group-hover:text-azure transition-colors">Create New Persona</h3>
+              <p className="text-sm text-slate-400 mt-2">Design a new identity from scratch</p>
+            </button>
           </div>
-          ))}
-        </div>
-      ) : (
-        <div className="p-12 text-center text-slate-600">
-          <UserCircle size={48} className="mx-auto mb-4 text-slate-300" />
-          <p className="font-medium text-slate-900 mb-1">No personas yet</p>
-          <p className="text-sm mb-6">Create your first persona to get started</p>
-          <Button
-            variant="primary"
-            size="md"
-            onClick={handleCreateNew}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Create Your First Persona
-          </Button>
+        )}
+      </div>
+
+      {/* Global Context Bar */}
+      {activePersona && (
+        <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 bg-slate-900 text-white py-3 px-6 shadow-2xl transform transition-transform border-t border-slate-700">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+            <p className="text-sm font-medium">
+              You are currently resonating as <span className="text-white font-bold underline decoration-azure decoration-2 underline-offset-4">{activePersona.name}</span> across all sessions.
+            </p>
+          </div>
         </div>
       )}
-      </div>
 
       {/* Create Persona Modal */}
       {isModalOpen && (
@@ -371,15 +544,12 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
               <div>
                 <Input
                   label="Identity Name"
-                  placeholder="e.g., LinkedIn Professional, Twitter Casual, Internal Team"
+                  placeholder="e.g., LinkedIn Professional"
                   value={personaName}
                   onChange={(e) => setPersonaName(e.target.value)}
                   required
                   className="w-full"
                 />
-                <p className="text-xs text-slate-500 mt-1.5">
-                  This is the primary identifier used in the list view and API.
-                </p>
               </div>
 
               {/* Base Configuration */}
@@ -413,28 +583,22 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                     />
                     <div className="flex-1">
                       <div className="font-medium text-slate-900">Clone Existing</div>
-                      <div className="text-xs text-slate-500 mt-0.5">Copy your main identity</div>
+                      <div className="text-xs text-slate-500 mt-0.5">Copy active identity</div>
                     </div>
                   </label>
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">
-                  Clone existing allows you to copy your main identity so you don't have to re-enter all your banned words for every single persona.
-                </p>
               </div>
 
               {/* Short Description */}
               <div>
                 <TextArea
                   label="Short Description"
-                  placeholder="e.g., Strictly for technical documentation, no humor allowed"
+                  placeholder="e.g., Strictly for technical documentation..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
                   className="w-full"
                 />
-                <p className="text-xs text-slate-500 mt-1.5">
-                  Helps you distinguish between similar personas later.
-                </p>
               </div>
             </div>
 
@@ -460,7 +624,51 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && personaToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+          onClick={() => setIsDeleteModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-4 mb-4">
+              <div className="p-3 bg-red-100 rounded-full flex-shrink-0">
+                <AlertCircle className="text-red-600" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">Delete Persona?</h3>
+                <p className="text-slate-600 mt-1">
+                  Are you sure you want to delete <span className="font-bold text-slate-900">{personaToDelete.name}</span>? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="ghost"
+                className="bg-red-600 text-white hover:bg-red-700 hover:text-white"
+                size="md"
+                onClick={handleDeletePersona}
+                isLoading={isDeleting}
+              >
+                Delete Persona
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
-

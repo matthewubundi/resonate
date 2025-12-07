@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     // Auth Check - supports both Bearer token and cookie auth with RLS
     const { supabase, user } = await getAuthenticatedClient(req);
 
-    const { display_name, theme, language, timezone } = await req.json();
+    const { display_name, theme, language, timezone, avatar_url } = await req.json();
 
     // Update the existing profile
     const { error } = await supabase
@@ -16,6 +16,7 @@ export async function POST(req: Request) {
         theme,
         language,
         timezone,
+        avatar_url,
         // updated_at: new Date().toISOString() // Uncomment if you add an updated_at column later
       })
       .eq('id', user.id);

@@ -16,6 +16,8 @@ import Image from 'next/image';
 import { NavItem, PageView } from '../types';
 import { User } from '@supabase/supabase-js';
 
+import { supabase } from '../lib/supabase';
+
 interface LayoutProps {
   children: React.ReactNode;
   activePage: PageView;
@@ -41,6 +43,23 @@ export const Layout: React.FC<LayoutProps> = ({
   children, activePage, onNavigate, onLogout, user
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (user) {
+      const fetchProfile = async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single();
+        if (data?.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+        }
+      };
+      fetchProfile();
+    }
+  }, [user]);
 
   // Get user display name from metadata or email
   const getUserDisplayName = () => {
@@ -98,7 +117,7 @@ export const Layout: React.FC<LayoutProps> = ({
       </aside>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden bg-paper relative">
+      <div className={`flex flex-1 flex-col overflow-hidden relative ${['personas', 'history', 'analytics', 'memory'].includes(activePage) ? 'bg-paleslate' : 'bg-paper'}`}>
         {/* Header */}
         <header className="flex h-16 items-center justify-between border-b border-ink/5 bg-paper px-4 md:px-6 z-10 sticky top-0">
           <div className="flex items-center gap-4 md:hidden">
@@ -121,8 +140,16 @@ export const Layout: React.FC<LayoutProps> = ({
                   {user?.email || 'Not logged in'}
                 </p>
               </div>
-              <div className="h-9 w-9 rounded-full bg-paleslate border border-ink/10 text-azure flex items-center justify-center font-bold">
-                {getUserInitial()}
+              <div className="h-9 w-9 rounded-full bg-paleslate border border-ink/10 text-azure flex items-center justify-center font-bold overflow-hidden relative">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  getUserInitial()
+                )}
               </div>
             </div>
           </div>

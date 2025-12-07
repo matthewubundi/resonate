@@ -9,6 +9,18 @@
 create extension if not exists vector;
 
 -- ============================================
+-- STORAGE
+-- ============================================
+
+-- Note: Storage buckets are usually created via the Supabase Dashboard or API, not SQL directly.
+-- However, you should create a public bucket named 'avatars'.
+--
+-- Policy for 'avatars' bucket:
+-- 1. Give public access to read objects (so profile pics can be seen).
+-- 2. Allow authenticated users to upload/update their own avatar files.
+--    (Folder structure convention: `avatars/{user_id}/profile.jpg`)
+
+-- ============================================
 -- TABLES
 -- ============================================
 
@@ -22,7 +34,8 @@ create table profiles (
   onboarding_completed boolean default false not null,
   theme text default 'Paper White',
   language text default 'English (US)',
-  timezone text default 'UTC'
+  timezone text default 'UTC',
+  avatar_url text -- URL to the user's profile picture in Supabase Storage
 );
 
 -- 2. Identities Table (Stores the active identity_json)

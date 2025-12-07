@@ -355,7 +355,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                 </div>
 
                 {/* Horizontal Tabs */}
-                <div className="flex items-center gap-6 border-b border-slate-200">
+                <div className="flex items-center gap-6 border-b border-slate-200 overflow-x-auto pb-px touch-pan-x">
                     {['General', 'Account', 'Notifications', 'API & Integrations', 'Billing'].map((tab) => (
                         <TabButton
                             key={tab}
@@ -399,8 +399,8 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                 {activeTab === 'General' && (
                     <div className="space-y-8 animate-fade-in-up">
                         {/* Avatar Management Row */}
-                        <div className="flex items-center gap-6 p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-                            <div className="relative group/avatar">
+                        <div className="flex flex-col md:flex-row md:items-center gap-6 p-4 md:p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+                            <div className="relative group/avatar self-center md:self-auto">
                                 <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-white shadow-md overflow-hidden flex items-center justify-center relative">
                                     {avatarUrl ? (
                                         <img
@@ -435,21 +435,21 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                     disabled={uploadingAvatar}
                                 />
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 text-center md:text-left">
                                 <h3 className="text-lg font-bold text-ink">Profile Picture</h3>
                                 <p className="text-slate-500 text-sm">Upload a custom avatar or use your Gravatar.</p>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                                 {avatarUrl && (
                                     <button
                                         onClick={() => setAvatarUrl(null)}
-                                        className="text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
+                                        className="text-sm font-medium text-red-500 hover:text-red-700 transition-colors w-full sm:w-auto text-center"
                                     >
                                         Remove
                                     </button>
                                 )}
-                                <label htmlFor="avatar-upload">
-                                    <span className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 h-10 px-4 py-2 cursor-pointer ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                <label htmlFor="avatar-upload" className="w-full sm:w-auto">
+                                    <span className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 h-10 px-4 py-2 cursor-pointer w-full sm:w-auto ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                         <Upload size={16} />
                                         {uploadingAvatar ? 'Uploading...' : 'Upload New'}
                                     </span>
@@ -458,7 +458,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                         </div>
 
                         {/* Settings Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 bg-white rounded-xl border border-slate-200 shadow-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 md:p-8 bg-white rounded-xl border border-slate-200 shadow-sm">
                             <div className="md:col-span-2">
                                 <h3 className="text-lg font-bold text-ink mb-6">Profile Information</h3>
                             </div>
@@ -532,7 +532,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
 
                 {activeTab === 'Account' && (
                     <div className="space-y-8 animate-fade-in-up">
-                        <div className="p-8 bg-white rounded-xl border border-slate-200 shadow-sm space-y-6">
+                        <div className="p-4 md:p-8 bg-white rounded-xl border border-slate-200 shadow-sm space-y-6">
                             <h3 className="text-lg font-bold text-ink">Account Credentials</h3>
                             <FloatingLabelInput
                                 id="email"
@@ -548,11 +548,11 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
 
                         {/* Danger Zone */}
                         <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
-                            <div className="p-8">
+                            <div className="p-4 md:p-8">
                                 <h3 className="text-lg font-bold text-ink mb-1">Delete Account</h3>
                                 <p className="text-slate-500 mb-6">Permanently remove your identity and data.</p>
 
-                                <div className="flex items-center justify-between p-4 bg-red-50/50 rounded-lg border border-red-100">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-red-50/50 rounded-lg border border-red-100">
                                     <div className="text-sm text-red-900/80 max-w-lg">
                                         Warning: This action is not reversible. Please be certain.
                                     </div>
@@ -571,7 +571,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                 {activeTab === 'API & Integrations' && (
                     <div className="space-y-8 animate-fade-in-up">
                         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                            <div className="p-8 border-b border-slate-100">
+                            <div className="p-4 md:p-8 border-b border-slate-100">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
                                         <h3 className="text-lg font-bold text-ink mb-1">Personal Access Tokens</h3>
@@ -584,7 +584,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                 </div>
                             </div>
 
-                            <div className="p-8 bg-slate-50/50">
+                            <div className="p-4 md:p-8 bg-slate-50/50">
                                 <div className="bg-white p-4 rounded-lg border border-slate-200 flex items-center gap-4 shadow-sm">
                                     <div className="w-10 h-10 rounded-full bg-azure/10 flex items-center justify-center flex-shrink-0">
                                         <Key className="text-azure" size={20} />

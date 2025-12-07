@@ -264,7 +264,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
             <div className="h-10 w-48 bg-paleslate rounded-full animate-pulse"></div>
           ) : identity ? (
             <div
-              className={`bg-white border rounded-2xl shadow-sm transition-all duration-300 z-50 ${isIdentityExpanded ? 'absolute top-0 right-0 w-80 border-azure/20 shadow-xl p-4' : 'border-paleslate-dark flex items-center gap-3 px-4 py-2'}`}
+              className={`bg-white border rounded-2xl shadow-sm transition-all duration-300 z-50 ${isIdentityExpanded ? 'absolute top-0 left-0 md:left-auto md:right-0 w-80 border-azure/20 shadow-xl p-4' : 'border-paleslate-dark flex items-center gap-3 px-4 py-2'}`}
             >
               {!isIdentityExpanded ? (
                 // Collapsed State

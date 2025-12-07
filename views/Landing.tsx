@@ -145,63 +145,68 @@ const TransformationVisual = () => {
 // --- Sub-Component: Schematic Diagram (The Glass Blueprint) ---
 const SchematicDiagram = () => {
   return (
-    <div className="w-full bg-white rounded-3xl border border-slate-200 p-8 md:p-12 mb-12 relative overflow-hidden">
+    <div className="w-full bg-white rounded-3xl border border-slate-200 p-6 md:p-12 mb-12 relative overflow-hidden">
       {/* Background Grid Pattern */}
       <div className="absolute inset-0 bg-grid-slate-100/50 [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
 
-      <div className="relative max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 md:gap-4">
+      <div className="relative max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-4">
 
         {/* Node 1: The Source */}
-        <div className="flex flex-col items-center gap-4 z-10">
-          <div className="w-40 h-24 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 z-10 w-full md:w-auto">
+          <div className="w-full max-w-[160px] h-20 md:h-24 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center">
             <span className="font-mono text-xs font-bold text-slate-400 uppercase tracking-widest">LLM Output</span>
           </div>
         </div>
 
-        {/* Connector 1 */}
+        {/* Connector 1 (Desktop: Horizontal) */}
         <div className="hidden md:block w-16 h-[2px] bg-slate-200 relative">
           <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-slate-300"></div>
         </div>
 
+        {/* Connector 1 (Mobile: Vertical) */}
+        <div className="md:hidden h-8 w-[2px] bg-slate-200 relative">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-slate-300"></div>
+        </div>
+
         {/* Node 2: The Core (Resonate Engine) */}
-        <div className="relative z-10">
+        <div className="relative z-10 my-4 md:my-0">
           {/* Top Label */}
-          <div className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-white px-2">Resonate Engine</span>
+          <div className="absolute -top-8 md:-top-10 left-1/2 -translate-x-1/2 whitespace-nowrap z-20">
+            <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 backdrop-blur px-2 rounded-full">Resonate Engine</span>
           </div>
 
-          <div className="w-64 h-64 rounded-full border border-slate-200 bg-paleslate/30 backdrop-blur-sm flex flex-col items-center justify-center gap-3 relative shadow-inner">
+          <div className="w-56 h-56 md:w-64 md:h-64 rounded-full border border-slate-200 bg-paleslate/30 backdrop-blur-sm flex flex-col items-center justify-center gap-2 md:gap-3 relative shadow-inner">
 
             {/* Identity File Injection */}
             <motion.div
               animate={{ y: [0, -5, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -left-16 top-1/2 -translate-y-1/2 flex items-center gap-2"
+              className="absolute -left-2 md:-left-16 top-1/2 -translate-y-1/2 flex items-center gap-1 md:gap-2 scale-75 md:scale-100 origin-right z-30"
             >
               <div className="w-12 h-12 bg-white rounded-lg border border-slate-200 shadow-sm flex items-center justify-center text-blue-600">
                 <FileJson size={20} />
               </div>
-              <div className="w-8 h-[2px] bg-blue-400/50"></div>
+              <div className="w-4 md:w-8 h-[2px] bg-blue-400/50"></div>
               <div className="w-2 h-2 rounded-full bg-blue-500"></div>
             </motion.div>
 
             {/* Internal Chips */}
-            <div className="w-40 py-2 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2">
-              <Activity size={14} className="text-slate-400" />
-              <span className="text-xs font-bold text-slate-600">Analysis</span>
+            <div className="w-32 md:w-40 py-1.5 md:py-2 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2">
+              <Activity size={12} className="text-slate-400" />
+              <span className="text-[10px] md:text-xs font-bold text-slate-600">Analysis</span>
             </div>
-            <div className="w-40 py-2 rounded-lg bg-white border border-blue-200 shadow-sm flex items-center justify-center gap-2 ring-2 ring-blue-50">
-              <FileJson size={14} className="text-blue-500" />
-              <span className="text-xs font-bold text-slate-900">Injection</span>
+            <div className="w-32 md:w-40 py-1.5 md:py-2 rounded-lg bg-white border border-blue-200 shadow-sm flex items-center justify-center gap-2 ring-2 ring-blue-50">
+              <FileJson size={12} className="text-blue-500" />
+              <span className="text-[10px] md:text-xs font-bold text-slate-900">Injection</span>
             </div>
-            <div className="w-40 py-2 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2">
-              <CheckCircle2 size={14} className="text-slate-400" />
-              <span className="text-xs font-bold text-slate-600">Re-ranking</span>
+            <div className="w-32 md:w-40 py-1.5 md:py-2 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2">
+              <CheckCircle2 size={12} className="text-slate-400" />
+              <span className="text-[10px] md:text-xs font-bold text-slate-600">Re-ranking</span>
             </div>
           </div>
         </div>
 
-        {/* Connector 2 (Active Flow) */}
+        {/* Connector 2 (Desktop: Horizontal) */}
         <div className="hidden md:block w-16 h-[2px] bg-blue-500 relative overflow-hidden">
           <motion.div
             animate={{ x: [-20, 64] }}
@@ -210,11 +215,20 @@ const SchematicDiagram = () => {
           ></motion.div>
         </div>
 
+        {/* Connector 2 (Mobile: Vertical) */}
+        <div className="md:hidden h-8 w-[2px] bg-blue-500 relative overflow-hidden">
+          <motion.div
+            animate={{ y: [-20, 32] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            className="absolute left-0 right-0 h-8 bg-gradient-to-b from-transparent via-white/50 to-transparent"
+          ></motion.div>
+        </div>
+
         {/* Node 3: The Output */}
-        <div className="flex flex-col items-center gap-4 z-10">
+        <div className="flex flex-col items-center gap-4 z-10 w-full md:w-auto">
           <motion.div
             whileHover={{ y: -5 }}
-            className="w-40 h-24 rounded-xl bg-white border border-blue-100 shadow-[0_10px_30px_-5px_rgba(37,99,235,0.15)] flex items-center justify-center"
+            className="w-full max-w-[160px] h-20 md:h-24 rounded-xl bg-white border border-blue-100 shadow-[0_10px_30px_-5px_rgba(37,99,235,0.15)] flex items-center justify-center"
           >
             <span className="font-bold text-sm text-blue-600 flex items-center gap-2">
               <Sparkles size={14} /> Preserved

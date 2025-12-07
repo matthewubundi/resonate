@@ -179,6 +179,18 @@ export const Layout: React.FC<LayoutProps> = ({
                   </button>
                 ))}
               </nav>
+              <div className="mt-4 pt-4 border-t border-ink/5">
+                <button
+                  onClick={() => {
+                    onLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-ink/60 hover:text-ink hover:bg-white/60 transition-colors"
+                >
+                  <LogOut size={18} />
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         )}

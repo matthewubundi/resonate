@@ -16,6 +16,10 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
+    // Delete account step state
+    const [deleteStep, setDeleteStep] = useState<'initial' | 'confirm'>('initial');
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');
+
     // Form state
     const [displayName, setDisplayName] = useState('');
     const [theme, setTheme] = useState('Paper White');
@@ -179,6 +183,8 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
             setError(err.message || 'Failed to delete account');
             setIsDeleting(false);
             setShowConfirm(false);
+            setDeleteStep('initial');
+            setDeleteConfirmation('');
         }
     };
 
@@ -360,33 +366,79 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
             {showConfirm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
                     <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-6 space-y-6">
-                        <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-3 text-red-600">
-                                <AlertCircle size={24} />
-                                <h3 className="text-lg font-bold text-slate-900">Delete Account?</h3>
-                            </div>
-                        </div>
+                        {deleteStep === 'initial' ? (
+                            <>
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-3 text-red-600">
+                                        <AlertCircle size={24} />
+                                        <h3 className="text-lg font-bold text-slate-900">Delete Account?</h3>
+                                    </div>
+                                </div>
 
-                        <p className="text-slate-600">
-                            Are you sure you want to delete your account? All your identities, memories, and transformation history will be permanently removed.
-                        </p>
+                                <p className="text-slate-600">
+                                    Are you sure you want to delete your account? All your identities, memories, and transformation history will be permanently removed.
+                                </p>
 
-                        <div className="flex gap-3 justify-end pt-2">
-                            <Button
-                                variant="secondary"
-                                onClick={() => setShowConfirm(false)}
-                                disabled={isDeleting}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                className="bg-red-600 hover:bg-red-700 text-white border-transparent"
-                                onClick={handleDeleteAccount}
-                                isLoading={isDeleting}
-                            >
-                                {isDeleting ? 'Deleting...' : 'Yes, Delete Account'}
-                            </Button>
-                        </div>
+                                <div className="flex gap-3 justify-end pt-2">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => setShowConfirm(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        className="bg-red-600 hover:bg-red-700 text-white border-transparent"
+                                        onClick={() => setDeleteStep('confirm')}
+                                    >
+                                        Yes, Delete Account
+                                    </Button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-3 text-red-600">
+                                        <AlertCircle size={24} />
+                                        <h3 className="text-lg font-bold text-slate-900">Final Confirmation</h3>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <p className="text-slate-600">
+                                        This action cannot be undone. To confirm, please type <span className="font-mono font-bold text-red-600">delete my account</span> below.
+                                    </p>
+
+                                    <Input
+                                        value={deleteConfirmation}
+                                        onChange={(e) => setDeleteConfirmation(e.target.value)}
+                                        placeholder="Type 'delete my account'"
+                                        className="border-red-200 focus:border-red-500 focus:ring-red-500/20"
+                                    />
+                                </div>
+
+                                <div className="flex gap-3 justify-end pt-2">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => {
+                                            setShowConfirm(false);
+                                            setDeleteStep('initial');
+                                            setDeleteConfirmation('');
+                                        }}
+                                        disabled={isDeleting}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        className="bg-red-600 hover:bg-red-700 text-white border-transparent"
+                                        onClick={handleDeleteAccount}
+                                        isLoading={isDeleting}
+                                        disabled={deleteConfirmation !== 'delete my account'}
+                                    >
+                                        Permanently Delete
+                                    </Button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

@@ -3,14 +3,16 @@ import Image from 'next/image';
 import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '../components/Components';
 import { Cpu, Mail, Lock, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { PageView } from '../types';
 
 interface LoginProps {
     onLogin: () => void;
     onNavigateToSignup: () => void;
     onBack: () => void;
+    onNavigate: (page: PageView) => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignup, onBack }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignup, onBack, onNavigate }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -275,9 +277,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignup, onBac
 
                 <p className="text-center text-xs text-ink/40 mt-6">
                     By continuing, you agree to our{' '}
-                    <a href="#" className="text-ink/60 hover:text-azure font-semibold">Terms of Service</a>
+                    <button onClick={() => onNavigate('terms')} className="text-ink/60 hover:text-azure font-semibold">Terms of Service</button>
                     {' '}and{' '}
-                    <a href="#" className="text-ink/60 hover:text-azure font-semibold">Privacy Policy</a>
+                    <button onClick={() => onNavigate('privacy')} className="text-ink/60 hover:text-azure font-semibold">Privacy Policy</button>
                 </p>
             </div>
         </div>

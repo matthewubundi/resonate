@@ -16,7 +16,9 @@ export type PageView =
   | 'settings'
   | 'documentation'
   | 'check-email'
-  | 'verified';
+  | 'verified'
+  | 'terms'
+  | 'privacy';
 
 export interface NavItem {
   id: PageView;

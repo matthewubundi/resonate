@@ -17,6 +17,8 @@ import { Memory } from './views/Memory';
 import { Personas } from './views/Personas';
 import Documentation from './views/Documentation';
 import { Settings } from './views/Settings';
+import { TermsOfService } from './views/TermsOfService';
+import { PrivacyPolicy } from './views/PrivacyPolicy';
 
 import { PageView } from './types';
 import { Card, CardHeader, CardTitle, CardContent, Input, TextArea, Button, JsonViewer, Chip } from './components/Components';
@@ -987,6 +989,8 @@ const AppContent: React.FC = () => {
       '/documentation': 'documentation',
       '/check-email': 'check-email',
       '/verified': 'verified',
+      '/terms': 'terms',
+      '/privacy': 'privacy',
     };
 
     return routeMap[pathname || '/'] || 'landing';
@@ -1018,7 +1022,7 @@ const AppContent: React.FC = () => {
       // If user is authenticated but hasn't completed onboarding
       if (onboardingCompleted === false) {
         // Only redirect if not already on onboarding or public pages
-        const publicPages = ['landing', 'login', 'signup', 'onboarding', 'loading', 'documentation', 'check-email', 'verified'];
+        const publicPages = ['landing', 'login', 'signup', 'onboarding', 'loading', 'documentation', 'check-email', 'verified', 'terms', 'privacy'];
         if (!publicPages.includes(view)) {
           router.push('/onboarding');
           setView('onboarding');
@@ -1138,6 +1142,8 @@ const AppContent: React.FC = () => {
       'documentation': '/documentation',
       'check-email': '/check-email',
       'verified': '/verified',
+      'terms': '/terms',
+      'privacy': '/privacy',
     };
 
     router.push(routeMap[page] || '/');
@@ -1159,6 +1165,7 @@ const AppContent: React.FC = () => {
             onLogin={handleLogin}
             onNavigateToSignup={() => handleNavigate('signup')}
             onBack={() => handleNavigate('landing')}
+            onNavigate={handleNavigate}
           />
         );
       case 'signup':
@@ -1177,6 +1184,7 @@ const AppContent: React.FC = () => {
               router.push('/check-email');
               setView('check-email');
             }}
+            onNavigate={handleNavigate}
           />
         );
       case 'check-email':
@@ -1245,13 +1253,17 @@ const AppContent: React.FC = () => {
         return <Settings onNavigate={handleNavigate} />;
       case 'documentation':
         return <Documentation onBack={() => handleNavigate('landing')} />;
+      case 'terms':
+        return <TermsOfService onBack={() => handleNavigate('landing')} />;
+      case 'privacy':
+        return <PrivacyPolicy onBack={() => handleNavigate('landing')} />;
       default:
         return <div className="p-8 text-center text-ink">Page: {view} (Placeholder)</div>;
     }
   };
 
   // Wrapper for logged-in pages
-  if (view === 'landing' || view === 'login' || view === 'signup' || view === 'onboarding' || view === 'loading' || view === 'documentation' || view === 'check-email' || view === 'verified') {
+  if (view === 'landing' || view === 'login' || view === 'signup' || view === 'onboarding' || view === 'loading' || view === 'documentation' || view === 'check-email' || view === 'verified' || view === 'terms' || view === 'privacy') {
     return (
       <div className="bg-paper min-h-screen text-ink font-sans selection:bg-azure/20 selection:text-azure">
         {renderView()}

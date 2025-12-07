@@ -3,15 +3,17 @@ import Image from 'next/image';
 import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '../components/Components';
 import { Cpu, Mail, Lock, User, ArrowLeft, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { PageView } from '../types';
 
 interface SignupProps {
     onSignup: () => void;
     onNavigateToLogin: () => void;
     onBack: () => void;
     onNavigateToCheckEmail: (email: string) => void;
+    onNavigate: (page: PageView) => void;
 }
 
-export const Signup: React.FC<SignupProps> = ({ onSignup, onNavigateToLogin, onBack, onNavigateToCheckEmail }) => {
+export const Signup: React.FC<SignupProps> = ({ onSignup, onNavigateToLogin, onBack, onNavigateToCheckEmail, onNavigate }) => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -249,9 +251,9 @@ export const Signup: React.FC<SignupProps> = ({ onSignup, onNavigateToLogin, onB
                                 />
                                 <span className="text-xs text-ink/60 group-hover:text-ink font-medium leading-relaxed">
                                     I agree to the{' '}
-                                    <a href="#" className="text-azure hover:text-azure-hover font-semibold">Terms of Service</a>
+                                    <button onClick={() => onNavigate('terms')} className="text-azure hover:text-azure-hover font-semibold">Terms of Service</button>
                                     {' '}and{' '}
-                                    <a href="#" className="text-azure hover:text-azure-hover font-semibold">Privacy Policy</a>
+                                    <button onClick={() => onNavigate('privacy')} className="text-azure hover:text-azure-hover font-semibold">Privacy Policy</button>
                                 </span>
                             </label>
 

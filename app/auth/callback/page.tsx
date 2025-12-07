@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 import { ResonateLoader } from '../../../components/ResonateLoader';
 
-export default function AuthCallback() {
+function CallbackContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -18,20 +19,31 @@ export default function AuthCallback() {
                 setIsLoading(false);
                 router.push('/login?error=auth_failed');
             } else {
-                // Wait 4 seconds before redirecting to dashboard
+                // Get the next path from params, default to dashboard
+                const next = searchParams.get('next') || '/dashboard';
+
+                // Wait 2 seconds before redirecting to show the loader a bit
                 setTimeout(() => {
                     setIsLoading(false);
-                    router.push('/verified');
-                }, 4000);
+                    router.push(next);
+                }, 2000);
             }
         };
 
         handleCallback();
-    }, [router]);
+    }, [router, searchParams]);
 
     if (isLoading) {
         return <ResonateLoader />;
     }
 
     return null;
+}
+
+export default function AuthCallback() {
+    return (
+        <Suspense fallback={<ResonateLoader />}>
+            <CallbackContent />
+        </Suspense>
+    );
 }

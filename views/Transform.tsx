@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, RefreshCw, Sliders } from 'lucide-react';
-import { Button, Card, TextArea } from '../components/Components';
+import { Copy, RefreshCw, Sliders, Zap, Sidebar, ArrowRight, X, Check, Eye, EyeOff } from 'lucide-react';
+import { Button } from '../components/Components';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -8,6 +8,7 @@ export const Transform: React.FC = () => {
   const { user } = useAuth();
   const [showDiff, setShowDiff] = useState(false);
   const [showParams, setShowParams] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Initialize state from sessionStorage if available
@@ -57,50 +58,17 @@ export const Transform: React.FC = () => {
     return null;
   });
 
-  // Persist state to sessionStorage whenever it changes
+  // Persist state
   useEffect(() => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('transform_inputText', inputText);
-    }
-  }, [inputText]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
       sessionStorage.setItem('transform_outputText', outputText);
-    }
-  }, [outputText]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (alignmentScore !== null) {
-        sessionStorage.setItem('transform_alignmentScore', alignmentScore.toString());
-      } else {
-        sessionStorage.removeItem('transform_alignmentScore');
-      }
-    }
-  }, [alignmentScore]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
+      alignmentScore !== null ? sessionStorage.setItem('transform_alignmentScore', alignmentScore.toString()) : sessionStorage.removeItem('transform_alignmentScore');
       sessionStorage.setItem('transform_reasoning', JSON.stringify(reasoning));
-    }
-  }, [reasoning]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
       sessionStorage.setItem('transform_temperature', temperature.toString());
+      evaluation !== null ? sessionStorage.setItem('transform_evaluation', JSON.stringify(evaluation)) : sessionStorage.removeItem('transform_evaluation');
     }
-  }, [temperature]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (evaluation !== null) {
-        sessionStorage.setItem('transform_evaluation', JSON.stringify(evaluation));
-      } else {
-        sessionStorage.removeItem('transform_evaluation');
-      }
-    }
-  }, [evaluation]);
+  }, [inputText, outputText, alignmentScore, reasoning, temperature, evaluation]);
 
   const diffWords = (a: string, b: string) => {
     const aWords = a.trim().split(/\s+/).filter(Boolean);
@@ -138,54 +106,49 @@ export const Transform: React.FC = () => {
   };
 
   const handleTransform = async () => {
-    if (!inputText.trim() || !user) {
-      alert('Please enter text to transform and ensure you are logged in.');
-      return;
-    }
+    if (!inputText.trim() || !user) return;
 
     const sanitizedTemperature = Math.min(1.5, Math.max(0, temperature));
     setIsProcessing(true);
-    setOutputText('');
+    // Do not clear output immediately to keep context if needed, but here we likely want to show progress
+    // setOutputText(''); // Keeping old output might be confusing if diff logic runs on old vs new
+    // But for a "Live Editor", clearing it is cleaner visually during the "thinking" usage
     setAlignmentScore(null);
     setReasoning([]);
     setEvaluation(null);
 
     try {
-      // Get the session token for authentication
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        alert('You must be logged in to transform text.');
-        setIsProcessing(false);
-        return;
-      }
+      if (!session) throw new Error('Not authenticated');
 
       const res = await fetch('/api/transform', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token} `,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ inputText, temperature: sanitizedTemperature })
       });
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || 'Request failed');
-      }
+      if (!res.ok) throw new Error(await res.text());
 
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
       setOutputText(data.output);
       setReasoning(Array.isArray(data.reasoning) ? data.reasoning : []);
-
-      // Set evaluation data if available
       if (data.evaluation) {
         setEvaluation(data.evaluation);
         if (typeof data.evaluation.score === 'number') {
           setAlignmentScore(data.evaluation.score);
         }
       }
+
+      // Auto-open insights after successful transform
+      setShowInsights(true);
+      // Auto-show diffs if it's a rewrite
+      setShowDiff(true);
+
     } catch (err: any) {
       alert('Transformation failed: ' + (err?.message || 'Unknown error'));
       console.error(err);
@@ -200,202 +163,220 @@ export const Transform: React.FC = () => {
     setReasoning([]);
     setAlignmentScore(null);
     setEvaluation(null);
-
-    // Clear sessionStorage as well
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('transform_inputText');
-      sessionStorage.removeItem('transform_outputText');
-      sessionStorage.removeItem('transform_reasoning');
-      sessionStorage.removeItem('transform_alignmentScore');
-      sessionStorage.removeItem('transform_evaluation');
+      sessionStorage.clear(); // Or specific keys
     }
   };
 
   return (
-    <div className="h-[calc(100vh-140px)] flex flex-col">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-ink">Transform Text</h1>
-        <div className="flex gap-3">
-          <div className="flex items-center space-x-3 bg-white border border-ink/10 rounded-lg px-4 py-1.5 shadow-sm">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink/60">Show Diffs</span>
+    <div className="h-[calc(100vh-120px)] flex flex-col gap-4 text-ink">
+
+      {/* Top Toolbar */}
+      <div className="flex items-center justify-between px-2 py-1">
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-extrabold tracking-tight">Command Center</h1>
+
+          <div className="h-6 w-px bg-slate-200 mx-2"></div>
+
+          {/* Diff Toggle */}
+          <div className="flex items-center bg-white border border-slate-200 rounded-full p-1 shadow-sm">
             <button
-              onClick={() => setShowDiff(!showDiff)}
-              className={`relative inline - flex h - 5 w - 9 items - center rounded - full transition - colors focus: outline - none border border - transparent ${showDiff ? 'bg-azure' : 'bg-paleslate border-ink/20'} `}
+              onClick={() => setShowDiff(false)}
+              className={`px-3 py-1 text-xs font-semibold rounded-full transition-all ${!showDiff ? 'bg-slate-100 text-ink' : 'text-ink/50 hover:text-ink'}`}
             >
-              <span className={`inline - block h - 3 w - 3 transform rounded - full bg - white transition - transform shadow - sm ${showDiff ? 'translate-x-5' : 'translate-x-1'} `} />
+              Clean
+            </button>
+            <button
+              onClick={() => setShowDiff(true)}
+              className={`px-3 py-1 text-xs font-semibold rounded-full transition-all ${showDiff ? 'bg-indigo-50 text-indigo-600' : 'text-ink/50 hover:text-ink'}`}
+            >
+              Diff View
             </button>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => setShowParams(!showParams)}>
-            <Sliders size={16} className="mr-2" /> Tune Parameters
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowParams(!showParams)}
+            className={showParams ? 'bg-slate-100 text-ink' : 'text-ink/60'}
+          >
+            <Sliders size={16} className="mr-2" /> Parameters
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowInsights(!showInsights)}
+            className={showInsights ? 'bg-slate-100 text-ink' : 'text-ink/60'}
+          >
+            <Sidebar size={16} className="mr-2" /> Insights
           </Button>
         </div>
       </div>
 
+      {/* Parameters Panel (collapsible) */}
       {showParams && (
-        <div className="mb-4 p-4 rounded-xl bg-white border border-ink/10 shadow-sm flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-ink/70">Temperature</span>
-            <span className="text-xs font-bold text-ink/50">{temperature.toFixed(2)}</span>
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mx-2 animate-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-semibold w-24">Temperature</span>
+            <input type="range" min="0" max="1.5" step="0.1" value={temperature} onChange={(e) => setTemperature(parseFloat(e.target.value))} className="flex-1 accent-azure h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer" />
+            <span className="text-xs font-mono font-bold bg-slate-100 px-2 py-1 rounded">{temperature.toFixed(1)}</span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={1.5}
-            step={0.05}
-            value={temperature}
-            onChange={(e) => setTemperature(parseFloat(e.target.value))}
-            className="w-full accent-azure"
-          />
-          <p className="text-xs text-ink/50">Lower = conservative, Higher = more creative</p>
         </div>
       )}
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-        {/* Input Column */}
-        <Card className="flex flex-col h-full border border-ink/10 shadow-sm bg-paleslate overflow-hidden">
-          <div className="p-4 border-b border-ink/5 flex justify-between items-center bg-white rounded-t-xl flex-shrink-0">
-            <span className="text-sm font-bold text-ink/60 uppercase tracking-wide">Generic Input</span>
-            <Button variant="ghost" size="sm" className="text-xs" onClick={handleClear}>Clear Buffer</Button>
-          </div>
-          <div className="flex-1 p-0 min-h-0 flex flex-col">
-            <textarea
-              className="flex-1 w-full resize-none border-none focus:ring-0 p-6 bg-transparent font-sans text-sm leading-7 text-ink/80 placeholder:text-ink/30 outline-none"
-              placeholder="Paste generic AI text here..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-            />
-          </div>
-          <div className="p-4 border-t border-ink/5 bg-white rounded-b-xl flex-shrink-0">
-            <Button
-              onClick={handleTransform}
-              isLoading={isProcessing}
-              className="w-full py-6 text-base shadow-lg shadow-azure/10"
-              disabled={!inputText.trim()}
-            >
-              Inject Identity Matrix
-            </Button>
-          </div>
-        </Card>
+      {/* Main Editor Surface */}
+      <div className="relative flex flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mx-2 mb-2">
 
-        {/* Output Column */}
-        <Card className="flex flex-col h-full border border-azure/20 shadow-md shadow-azure/5 bg-white">
-          <div className="p-4 border-b border-ink/5 flex justify-between items-center bg-white rounded-t-xl">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-azure uppercase tracking-wide flex items-center gap-2">
-                <span className="w-2 h-2 bg-azure rounded-full"></span> Identity Aligned
-              </span>
-              {alignmentScore !== null && (
-                <span className={`flex h - 6 px - 3 items - center justify - center rounded - md border text - xs font - bold ${alignmentScore >= 8
-                  ? 'bg-green-50 border-green-200 text-green-700'
-                  : alignmentScore >= 6
-                    ? 'bg-yellow-50 border-yellow-200 text-yellow-700'
-                    : 'bg-red-50 border-red-200 text-red-700'
-                  } `}>
-                  {alignmentScore.toFixed(1)}/10
-                </span>
+        {/* LEFT: Input Pane */}
+        <div className="flex-1 flex flex-col relative group">
+          <textarea
+            className="flex-1 w-full resize-none border-none p-8 font-serif leading-8 text-lg text-ink placeholder:text-slate-300 focus:ring-0 outline-none"
+            placeholder="Paste your raw draft here..."
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+          />
+          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="sm" onClick={handleClear} className="text-xs h-8 text-red-500 hover:text-red-600 hover:bg-red-50">Clear</Button>
+          </div>
+        </div>
+
+        {/* CENTER: Divider & Action */}
+        <div className="relative w-px bg-slate-100 flex items-center justify-center z-20">
+          <button
+            onClick={handleTransform}
+            disabled={!inputText.trim() || isProcessing}
+            className={`
+              absolute flex items-center justify-center w-14 h-14 rounded-full shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95
+              ${isProcessing ? 'bg-slate-100 cursor-not-allowed' : 'bg-azure hover:bg-azure-hover text-white'}
+            `}
+          >
+            {isProcessing ? (
+              <div className="w-6 h-6 border-2 border-slate-300 border-t-azure rounded-full animate-spin" />
+            ) : (
+              <Zap size={24} fill="currentColor" className={inputText.trim() ? "animate-pulse" : ""} />
+            )}
+          </button>
+        </div>
+
+        {/* RIGHT: Output Pane */}
+        <div className={`flex-1 flex flex-col bg-slate-50/10 relative transition-all duration-300`}>
+          {outputText ? (
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
+              {/* Score Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-dashed border-slate-100">
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => setShowInsights(true)}>
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold border transition-colors ${(alignmentScore || 0) >= 8 ? 'bg-mint/10 text-mint border-mint/20' :
+                      (alignmentScore || 0) >= 6 ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
+                        'bg-red-50 text-red-600 border-red-200'
+                    }`}>
+                    {(alignmentScore || 0).toFixed(1)} / 10
+                    <ArrowRight size={12} />
+                  </div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Alignment Score</span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(outputText)}>
+                  <Copy size={14} className="mr-2" /> Copy
+                </Button>
+              </div>
+
+              {/* Text Content */}
+              <div className="flex-1 overflow-y-auto p-8 font-serif leading-8 text-lg">
+                {showDiff ? (
+                  <div className="whitespace-pre-wrap">
+                    {diffWords(inputText, outputText).map((segment, i) => (
+                      <span key={i} className={
+                        segment.type === 'added' ? 'bg-[#EAB308]/20 text-ink decoration-clone px-1 rounded-sm mx-0.5' :
+                          segment.type === 'removed' ? 'text-red-400 line-through decoration-red-300/50 decoration-2 opacity-60 mx-0.5' :
+                            'text-ink'
+                      }>
+                        {segment.text}{' '}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap text-ink">{outputText}</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-300 select-none">
+              <ArrowRight size={48} className="opacity-20 mb-4" />
+              <p className="font-medium">Ready to Resonate</p>
+            </div>
+          )}
+        </div>
+
+        {/* FAR RIGHT: Insights Sidebar (Drawer) */}
+        <div className={`absolute right-0 top-0 h-full bg-slate-50 border-l border-slate-200 w-80 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] transition-transform duration-300 transform z-30 ${showInsights ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="h-full flex flex-col">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white">
+              <h3 className="font-bold text-ink text-sm uppercase tracking-wide">Analysis</h3>
+              <button onClick={() => setShowInsights(false)} className="p-1 hover:bg-slate-100 rounded-md text-slate-500"><X size={16} /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              {evaluation ? (
+                <>
+                  {/* Score Breakdown */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Tone Match</h4>
+                    <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${evaluation.score >= 8 ? 'bg-mint' : evaluation.score >= 6 ? 'bg-yellow-400' : 'bg-red-400'
+                          }`}
+                        style={{ width: `${evaluation.score * 10}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1 text-xs text-slate-500 font-mono">
+                      <span>0</span>
+                      <span>{evaluation.score}</span>
+                      <span>10</span>
+                    </div>
+                  </div>
+
+                  {/* Reasoning */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Why this grade?</h4>
+                    <p className="text-sm text-slate-600 leading-relaxed bg-white p-3 rounded-lg border border-slate-100">
+                      {evaluation.reasoning}
+                    </p>
+                  </div>
+
+                  {/* Suggestions */}
+                  {evaluation.suggestions && (
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Improvement</h4>
+                      <div className="text-sm text-slate-600 leading-relaxed bg-blue-50/50 p-3 rounded-lg border border-blue-100/50">
+                        {evaluation.suggestions}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center text-slate-400 text-sm mt-10">
+                  Generate a transformation to see detailed analysis.
+                </div>
+              )}
+
+              {reasoning.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Transform Logic</h4>
+                  <ul className="space-y-2">
+                    {reasoning.map((r, i) => (
+                      <li key={i} className="text-xs text-slate-600 flex items-start gap-2">
+                        <Check size={12} className="mt-0.5 text-azure shrink-0" />
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
-            <div className="flex gap-1">
-              <Button variant="ghost" size="sm" onClick={handleTransform}><RefreshCw size={14} /></Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={!outputText}
-                onClick={() => outputText && navigator.clipboard.writeText(outputText)}
-              >
-                <Copy size={14} />
-              </Button>
-            </div>
           </div>
-          <div className="flex-1 p-6 bg-white rounded-b-xl overflow-y-auto relative">
-            {isProcessing ? (
-              <div className="h-full flex flex-col items-center justify-center text-ink/40">
-                <div className="relative mb-4">
-                  <div className="h-12 w-12 rounded-full border-t-2 border-b-2 border-azure animate-spin"></div>
-                </div>
-                <p className="text-sm font-bold tracking-widest uppercase">Applying linguistic signature...</p>
-              </div>
-            ) : outputText ? (
-              <div className="prose prose-sm max-w-none text-ink">
-                <p className="leading-7 text-base font-medium">
-                  {outputText}
-                </p>
+        </div>
 
-                {/* Evaluation Score Panel */}
-                {evaluation && evaluation.score !== null && (
-                  <div className="mt-8 p-5 bg-slate-900 rounded-xl border border-slate-800 shadow-xl">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`text - 3xl font - bold ${evaluation.score >= 8
-                        ? 'text-green-400'
-                        : evaluation.score >= 6
-                          ? 'text-yellow-400'
-                          : 'text-red-400'
-                        } `}>
-                        {evaluation.score.toFixed(1)}/10
-                      </div>
-                      <div className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Alignment Score</div>
-                    </div>
-                    {evaluation.reasoning && (
-                      <p className="text-sm text-slate-400 border-t border-slate-700 pt-3 mt-3 leading-relaxed">
-                        {evaluation.reasoning}
-                      </p>
-                    )}
-                    {evaluation.suggestions && (
-                      <div className="mt-3 pt-3 border-t border-slate-700">
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Suggestions</p>
-                        <p className="text-sm text-slate-400 leading-relaxed">{evaluation.suggestions}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {reasoning.length > 0 && (
-                  <div className="mt-8 p-5 bg-paleslate rounded-xl border border-ink/5">
-                    <h4 className="text-xs font-bold text-azure uppercase tracking-wide mb-3 flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-azure"></span> Reasoning Engine
-                    </h4>
-                    <ul className="text-sm text-ink/70 space-y-2 list-none font-medium">
-                      {reasoning.map((reason, idx) => (
-                        <li key={idx} className="flex gap-2"><span className="text-azure/60">•</span> {reason}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-ink/40">
-                <p className="text-sm font-medium">Transformed text will appear here</p>
-                <p className="text-xs mt-2">Paste text and click "Inject Identity Matrix" to transform</p>
-              </div>
-            )}
-
-            {showDiff && outputText && !isProcessing && (
-              <div className="mt-6">
-                <div className="text-xs font-bold uppercase tracking-wide text-ink/50 mb-2 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-azure"></span>
-                  Diff View
-                </div>
-                <div className="p-4 bg-paleslate rounded-lg border border-ink/10 text-sm leading-7 text-ink">
-                  {diffWords(inputText, outputText).map((segment, idx) => (
-                    <span
-                      key={idx}
-                      className={
-                        segment.type === 'added'
-                          ? 'text-azure font-semibold'
-                          : segment.type === 'removed'
-                            ? 'text-highlight line-through'
-                            : 'text-ink'
-                      }
-                    >
-                      {segment.text + ' '}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-xs text-ink/50 mt-2">Additions shown in blue, removals in red strike-through.</p>
-              </div>
-            )}
-          </div>
-        </Card>
       </div>
     </div>
   );

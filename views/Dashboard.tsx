@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Chip, TextArea } from '../components/Components';
-import { ArrowRight, Sparkles, History, Zap, Activity, Copy, X, RefreshCw, AlertCircle, Check } from 'lucide-react';
+import { ArrowRight, Sparkles, History, Zap, Activity, Copy, X, RefreshCw, AlertCircle, Check, ChevronDown, User } from 'lucide-react';
 import { PageView } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,6 +48,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [isIdentityExpanded, setIsIdentityExpanded] = useState(false);
 
   // Fetch identity and transformation history on mount
   const fetchData = async () => {
@@ -79,7 +80,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
         .select('id, input_text, final_output, alignment_score, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(3); // Updated limit to 3 for the grid
 
       if (transData && !transError) {
         setTransformations(transData as TransformationLog[]);
@@ -103,14 +104,14 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
   // Refresh transformations after a successful transformation
   const refreshTransformations = async () => {
     if (!user) return;
-    
+
     try {
       const { data: transData, error: transError } = await supabase
         .from('transformations')
         .select('id, input_text, final_output, alignment_score, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(3);
 
       if (transData && !transError) {
         setTransformations(transData as TransformationLog[]);
@@ -141,7 +142,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
 
   const handleQuickTransform = async () => {
     if (!quickInput.trim() || !user || !identity) return;
-    
+
     setIsTransforming(true);
     setError(null);
     try {
@@ -155,16 +156,16 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
 
       const res = await fetch('/api/transform', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ inputText: quickInput })
       });
-      
+
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      
+
       setQuickOutput(data.output);
       // Clear input after successful transformation
       setQuickInput('');
@@ -201,7 +202,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
   };
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-6xl mx-auto space-y-10">
       {/* Error Banner */}
       {error && (
         <div className="bg-highlight/10 border border-highlight/20 rounded-lg p-4 flex items-start justify-between">
@@ -223,243 +224,213 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+      {/* Header Area: Headline & Identity HUD */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-           <h1 className="text-3xl font-extrabold tracking-tight mb-2 text-ink">Welcome back.</h1>
-           {identity ? (
-             <p className="text-ink/60 font-medium">Identity profile is <span className="font-mono text-xs bg-azure/10 border border-azure/20 px-2 py-0.5 rounded text-azure font-bold">active</span> and aligned.</p>
-           ) : (
-             <p className="text-ink/60 font-medium">No active identity. Create one to get started.</p>
-           )}
+          <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+            Good morning, Matt.
+          </h1>
+          <p className="text-ink/60 text-lg">What are we rewriting today?</p>
         </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="ghost" 
-            size="lg" 
-            onClick={handleRefresh}
-            isLoading={isRefreshing}
-            disabled={isRefreshing}
-            title="Refresh dashboard data"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button onClick={() => onNavigate('transform')} size="lg" className="shadow-lg shadow-azure/10">
-            <Sparkles className="mr-2 h-4 w-4" /> Initialize Transformation
-          </Button>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Identity Snapshot */}
-        <Card className="md:col-span-2 relative overflow-hidden border-none shadow-md bg-white">
-          <div className="absolute top-0 right-0 p-3 opacity-5">
-              <Activity size={100} className="text-ink" />
-          </div>
-          <CardHeader>
-            <CardTitle>Identity Snapshot</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingIdentity ? (
-              <div className="animate-pulse space-y-4">
-                <div className="h-4 bg-paleslate rounded w-3/4"></div>
-                <div className="h-4 bg-paleslate rounded w-1/2"></div>
-              </div>
-            ) : identity ? (
-              <>
-                <div className="flex flex-wrap gap-2 mb-6">
-                  <Chip label={identity.tone} />
-                  <Chip label={`Formality: ${identity.formality}`} />
-                  <Chip label={identity.directness} />
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                   <div>
-                     <h4 className="text-xs font-bold uppercase tracking-wider text-ink/40 mb-3">Core Values</h4>
-                     <ul className="space-y-2">
-                       {identity.values && identity.values.length > 0 ? (
-                         identity.values.slice(0, 5).map((v: string, idx: number) => (
-                           <li key={idx} className="flex items-center text-sm font-semibold text-ink">
-                             <span className="w-1.5 h-1.5 rounded-full bg-azure mr-3"></span> {v}
-                           </li>
-                         ))
-                       ) : (
-                         <li className="text-sm text-ink/60">No values specified</li>
-                       )}
-                     </ul>
-                   </div>
-                   <div>
-                     <h4 className="text-xs font-bold uppercase tracking-wider text-ink/40 mb-3">Vocabulary</h4>
-                     <div className="space-y-3">
-                       <div>
-                         <p className="text-xs text-ink/60 mb-1">Frequent Words:</p>
-                         <p className="text-sm text-ink/80">
-                           {identity.vocabulary?.frequent_words?.slice(0, 5).join(', ') || 'None'}
-                         </p>
-                       </div>
-                       <div>
-                         <p className="text-xs text-ink/60 mb-1">Avoid Words:</p>
-                         <p className="text-sm text-highlight">
-                           {identity.vocabulary?.avoid_words?.slice(0, 5).join(', ') || 'None'}
-                         </p>
-                       </div>
-                     </div>
-                   </div>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-12 text-ink/60">
-                <Activity size={48} className="mx-auto mb-4 text-ink/30" />
-                <p className="font-medium">No identity data available</p>
-                <p className="text-sm mt-2 mb-4">Create an identity to see your snapshot here</p>
-                <Button onClick={() => onNavigate('onboarding')} size="sm">
-                  Create Identity
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions / Stats */}
-        <Card className="bg-paleslate border-ink/5 shadow-md">
-          <CardContent className="flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="h-10 w-10 bg-white border border-ink/5 rounded-lg flex items-center justify-center mb-4 text-azure shadow-sm">
-                <Zap size={20} />
-              </div>
-              <h3 className="text-xl font-bold mb-1 text-ink">Quick Injection</h3>
-              <p className="text-ink/60 text-sm font-medium">Paste text to instantly apply your active persona matrix.</p>
-            </div>
-            <div className="mt-8 relative z-10">
-              {!identity ? (
-                <div className="p-4 bg-azure/5 border border-azure/20 rounded-lg mb-3">
-                  <p className="text-sm text-ink/60 mb-2">No active identity found</p>
-                  <Button onClick={() => onNavigate('onboarding')} size="sm" className="w-full">
-                    Create Identity
-                  </Button>
-                </div>
-              ) : (
+        {/* Identity HUD (Persona Pill) */}
+        <div className="relative">
+          {loadingIdentity ? (
+            <div className="h-10 w-48 bg-paleslate rounded-full animate-pulse"></div>
+          ) : identity ? (
+            <div
+              className={`bg-white border rounded-2xl shadow-sm transition-all duration-300 z-50 ${isIdentityExpanded ? 'absolute top-0 right-0 w-80 border-azure/20 shadow-xl p-4' : 'border-paleslate-dark flex items-center gap-3 px-4 py-2'}`}
+            >
+              {!isIdentityExpanded ? (
+                // Collapsed State
                 <>
-                  <TextArea
-                    placeholder="Paste generic text..."
-                    className="w-full bg-white border border-ink/10 rounded-lg px-4 py-3 text-sm text-ink placeholder:text-ink/40 mb-3 focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure resize-none"
-                    rows={3}
-                    value={quickInput}
-                    onChange={(e) => setQuickInput(e.target.value)}
-                    disabled={isTransforming}
-                  />
-                  <Button 
-                    className="w-full" 
-                    onClick={handleQuickTransform}
-                    isLoading={isTransforming}
-                    disabled={isTransforming || !quickInput.trim() || !identity}
+                  <div className="w-2 h-2 rounded-full bg-azure animate-pulse"></div>
+                  <span className="text-sm font-semibold text-ink">Active: {identity.tone || 'General'}</span>
+                  <div
+                    className="cursor-pointer p-1 hover:bg-paleslate rounded-full transition-colors"
+                    onClick={() => setIsIdentityExpanded(true)}
                   >
-                    {isTransforming ? 'Aligning...' : 'Preserve Identity'}
-                  </Button>
+                    <ChevronDown size={14} className="text-ink/40 hover:text-ink" />
+                  </div>
                 </>
-              )}
-              {quickOutput && (
-                <div className="mt-3 p-3 bg-white border border-azure/20 rounded-lg">
-                  <div className="flex justify-between items-start mb-2">
-                    <p className="text-xs font-bold text-azure uppercase tracking-wide">Transformed:</p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCopy}
-                        title="Copy to clipboard"
-                        className="h-7 w-7 p-0"
-                      >
-                        {copySuccess ? (
-                          <Check size={14} className="text-azure" />
-                        ) : (
-                          <Copy size={14} />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setQuickOutput('')}
-                        title="Clear output"
-                        className="h-7 w-7 p-0"
+              ) : (
+                // Expanded State
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <div className="flex items-center gap-2">
+                      <User size={16} className="text-azure" />
+                      <span className="font-bold text-ink text-sm">Active Identity</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs bg-azure/10 text-azure px-2 py-0.5 rounded font-mono font-bold">LIVE</span>
+                      <button
+                        className="h-6 w-6 flex items-center justify-center p-0 text-ink/40 hover:text-ink hover:bg-paleslate rounded-full transition-colors"
+                        onClick={() => setIsIdentityExpanded(false)}
                       >
                         <X size={14} />
-                      </Button>
+                      </button>
                     </div>
                   </div>
-                  <div className="text-sm text-ink/80 whitespace-pre-wrap break-words max-h-56 overflow-y-auto pr-1">
-                    {quickOutput}
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Recent Activity */}
-      <Card className="bg-white border-none shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between border-ink/5">
-          <CardTitle>Transformation Log</CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs font-bold text-azure hover:text-azure-hover"
-            onClick={() => onNavigate('history')}
-          >
-            View All History
-          </Button>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loadingTransformations ? (
-            <div className="p-12 text-center">
-              <div className="animate-pulse space-y-3">
-                <div className="h-4 bg-paleslate rounded w-3/4 mx-auto"></div>
-                <div className="h-4 bg-paleslate rounded w-1/2 mx-auto"></div>
-              </div>
-            </div>
-          ) : transformations.length > 0 ? (
-            <div className="divide-y divide-ink/5">
-              {transformations.map((item) => (
-                <div key={item.id} className="p-5 flex items-center justify-between hover:bg-paleslate transition-colors group cursor-pointer">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="h-10 w-10 rounded-full bg-paleslate border border-ink/5 flex items-center justify-center text-ink/50 group-hover:bg-white group-hover:text-azure transition-colors flex-shrink-0">
-                      <History size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-ink truncate">{getPreview(item.input_text)}</p>
-                      <p className="text-xs text-ink/50 font-medium mt-0.5">{formatDate(item.created_at)}</p>
+                  <div>
+                    <label className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-1 block">Tone & Style</label>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="bg-paleslate text-ink text-xs px-2 py-1 rounded-md font-medium">{identity.tone}</span>
+                      <span className="bg-paleslate text-ink text-xs px-2 py-1 rounded-md font-medium">{identity.formality}</span>
+                      <span className="bg-paleslate text-ink text-xs px-2 py-1 rounded-md font-medium">{identity.directness}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-6 flex-shrink-0">
-                    {item.alignment_score !== null ? (
-                      <div className="text-right">
-                        <span className={`block text-sm font-bold ${item.alignment_score >= 8 ? 'text-azure' : 'text-highlight'}`}>
-                          {item.alignment_score.toFixed(1)}
-                        </span>
-                        <span className="text-[10px] uppercase text-ink/40 font-bold tracking-wider">Alignment</span>
+
+                  {identity.values && identity.values.length > 0 && (
+                    <div>
+                      <label className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-1 block">Core Values</label>
+                      <div className="flex flex-wrap gap-1">
+                        {identity.values.slice(0, 3).map((v, i) => (
+                          <span key={i} className="text-xs text-ink/70 border border-ink/10 px-1.5 py-0.5 rounded">{v}</span>
+                        ))}
                       </div>
-                    ) : (
-                      <div className="text-right">
-                        <span className="block text-sm font-bold text-ink/40">—</span>
-                        <span className="text-[10px] uppercase text-ink/40 font-bold tracking-wider">Pending</span>
-                      </div>
-                    )}
-                    <Button variant="ghost" size="sm" className="text-ink/40 group-hover:text-ink" onClick={() => onNavigate('transform')}>
-                      <ArrowRight size={16} />
+                    </div>
+                  )}
+
+                  <div className="pt-2 text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => { e.stopPropagation(); onNavigate('editor'); }}
+                      className="text-xs text-azure hover:text-azure-hover p-0 h-auto"
+                    >
+                      Edit Profile →
                     </Button>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           ) : (
-            <div className="p-12 text-center text-ink/60">
-              <History size={48} className="mx-auto mb-4 text-ink/30" />
-              <p className="font-medium">No transformations yet</p>
-              <p className="text-sm mt-2">Your transformation history will appear here</p>
+            <Button onClick={() => onNavigate('onboarding')} variant="outline" size="sm" className="bg-white">
+              <Sparkles size={14} className="mr-2" /> Create Identity
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* The Active Workbench (Center Hero) */}
+      <Card className="bg-white border-none shadow-xl shadow-ink/5 overflow-hidden rounded-2xl relative">
+        <CardContent className="p-8">
+          {quickOutput ? (
+            // Result View
+            <div className="animate-fade-in relative">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-azure flex items-center gap-2">
+                  <Sparkles size={20} /> Resonated Output
+                </h2>
+                <div className="flex gap-2">
+                  <Button variant="ghost" onClick={() => setQuickOutput('')} className="text-ink/60 hover:text-ink">
+                    New Rewrite
+                  </Button>
+                  <Button onClick={handleCopy} className={`min-w-[100px] ${copySuccess ? 'bg-mint text-white' : ''}`}>
+                    {copySuccess ? <><Check size={16} className="mr-2" /> Copied</> : <><Copy size={16} className="mr-2" /> Copy Text</>}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="bg-paleslate rounded-xl p-6 text-ink/80 leading-relaxed text-lg shadow-inner min-h-[200px]">
+                {quickOutput}
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <p className="text-sm text-ink/40 italic">Aligned with your {identity?.tone} profile</p>
+              </div>
+            </div>
+          ) : (
+            // Input View
+            <div className="relative">
+              <TextArea
+                placeholder="Paste your raw AI draft here..."
+                className="w-full bg-transparent border-none text-lg text-ink placeholder:text-ink/30 focus:ring-0 resize-none p-0 min-h-[240px]"
+                value={quickInput}
+                onChange={(e) => setQuickInput(e.target.value)}
+                disabled={isTransforming}
+                autoFocus
+              />
+
+              <div className="absolute bottom-0 right-0 z-10 pt-10 bg-gradient-to-t from-white via-white to-transparent w-full flex justify-end pb-2">
+                <Button
+                  size="lg"
+                  onClick={handleQuickTransform}
+                  isLoading={isTransforming}
+                  disabled={isTransforming || !quickInput.trim() || !identity}
+                  className="shadow-lg shadow-azure/20 text-base font-semibold px-8 py-6 h-auto rounded-xl"
+                >
+                  {isTransforming ? 'Resonating...' : <>Resonate Text <ArrowRight size={18} className="ml-2" /></>}
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Recent Activity Grid */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-lg font-bold text-ink">Recent Rewrites</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onNavigate('history')}
+            className="text-azure hover:text-azure-hover"
+          >
+            View All History →
+          </Button>
+        </div>
+
+        {loadingTransformations ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 bg-paleslate rounded-xl animate-pulse"></div>
+            ))}
+          </div>
+        ) : transformations.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {transformations.map((item) => (
+              <Card
+                key={item.id}
+                className="bg-white border hover:border-azure/30 transition-all duration-200 hover:shadow-md cursor-pointer group rounded-xl overflow-hidden"
+                onClick={() => {
+                  navigator.clipboard.writeText(item.final_output);
+                }}
+              >
+                <CardContent className="p-5 flex flex-col h-full justify-between">
+                  <div>
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="text-xs font-semibold text-ink/40 uppercase tracking-wider">
+                        {formatDate(item.created_at)}
+                      </div>
+                      {item.alignment_score !== null && (
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.alignment_score >= 8
+                          ? 'bg-mint/10 text-mint'
+                          : 'bg-highlight/10 text-highlight'
+                          }`}>
+                          {item.alignment_score.toFixed(1)} / 10
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-ink text-sm font-medium line-clamp-3 leading-relaxed">
+                      "{getPreview(item.final_output, 100)}"
+                    </p>
+                  </div>
+                  <div className="mt-4 flex items-center text-azure text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Copy size={12} className="mr-1" /> Click to Copy
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-paleslate/50 rounded-xl border border-dashed border-ink/10">
+            <p className="text-ink/40">No recent transformations found.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

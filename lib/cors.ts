@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 const ALLOWED_ORIGINS = [
+    'https://resonate-phi.vercel.app',
     process.env.NEXT_PUBLIC_SITE_URL,
     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
     process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : null,

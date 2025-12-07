@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (event === 'TOKEN_REFRESHED') {
                 return;
             }
-            
+
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
@@ -55,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 data: {
                     full_name: name,
                 },
+                emailRedirectTo: `${window.location.origin}/auth/callback`,
             },
         });
         return { error, session: data.session };

@@ -14,7 +14,9 @@ export type PageView =
   | 'memory'
   | 'personas'
   | 'settings'
-  | 'documentation';
+  | 'documentation'
+  | 'check-email'
+  | 'verified';
 
 export interface NavItem {
   id: PageView;

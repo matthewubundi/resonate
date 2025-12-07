@@ -8,9 +8,10 @@ interface SignupProps {
     onSignup: () => void;
     onNavigateToLogin: () => void;
     onBack: () => void;
+    onNavigateToCheckEmail: (email: string) => void;
 }
 
-export const Signup: React.FC<SignupProps> = ({ onSignup, onNavigateToLogin, onBack }) => {
+export const Signup: React.FC<SignupProps> = ({ onSignup, onNavigateToLogin, onBack, onNavigateToCheckEmail }) => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -67,7 +68,7 @@ export const Signup: React.FC<SignupProps> = ({ onSignup, onNavigateToLogin, onB
                 onSignup();
             } else {
                 // Email confirmation required
-                setError('Please check your email to confirm your account before signing in.');
+                onNavigateToCheckEmail(formData.email);
             }
         }
     };

@@ -254,3 +254,5 @@ create index if not exists idx_memories_embedding on memories
   using hnsw (embedding vector_cosine_ops)
   with (m = 16, ef_construction = 64);
 
+
+

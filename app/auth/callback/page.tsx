@@ -21,7 +21,7 @@ export default function AuthCallback() {
                 // Wait 4 seconds before redirecting to dashboard
                 setTimeout(() => {
                     setIsLoading(false);
-                    router.push('/dashboard');
+                    router.push('/verified');
                 }, 4000);
             }
         };

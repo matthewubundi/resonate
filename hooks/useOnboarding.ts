@@ -24,7 +24,7 @@ export const useOnboarding = (user: User | null): UseOnboardingReturn => {
   const [error, setError] = useState<Error | null>(null);
   const lastUserId = useRef<string | null>(null);
 
-  const checkOnboardingStatus = async () => {
+  const checkOnboardingStatus = async (force: boolean = false) => {
     if (!user) {
       setOnboardingCompleted(null);
       setLoading(false);
@@ -32,8 +32,8 @@ export const useOnboarding = (user: User | null): UseOnboardingReturn => {
       return;
     }
 
-    // Check cache first
-    if (typeof window !== 'undefined') {
+    // Check cache first (unless forced)
+    if (!force && typeof window !== 'undefined') {
       const cached = sessionStorage.getItem(`onboarding_${user.id}`);
       if (cached !== null && lastUserId.current === user.id) {
         // Use cached value and skip database query
@@ -99,6 +99,6 @@ export const useOnboarding = (user: User | null): UseOnboardingReturn => {
     }
   }, [user?.id]); // Only depend on user ID, not the entire user object
 
-  return { onboardingCompleted, loading, error, refetch: checkOnboardingStatus };
+  return { onboardingCompleted, loading, error, refetch: () => checkOnboardingStatus(true) };
 };
 

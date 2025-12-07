@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Layout } from './components/Layout';
@@ -5,6 +6,8 @@ import { Landing } from './views/Landing';
 import { ResonateLoader } from './components/ResonateLoader';
 import { Login } from './views/Login';
 import { Signup } from './views/Signup';
+import { CheckEmail } from './views/CheckEmail';
+import { Verified } from './views/Verified';
 import { Onboarding } from './views/Onboarding';
 import { Dashboard } from './views/Dashboard';
 import { Transform } from './views/Transform';
@@ -13,6 +16,7 @@ import { AnalyticsPage } from './views/Analytics';
 import { Memory } from './views/Memory';
 import { Personas } from './views/Personas';
 import Documentation from './views/Documentation';
+import { Settings } from './views/Settings';
 
 import { PageView } from './types';
 import { Card, CardHeader, CardTitle, CardContent, Input, TextArea, Button, JsonViewer, Chip } from './components/Components';
@@ -154,7 +158,7 @@ const IdentityEditor = () => {
         (dataToSave as any).description = dataToSave.tone_description;
         // Keep tone_description for UI consistency, but description is the canonical field
       }
-      
+
       const { error: updateError } = await supabase
         .from('identities')
         .update({
@@ -682,13 +686,13 @@ const SettingsPage = ({ user }: { user: User | null }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
   // Form state
   const [displayName, setDisplayName] = useState('');
   const [theme, setTheme] = useState('Paper White');
   const [language, setLanguage] = useState('English (US)');
   const [timezone, setTimezone] = useState('UTC');
-  
+
   // Original values to detect changes
   const [originalValues, setOriginalValues] = useState({
     displayName: '',
@@ -726,7 +730,7 @@ const SettingsPage = ({ user }: { user: User | null }) => {
         setTheme(themeValue);
         setLanguage(languageValue);
         setTimezone(timezoneValue);
-        
+
         setOriginalValues({
           displayName: displayNameValue,
           theme: themeValue,
@@ -775,7 +779,7 @@ const SettingsPage = ({ user }: { user: User | null }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token} `,
         },
         body: JSON.stringify({
           display_name: displayName,
@@ -883,7 +887,7 @@ const SettingsPage = ({ user }: { user: User | null }) => {
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Enter your display name"
               />
-              
+
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-ink">Email</label>
                 <input
@@ -981,6 +985,8 @@ const AppContent: React.FC = () => {
       '/memory': 'memory',
       '/personas': 'personas',
       '/documentation': 'documentation',
+      '/check-email': 'check-email',
+      '/verified': 'verified',
     };
 
     return routeMap[pathname || '/'] || 'landing';
@@ -1012,7 +1018,7 @@ const AppContent: React.FC = () => {
       // If user is authenticated but hasn't completed onboarding
       if (onboardingCompleted === false) {
         // Only redirect if not already on onboarding or public pages
-        const publicPages = ['landing', 'login', 'signup', 'onboarding', 'loading', 'documentation'];
+        const publicPages = ['landing', 'login', 'signup', 'onboarding', 'loading', 'documentation', 'check-email', 'verified'];
         if (!publicPages.includes(view)) {
           router.push('/onboarding');
           setView('onboarding');
@@ -1025,6 +1031,8 @@ const AppContent: React.FC = () => {
   const [pendingSignup, setPendingSignup] = useState(false);
   // Track if we're waiting for login authentication
   const [pendingLogin, setPendingLogin] = useState(false);
+  // Track email for verification step
+  const [verificationEmail, setVerificationEmail] = useState<string | undefined>(undefined);
 
   // Watch for user authentication after login
   useEffect(() => {
@@ -1128,6 +1136,8 @@ const AppContent: React.FC = () => {
       'personas': '/personas',
       'review': '/review',
       'documentation': '/documentation',
+      'check-email': '/check-email',
+      'verified': '/verified',
     };
 
     router.push(routeMap[page] || '/');
@@ -1157,6 +1167,39 @@ const AppContent: React.FC = () => {
             onSignup={handleSignup}
             onNavigateToLogin={() => handleNavigate('login')}
             onBack={() => handleNavigate('landing')}
+            onNavigateToCheckEmail={(email) => {
+              setVerificationEmail(email);
+              // Handle view change manually since we want to pass state, 
+              // though handleNavigate updates URL which is fine.
+              // We'll trust handleNavigate to update view state via URL or internal logic if we implemented that,
+              // but here handleNavigate updates URL and view state syncs via useEffect or router.
+              // Actually handleNavigate uses router.push.
+              router.push('/check-email');
+              setView('check-email');
+            }}
+          />
+        );
+      case 'check-email':
+        return (
+          <CheckEmail
+            email={verificationEmail}
+            onNavigateToLogin={() => handleNavigate('login')}
+            onVerified={() => {
+              // When verified (session detected), go to dashboard
+              // Check onboarding status first?
+              // The main useEffect for auth changes will handle onboarding redirect if needed.
+              // But we can force a push here.
+              router.push('/dashboard');
+              setView('dashboard');
+            }}
+          />
+        );
+      case 'verified':
+        return (
+          <Verified
+            onNavigateToDashboard={() => {
+              handleNavigate('dashboard');
+            }}
           />
         );
       case 'onboarding':
@@ -1199,7 +1242,7 @@ const AppContent: React.FC = () => {
       case 'personas':
         return <Personas onNavigate={handleNavigate} />;
       case 'settings':
-        return <SettingsPage user={user} />;
+        return <Settings onNavigate={handleNavigate} />;
       case 'documentation':
         return <Documentation onBack={() => handleNavigate('landing')} />;
       default:
@@ -1208,7 +1251,7 @@ const AppContent: React.FC = () => {
   };
 
   // Wrapper for logged-in pages
-  if (view === 'landing' || view === 'login' || view === 'signup' || view === 'onboarding' || view === 'loading' || view === 'documentation') {
+  if (view === 'landing' || view === 'login' || view === 'signup' || view === 'onboarding' || view === 'loading' || view === 'documentation' || view === 'check-email' || view === 'verified') {
     return (
       <div className="bg-paper min-h-screen text-ink font-sans selection:bg-azure/20 selection:text-azure">
         {renderView()}

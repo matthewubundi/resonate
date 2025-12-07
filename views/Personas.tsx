@@ -159,7 +159,7 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     }
   };
 
-  const handleActivate = async (id: string) => {
+  const handleActivate = async (id: string, onSuccess?: () => void) => {
     setIsActivating(id);
     setError(null);
     try {
@@ -188,6 +188,7 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
 
       // Refresh the personas list
       await fetchPersonas();
+      onSuccess?.();
     } catch (err: any) {
       console.error('Error activating persona:', err);
       setError(err.message || 'Failed to activate persona. Please try again.');
@@ -197,13 +198,13 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
   };
 
   const handleEdit = (id: string) => {
-    // Placeholder for future implementation
-    console.log('Edit persona:', id);
+    // Activate the persona first, then navigate to the editor
+    handleActivate(id, () => onNavigate('editor'));
   };
 
-  const handleEditConfiguration = (id: string) => {
-    // Placeholder for future implementation
-    console.log('Edit configuration:', id);
+  const handleEditConfiguration = () => {
+    // Persona is already active, go straight to the identity editor
+    onNavigate('editor');
   };
 
   return (
@@ -297,7 +298,7 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                   variant="primary"
                   size="md"
                   className="w-full"
-                  onClick={() => handleEditConfiguration(persona.id)}
+                  onClick={handleEditConfiguration}
                 >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Configuration

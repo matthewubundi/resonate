@@ -29,7 +29,8 @@ import { Copy, Check, AlertCircle, X } from 'lucide-react';
 
 interface GeneratedIdentity {
   tone: string;
-  tone_description?: string; // Detailed description of the tone
+  tone_description?: string; // Detailed description of the tone (UI field)
+  description?: string; // Database field (maps to tone_description)
   formality: string;
   directness: string;
   sentence_structure?: {
@@ -102,6 +103,10 @@ const IdentityEditor = () => {
           }
         } else if (data) {
           const identity = data.identity_json as GeneratedIdentity;
+          // Map 'description' to 'tone_description' if it exists (for backward compatibility)
+          if (identity.description && !identity.tone_description) {
+            identity.tone_description = identity.description;
+          }
           setIdentityId(data.id);
           const name = data.name || '';
           setIdentityName(name);
@@ -143,11 +148,18 @@ const IdentityEditor = () => {
     setSuccess(null);
 
     try {
+      // Map tone_description to description for database storage
+      const dataToSave = { ...editableData };
+      if (dataToSave.tone_description !== undefined) {
+        (dataToSave as any).description = dataToSave.tone_description;
+        // Keep tone_description for UI consistency, but description is the canonical field
+      }
+      
       const { error: updateError } = await supabase
         .from('identities')
         .update({
           name: identityName || null,
-          identity_json: editableData,
+          identity_json: dataToSave,
           updated_at: new Date().toISOString(),
         })
         .eq('id', identityId)
@@ -155,8 +167,12 @@ const IdentityEditor = () => {
 
       if (updateError) throw updateError;
 
-      // Update the original data as well
-      setIdentityData(JSON.parse(JSON.stringify(editableData)));
+      // Update the original data as well (normalize description field)
+      const updatedData = JSON.parse(JSON.stringify(editableData));
+      if (updatedData.tone_description !== undefined) {
+        updatedData.description = updatedData.tone_description;
+      }
+      setIdentityData(updatedData);
       setSuccess('Identity updated successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
@@ -169,7 +185,12 @@ const IdentityEditor = () => {
 
   const handleReset = () => {
     if (identityData) {
-      setEditableData(JSON.parse(JSON.stringify(identityData)));
+      const resetData = JSON.parse(JSON.stringify(identityData));
+      // Ensure tone_description is set from description if needed
+      if (resetData.description && !resetData.tone_description) {
+        resetData.tone_description = resetData.description;
+      }
+      setEditableData(resetData);
       setIdentityName(originalName);
       setNewWordInputs({ frequent: '', avoid: '' });
       setNewValueInput('');
@@ -657,218 +678,280 @@ const IdentityEditor = () => {
 
 
 const SettingsPage = ({ user }: { user: User | null }) => {
-  const getUserDisplayName = () => {
-    if (!user) return 'Guest';
-    return user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  
+  // Form state
+  const [displayName, setDisplayName] = useState('');
+  const [theme, setTheme] = useState('Paper White');
+  const [language, setLanguage] = useState('English (US)');
+  const [timezone, setTimezone] = useState('UTC');
+  
+  // Original values to detect changes
+  const [originalValues, setOriginalValues] = useState({
+    displayName: '',
+    theme: '',
+    language: '',
+    timezone: '',
+  });
+
+  // Fetch profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('profiles')
+          .select('full_name, theme, language, timezone')
+          .eq('id', user.id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        const displayNameValue = data?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || '';
+        const themeValue = data?.theme || 'Paper White';
+        const languageValue = data?.language || 'English (US)';
+        const timezoneValue = data?.timezone || 'UTC';
+
+        setDisplayName(displayNameValue);
+        setTheme(themeValue);
+        setLanguage(languageValue);
+        setTimezone(timezoneValue);
+        
+        setOriginalValues({
+          displayName: displayNameValue,
+          theme: themeValue,
+          language: languageValue,
+          timezone: timezoneValue,
+        });
+      } catch (err: any) {
+        console.error('Error fetching profile:', err);
+        setError(err.message || 'Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  const hasChanges = () => {
+    return (
+      displayName !== originalValues.displayName ||
+      theme !== originalValues.theme ||
+      language !== originalValues.language ||
+      timezone !== originalValues.timezone
+    );
   };
 
-  const SettingToggle = ({
-    label,
-    description,
-    defaultChecked = false,
-    disabled = false,
-  }: {
-    label: string;
-    description?: string;
-    defaultChecked?: boolean;
-    disabled?: boolean;
-  }) => (
-    <label className="flex items-start justify-between gap-3 p-3 bg-paleslate rounded-lg border border-ink/5">
-      <div className="space-y-0.5">
-        <p className="text-sm font-semibold text-ink">{label}</p>
-        {description && <p className="text-xs text-ink/60">{description}</p>}
-      </div>
-      <input
-        type="checkbox"
-        defaultChecked={defaultChecked}
-        disabled={disabled}
-        className="mt-0.5 h-5 w-5 rounded border-ink/20 text-azure focus:ring-azure focus:outline-none"
-      />
-    </label>
-  );
+  const handleSave = async () => {
+    if (!user) {
+      setError('You must be logged in to save settings');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('You must be logged in to save settings');
+        setSaving(false);
+        return;
+      }
+
+      const res = await fetch('/api/settings/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          display_name: displayName,
+          theme,
+          language,
+          timezone,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      // Update original values to reflect saved state
+      setOriginalValues({
+        displayName,
+        theme,
+        language,
+        timezone,
+      });
+
+      setSuccess('Settings saved successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      console.error('Error saving settings:', err);
+      setError(err.message || 'Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReset = () => {
+    setDisplayName(originalValues.displayName);
+    setTheme(originalValues.theme);
+    setLanguage(originalValues.language);
+    setTimezone(originalValues.timezone);
+    setError(null);
+    setSuccess(null);
+  };
 
   return (
     <div className="max-w-3xl space-y-6">
-      <Card className="bg-white">
-        <CardHeader><CardTitle>General System</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <Input label="Display Name" defaultValue={getUserDisplayName()} />
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-ink">Email</label>
-            <input
-              type="email"
-              value={user?.email || ''}
-              disabled
-              className="w-full px-4 py-2 rounded-lg border border-ink/10 bg-paleslate/30 text-ink/60 cursor-not-allowed"
-            />
-          </div>
-          <div className="flex items-center justify-between p-4 bg-paleslate rounded-lg border border-ink/5">
-            <span className="text-sm font-semibold text-ink">Interface Theme</span>
-            <div className="text-xs bg-white px-3 py-1 rounded-full text-ink font-bold border border-ink/10 shadow-sm">Paper White</div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-ink">Language</label>
-              <select className="w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors">
-                <option>English (US)</option>
-                <option>English (UK)</option>
-                <option>Spanish</option>
-                <option>French</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-ink">Timezone</label>
-              <select className="w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors">
-                <option>UTC</option>
-                <option>GMT</option>
-                <option>America/New_York</option>
-                <option>Europe/London</option>
-              </select>
+      {/* Success Message */}
+      {success && (
+        <div className="bg-azure/10 border border-azure/20 rounded-lg p-4 flex items-start justify-between">
+          <div className="flex items-start gap-3 flex-1">
+            <Check className="text-azure flex-shrink-0 mt-0.5" size={20} />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-azure mb-1">Success</p>
+              <p className="text-sm text-ink/80">{success}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-      <Card className="bg-white">
-        <CardHeader><CardTitle>API Gateway</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <Input type="password" label="OpenAI API Key" placeholder="sk-..." />
-          <Input type="password" label="Anthropic API Key" placeholder="sk-..." />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-ink">Default Model</label>
-              <select className="w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors">
-                <option>gpt-4.1</option>
-                <option>gpt-4o</option>
-                <option>claude-3.5-sonnet</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-ink">Usage Guardrail</label>
-              <select className="w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors">
-                <option>Standard (recommended)</option>
-                <option>Conservative</option>
-                <option>Experimental</option>
-              </select>
+          <Button variant="ghost" size="sm" onClick={() => setSuccess(null)}>
+            <X size={16} />
+          </Button>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-highlight/10 border border-highlight/20 rounded-lg p-4 flex items-start justify-between">
+          <div className="flex items-start gap-3 flex-1">
+            <AlertCircle className="text-highlight flex-shrink-0 mt-0.5" size={20} />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-highlight mb-1">Error</p>
+              <p className="text-sm text-ink/80">{error}</p>
             </div>
           </div>
-          <div className="flex items-center justify-between p-4 bg-paleslate rounded-lg border border-ink/5">
-            <div>
-              <p className="text-sm font-semibold text-ink">Test Mode</p>
-              <p className="text-xs text-ink/60">Route calls to sandbox providers first</p>
+          <Button variant="ghost" size="sm" onClick={() => setError(null)}>
+            <X size={16} />
+          </Button>
+        </div>
+      )}
+
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-ink">Settings</h1>
+        <div className="flex gap-3">
+          {hasChanges() && (
+            <Button variant="outline" onClick={handleReset} disabled={saving}>
+              Reset
+            </Button>
+          )}
+          <Button onClick={handleSave} isLoading={saving} disabled={!hasChanges() || saving || loading}>
+            Save Changes
+          </Button>
+        </div>
+      </div>
+
+      <Card className="bg-white shadow-sm">
+        <CardHeader className="border-b border-ink/5">
+          <CardTitle className="text-lg">General Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-6">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-paleslate rounded w-3/4"></div>
+              <div className="h-10 bg-paleslate rounded"></div>
+              <div className="h-4 bg-paleslate rounded w-1/2"></div>
+              <div className="h-10 bg-paleslate rounded"></div>
             </div>
-            <Button variant="outline" size="sm" type="button" className="text-xs px-3 py-1 h-8">Enable</Button>
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="bg-white">
-        <CardHeader><CardTitle>Notifications</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          <SettingToggle
-            label="Weekly summaries"
-            description="Usage recap, alignment score, and suggestions"
-            defaultChecked
-          />
-          <SettingToggle
-            label="Security alerts"
-            description="Notify on new device sign-ins or key updates"
-            defaultChecked
-          />
-          <SettingToggle
-            label="Collaboration updates"
-            description="Changes to shared identities or personas"
-          />
-          <SettingToggle
-            label="Billing thresholds"
-            description="Alert when spend crosses configured limits"
-            defaultChecked
-          />
-        </CardContent>
-      </Card>
-      <Card className="bg-white">
-        <CardHeader><CardTitle>Security & Access</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input label="Session timeout (mins)" type="number" defaultValue={45} min={5} />
-            <Input label="IP allowlist" placeholder="e.g. 192.168.0.0/24" />
-          </div>
-          <SettingToggle
-            label="Two-factor authentication"
-            description="Require TOTP for all console logins"
-            disabled
-          />
-          <SettingToggle
-            label="Device approvals"
-            description="Flag sign-ins from unknown devices for review"
-            defaultChecked
-          />
-          <SettingToggle
-            label="Audit logging"
-            description="Track identity edits, exports, and API key changes"
-            defaultChecked
-          />
-        </CardContent>
-      </Card>
-      <Card className="bg-white">
-        <CardHeader><CardTitle>Data & Privacy</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-ink">Data retention</label>
-              <select className="w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors">
-                <option>30 days</option>
-                <option>90 days</option>
-                <option>180 days</option>
-                <option>1 year</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-ink">PII handling</label>
-              <select className="w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors">
-                <option>Mask sensitive entities</option>
-                <option>Redact before storage</option>
-                <option>Store raw (not recommended)</option>
-              </select>
-            </div>
-          </div>
-          <SettingToggle
-            label="Training opt-out"
-            description="Exclude project data from model fine-tuning"
-            defaultChecked
-          />
-          <SettingToggle
-            label="Auto-delete histories"
-            description="Drop transform history after retention window"
-            defaultChecked
-          />
-          <div className="flex items-center justify-between p-4 bg-paleslate rounded-lg border border-ink/5">
-            <div>
-              <p className="text-sm font-semibold text-ink">Export my data</p>
-              <p className="text-xs text-ink/60">Download identities, personas, and logs as JSON</p>
-            </div>
-            <Button variant="outline" size="sm" type="button" className="text-xs px-3 py-1 h-8">Prepare export</Button>
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="bg-white">
-        <CardHeader><CardTitle>Collaboration & Integrations</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <SettingToggle
-            label="Shared workspace mode"
-            description="Allow teammates to reuse approved identities"
-            defaultChecked
-          />
-          <SettingToggle
-            label="Slack notifications"
-            description="Send identity changes to #identity-ops"
-          />
-          <SettingToggle
-            label="Git versioning"
-            description="Track identity JSON in your connected repo"
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input label="Webhook URL" placeholder="https://hooks.example.com/identity" />
-            <Input label="Integration note" placeholder="Describe how this is used" />
-          </div>
+          ) : (
+            <>
+              <Input
+                label="Display Name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Enter your display name"
+              />
+              
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-ink">Email</label>
+                <input
+                  type="email"
+                  value={user?.email || ''}
+                  disabled
+                  className="w-full px-4 py-2 rounded-lg border border-ink/10 bg-paleslate/30 text-ink/60 cursor-not-allowed"
+                />
+                <p className="text-xs text-ink/50">Email cannot be changed</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-ink">Interface Theme</label>
+                <select
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value)}
+                  className="w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors focus:bg-white"
+                >
+                  <option>Paper White</option>
+                  <option>Dark Mode</option>
+                  <option>Auto</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-ink">Language</label>
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors focus:bg-white"
+                  >
+                    <option>English (US)</option>
+                    <option>English (UK)</option>
+                    <option>Spanish</option>
+                    <option>French</option>
+                    <option>German</option>
+                    <option>Italian</option>
+                    <option>Portuguese</option>
+                    <option>Japanese</option>
+                    <option>Chinese (Simplified)</option>
+                    <option>Chinese (Traditional)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-ink">Timezone</label>
+                  <select
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="w-full rounded-md border border-ink/10 bg-paleslate px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure transition-colors focus:bg-white"
+                  >
+                    <option>UTC</option>
+                    <option>GMT</option>
+                    <option>America/New_York</option>
+                    <option>America/Chicago</option>
+                    <option>America/Denver</option>
+                    <option>America/Los_Angeles</option>
+                    <option>Europe/London</option>
+                    <option>Europe/Paris</option>
+                    <option>Europe/Berlin</option>
+                    <option>Asia/Tokyo</option>
+                    <option>Asia/Shanghai</option>
+                    <option>Australia/Sydney</option>
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

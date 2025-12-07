@@ -19,7 +19,10 @@ create table profiles (
   email text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   full_name text,
-  onboarding_completed boolean default false not null
+  onboarding_completed boolean default false not null,
+  theme text default 'Paper White',
+  language text default 'English (US)',
+  timezone text default 'UTC'
 );
 
 -- 2. Identities Table (Stores the active identity_json)

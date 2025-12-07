@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 
 const ALLOWED_ORIGINS = [
-    'https://yourdomain.com',
-    'https://www.yourdomain.com',
-    ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : []),
-];
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+    process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : null,
+    'http://localhost:3000',
+].filter(Boolean) as string[];
 
 export function corsHeaders(origin: string | null): Record<string, string> {
     if (!origin || !ALLOWED_ORIGINS.includes(origin)) {

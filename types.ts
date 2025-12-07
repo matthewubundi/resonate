@@ -171,3 +171,36 @@ export type IdentityUpdate = Database['public']['Tables']['identities']['Update'
 export type Transformation = Database['public']['Tables']['transformations']['Row'];
 export type TransformationInsert = Database['public']['Tables']['transformations']['Insert'];
 export type TransformationUpdate = Database['public']['Tables']['transformations']['Update'];
+
+export interface GeneratedIdentity {
+  tone: string;
+  tone_description?: string; // Detailed description of the tone (UI field)
+  description?: string; // Database field (maps to tone_description)
+  formality: string;
+  directness: string;
+  sentence_structure?: {
+    typical_length: string;
+    patterns: string[];
+  };
+  vocabulary: {
+    frequent_words: string[];
+    avoid_words: string[];
+  };
+  values: string[];
+  ethics?: string[];
+  humour?: string;
+  formatting_preferences?: {
+    default: string;
+    structure: string;
+    prefers_summaries?: boolean;
+  };
+  decision_style?: string;
+  rules: {
+    always: string[];
+    never: string[];
+  };
+  _disabled_rules?: {
+    always: string[];
+    never: string[];
+  };
+}

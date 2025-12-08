@@ -20,7 +20,7 @@ You can authenticate using either:
 ### 1. Transform Text
 **Endpoint**: `POST /api/transform`
 
-Transforms input text to match the user's active identity using a self-healing correction loop.
+Transforms input text to match the user's active identity using a self-healing correction loop. Now supports multi-model selection and contextual instructions.
 
 #### Headers
 - `Authorization`: Bearer <token> (optional if cookie is present)
@@ -31,6 +31,8 @@ Transforms input text to match the user's active identity using a self-healing c
 |---|---|---|---|
 | `inputText` | string | Yes | The raw text to be rewritten. |
 | `temperature` | number | No | Creativity control (0.0 - 1.5). Default: 0.7. |
+| `instructions` | string | No | Specific contextual instructions for this run (e.g., "Make it punchy for Slack"). |
+| `model_id` | string | No | The LLM to use: `gpt-4o-mini`, `gpt-4o`, `gemini-1.5-flash`. |
 
 #### Response
 **Status**: `200 OK`
@@ -42,15 +44,16 @@ Transforms input text to match the user's active identity using a self-healing c
     "reasoning": "Matches tone and vocabulary well.",
     "suggestions": ""
   },
-  "attempts": 1
+  "attempts": 1,
+  "used_memory": true
 }
 ```
 
 #### Errors
 - `401 Unauthorized`: User not logged in.
-- `400 Bad Request`: Missing `inputText`.
-- `404 Not Found`: User has no active identity (needs onboarding).
-- `500 Internal Server Error`: Transformation failed or OpenAI error.
+- `400 Bad Request`: Missing `inputText` or validation error.
+- `404 Not Found`: User has no active identity.
+- `429 Too Many Requests`: Rate limit exceeded.
 
 ---
 
@@ -59,12 +62,7 @@ Transforms input text to match the user's active identity using a self-healing c
 
 Analyzes raw user input (values, vocabulary, writing samples) to generate a structured Identity JSON profile.
 
-#### Headers
-- `Authorization`: Bearer <token> (optional if cookie is present)
-- `Content-Type`: `application/json`
-
 #### Request Body
-Accepts a JSON object containing the user's raw inputs. Common fields included:
 | Field | Type | Description |
 |---|---|---|
 | `values` | any | User's core values and rules. |
@@ -78,16 +76,23 @@ Accepts a JSON object containing the user's raw inputs. Common fields included:
 ```json
 {
   "data": {
-    "tone": "Professional, Direct",
-    "formality": "High",
-    "directness": "To the point",
-    "sentence_structure": { ... },
-    "vocabulary": { ... },
+    "tone": "Professional, Direct, Empathetic",
+    "tone_description": "Generally formal but uses emojis in internal chats.",
+    "formality": "Neutral",
+    "directness": "Balanced",
+    "sentence_structure": {
+        "typical_length": "Medium",
+        "patterns": ["Starts sentences with verbs"]
+    },
+    "vocabulary": { 
+        "frequent_words": ["..."],
+        "avoid_words": ["..."]
+    },
     "values": [ ... ],
     "ethics": [ ... ],
-    "humour": "...",
+    "humour": "Dry, Sarcastic",
     "formatting_preferences": { ... },
-    "decision_style": "...",
+    "decision_style": "Analytical",
     "rules": {
       "always": [ ... ],
       "never": [ ... ]
@@ -96,19 +101,55 @@ Accepts a JSON object containing the user's raw inputs. Common fields included:
 }
 ```
 
-#### Errors
-- `401 Unauthorized`: User not logged in.
-- `500 Internal Server Error`: Generation failed.
+---
+
+### 3. Persona Management
+
+#### List Personas
+**Endpoint**: `GET /api/personas/list`
+Retrieves all identity personas for the authenticated user.
+
+#### Create Persona
+**Endpoint**: `POST /api/personas/create`
+Creates a new persona.
+- `baseConfig`: 'clone' (to copy active) or 'default'.
+- `name`: Name of the new persona.
+
+#### Duplicate Persona
+**Endpoint**: `POST /api/personas/duplicate`
+Duplicates a specific persona by ID.
+**Body**: `{ "id": "uuid-of-source-persona" }`
 
 ---
 
-### 3. Get Documentation
-**Endpoint**: `GET /api/docs`
+### 4. Data Export
+**Endpoint**: `GET /api/settings/export`
 
-Retrieves all markdown documentation files from the server's `docs` directory. This is used to populate the internal Documentation page.
+Downloads all user data (profiles, identities, memories, transformations) in a JSON format. Cleaned of internal system fields.
 
 #### Response
 **Status**: `200 OK`
+```json
+{
+  "profiles": [ ... ],
+  "identities": [ ... ],
+  "memories": [ ... ],
+  "transformations": [ ... ],
+  "metadata": {
+      "export_date": "2024-12-08T...",
+      "version": "1.0"
+  }
+}
+```
+
+---
+
+### 5. Get Documentation
+**Endpoint**: `GET /api/docs`
+
+Retrieves all markdown documentation files from the server's `docs` directory.
+
+#### Response
 ```json
 [
   {
@@ -116,11 +157,6 @@ Retrieves all markdown documentation files from the server's `docs` directory. T
     "title": "API Specification",
     "content": "# API Specification...",
     "category": "general"
-  },
-  ...
+  }
 ]
 ```
-
-#### Errors
-- `404 Not Found`: Documentation directory missing.
-- `500 Internal Server Error`: Failed to read files.

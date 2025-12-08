@@ -143,7 +143,7 @@ export async function POST(req: Request) {
             {
               role: "user",
               // USES NEW HELPER FUNCTION
-              content: buildEvaluationPrompt(identityRecord.identity_json, currentText)
+              content: buildEvaluationPrompt(identityRecord.identity_json, inputText, instructions, currentText)
             }
           ],
           response_format: { type: "json_object" }

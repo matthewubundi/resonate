@@ -1,8 +1,8 @@
 # System Architecture Document
 
 **Project:** Resonate  
-**Version:** 0.0.0  
-**Last Updated:** December 4, 2025  
+**Version:** 0.2.0  
+**Last Updated:** December 8, 2025  
 **Status:** Active Development
 
 ---
@@ -32,15 +32,16 @@
 
 ## Executive Summary
 
-**Resonate** is an AI-powered web application designed to help users preserve and maintain their unique communication identity across different platforms and contexts. The system leverages modern web technologies, secure authentication, and AI capabilities to analyze, store, and transform user communication patterns while maintaining their authentic voice.
+**Resonate** is an AI-powered web application designed to help users preserve and maintain their unique communication identity across different platforms and contexts. The system leverages modern web technologies, secure authentication, and multi-model AI capabilities to analyze, store, and transform user communication patterns while maintaining their authentic voice.
 
 ### Key Features
 - Secure user authentication with multiple providers
-- AI-powered identity analysis and transformation
+- Multi-Model AI support (OpenAI + Gemini)
 - Real-time dashboard analytics
-- Identity profile management
-- Communication pattern tracking
-- Multi-persona support
+- Identity profile management (v1.1 Schema)
+- Context-aware text transformation (RAG + Instructions)
+- Multi-persona support with cloning
+- Data export functionality
 
 ---
 
@@ -80,7 +81,7 @@ The system is built on the following core principles:
 ## Technology Stack
 
 ### Frontend Framework
-- **Next.js 16.0.7**: React framework with server-side rendering
+- **Next.js 16.0.7**: React framework with App Router
 - **React 19.2.1**: Component-based UI library
 - **TypeScript 5.8.2**: Type-safe JavaScript
 
@@ -101,6 +102,9 @@ The system is built on the following core principles:
   - Database (PostgreSQL)
   - Real-time subscriptions
   - Storage
+- **AI SDKs**:
+  - `openai`: For GPT-4o / Embbeddings
+  - `@google/generative-ai`: For Gemini Models
 
 ### Development Tools
 - **Vite 6.2.0**: Build tool
@@ -117,7 +121,7 @@ The system is built on the following core principles:
 ┌─────────────────────────────────────────────────────────────┐
 │                        Client Layer                          │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │              Next.js Application                      │   │
+│  │              Next.js App Router                      │   │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────┐     │   │
 │  │  │   Pages    │  │ Components │  │  Contexts  │     │   │
 │  │  └────────────┘  └────────────┘  └────────────┘     │   │
@@ -127,9 +131,9 @@ The system is built on the following core principles:
 ┌─────────────────────────────────────────────────────────────┐
 │                     API/Service Layer                        │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │              Supabase Services                        │   │
+│  │     Next.js API Routes / Supabase Services           │   │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────┐     │   │
-│  │  │    Auth    │  │  Database  │  │  Storage   │     │   │
+│  │  │    Auth    │  │ LLM Factory│  │  Memory    │     │   │
 │  │  └────────────┘  └────────────┘  └────────────┘     │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -139,7 +143,7 @@ The system is built on the following core principles:
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │            PostgreSQL Database                        │   │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────┐     │   │
-│  │  │   Users    │  │  Profiles  │  │   Memory   │     │   │
+│  │  │ Identities │  │ Transforms │  │   Memory   │     │   │
 │  │  └────────────┘  └────────────┘  └────────────┘     │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -149,22 +153,22 @@ The system is built on the following core principles:
 
 #### 1. Presentation Layer
 - **Responsibility**: User interface and user experience
-- **Components**: React components, pages, layouts
+- **Components**: React server/client components, layouts
 - **Technologies**: React, Tailwind CSS, Framer Motion
 
 #### 2. Application Layer
 - **Responsibility**: Business logic and state management
-- **Components**: Contexts, hooks, utilities
+- **Components**: Contexts, hooks, utilities, `LLMFactory`
 - **Technologies**: React Context, custom hooks
 
 #### 3. Service Layer
-- **Responsibility**: External service integration
-- **Components**: Supabase client, API calls
-- **Technologies**: Supabase SDK
+- **Responsibility**: External service integration (AI, Database)
+- **Components**: Supabase client, OpenAI/Gemini SDKs
+- **Technologies**: Supabase SDK, AI SDKs
 
 #### 4. Data Layer
 - **Responsibility**: Data persistence and retrieval
-- **Components**: Database, storage
+- **Components**: Database, storage, Vector Store (pgvector)
 - **Technologies**: PostgreSQL, Supabase Storage
 
 ---
@@ -176,122 +180,68 @@ The system is built on the following core principles:
 ```
 resonate/
 ├── app/                          # Next.js App Router
-│   ├── auth/                     # Auth-related routes
-│   │   └── callback/             # OAuth callback handler
+│   ├── api/                      # API Routes
+│   │   ├── auth/                 # Auth handlers
+│   │   ├── onboarding/           # Identity generation
+│   │   ├── personas/             # Persona management
+│   │   ├── transform/            # Transformation logic
+│   │   └── settings/             # Export/Settings
+│   ├── auth/                     # Auth Data Pages
+│   ├── dashboard/                # Main app views
 │   ├── globals.css               # Global styles
 │   ├── layout.tsx                # Root layout
-│   └── page.tsx                  # Home page
+│   └── page.tsx                  # Landing page
 │
 ├── components/                   # Reusable UI components
-│   ├── Components.tsx            # Shared UI components
-│   └── Layout.tsx                # Layout components
+│   ├── ui/                       # Design system components
+│   └── ...                       # Feature components
 │
 ├── contexts/                     # React Context providers
 │   └── AuthContext.tsx           # Authentication context
 │
 ├── hooks/                        # Custom React hooks
-│   └── useAuth.ts                # Authentication hook
-│
-├── lib/                          # Utility libraries
-│   └── supabase.ts               # Supabase client config
-│
-├── pages/                        # Application pages
-│   ├── Dashboard.tsx             # Main dashboard
-│   ├── Landing.tsx               # Landing page
-│   ├── Login.tsx                 # Login page
-│   ├── Signup.tsx                # Registration page
-│   ├── Onboarding.tsx            # User onboarding
-│   └── Transform.tsx             # Content transformation
+├── lib/                          # Core libraries
+│   ├── ai.ts                     # AI helper functions
+│   ├── llm/                      # LLM Factory & Providers
+│   ├── prompts.ts                # System prompts
+│   └── supabase.ts               # Supabase config
 │
 ├── docs/                         # Documentation
-│   └── SYSTEM_ARCHITECTURE.md    # This document
-│
-├── App.tsx                       # Main application component
 ├── types.ts                      # TypeScript type definitions
-├── constants.tsx                 # Application constants
 └── package.json                  # Dependencies
-```
-
-### Component Hierarchy
-
-```
-App (Root)
-├── AuthProvider (Context)
-│   └── AppContent
-│       ├── Layout
-│       │   ├── Navbar
-│       │   └── Footer
-│       │
-│       └── Page Router
-│           ├── Landing (Public)
-│           ├── Login (Public)
-│           ├── Signup (Public)
-│           ├── Onboarding (Semi-Protected)
-│           └── Protected Routes
-│               ├── Dashboard
-│               ├── Transform
-│               ├── Editor
-│               ├── Analytics
-│               ├── Memory
-│               ├── Personas
-│               └── Settings
 ```
 
 ---
 
 ## Data Architecture
 
-### Data Models
+### Data Models (TypeScript)
 
-#### User Profile
+#### IdentityProfile (v1.1)
 ```typescript
 interface IdentityProfile {
-  id: string;
-  name: string;
-  version: string;
-  tone: string[];
+  tone: string;
+  tone_description: string;
+  formality: "Casual" | "Neutral" | "Formal";
+  directness: "Concise" | "Balanced" | "Elaborate";
   vocabulary: {
-    frequent: string[];
-    avoid: string[];
+    frequent_words: string[];
+    avoid_words: string[];
   };
   values: string[];
   rules: {
     always: string[];
     never: string[];
   };
-  alignmentScore: number;
-}
-```
-
-#### Transformation Item
-```typescript
-interface TransformationItem {
-  id: string;
-  date: string;
-  preview: string;
-  score: number;
-}
-```
-
-#### Memory Item
-```typescript
-interface MemoryItem {
-  id: string;
-  title: string;
-  content: string;
-  isActive: boolean;
-  dateAdded: string;
-}
-```
-
-#### Persona
-```typescript
-interface Persona {
-  id: string;
-  name: string;
-  description: string;
-  isActive: boolean;
-  avatarColor: string;
+  sentence_structure: {
+    typical_length: string;
+    patterns: string[];
+  };
+  formatting_preferences: {
+    default: string;
+    structure: string;
+    prefers_summaries: boolean;
+  };
 }
 ```
 
@@ -300,58 +250,45 @@ interface Persona {
 ```sql
 -- Users table (managed by Supabase Auth)
 auth.users
-  - id (uuid, primary key)
-  - email (text)
-  - encrypted_password (text)
-  - email_confirmed_at (timestamp)
-  - created_at (timestamp)
-  - updated_at (timestamp)
-  - user_metadata (jsonb)
 
--- Identity Profiles
-public.identity_profiles
+-- Identities Table (Core Persona Data)
+public.identities
   - id (uuid, primary key)
-  - user_id (uuid, foreign key → auth.users)
-  - name (text)
-  - version (text)
-  - tone (text[])
-  - vocabulary (jsonb)
-  - values (text[])
-  - rules (jsonb)
-  - alignment_score (numeric)
-  - created_at (timestamp)
-  - updated_at (timestamp)
-
--- Transformations
-public.transformations
-  - id (uuid, primary key)
-  - user_id (uuid, foreign key → auth.users)
-  - profile_id (uuid, foreign key → identity_profiles)
-  - original_content (text)
-  - transformed_content (text)
-  - score (numeric)
-  - created_at (timestamp)
-
--- Memory Items
-public.memory_items
-  - id (uuid, primary key)
-  - user_id (uuid, foreign key → auth.users)
-  - title (text)
-  - content (text)
-  - is_active (boolean)
-  - created_at (timestamp)
-  - updated_at (timestamp)
-
--- Personas
-public.personas
-  - id (uuid, primary key)
-  - user_id (uuid, foreign key → auth.users)
+  - user_id (uuid, foreign key)
   - name (text)
   - description (text)
+  - identity_json (jsonb) -- Stores IdentityProfile
   - is_active (boolean)
-  - avatar_color (text)
+  - last_used_at (timestamp)
   - created_at (timestamp)
-  - updated_at (timestamp)
+
+-- Transformations (Usage Logs)
+public.transformations
+  - id (uuid, primary key)
+  - user_id (uuid, foreign key)
+  - input_text (text)
+  - final_output (text)
+  - model_used (text)
+  - alignment_score (numeric)
+  - processing_time_ms (integer)
+  - created_at (timestamp)
+
+-- Memories (RAG Knowledge Base)
+public.memories
+  - id (uuid, primary key)
+  - user_id (uuid, foreign key)
+  - content (text)
+  - embedding (vector)
+  - is_active (boolean)
+  - created_at (timestamp)
+
+-- Identity Versions (History)
+public.identity_versions
+  - id (uuid, primary key)
+  - identity_id (uuid, foreign key)
+  - identity_json (jsonb)
+  - change_summary (text)
+  - created_at (timestamp)
 ```
 
 ---
@@ -367,398 +304,40 @@ See [AUTH_ARCHITECTURE.md](./AUTH_ARCHITECTURE.md) for detailed authentication f
 2. **OAuth - Google**: Social authentication
 3. **OAuth - GitHub**: Developer-focused authentication
 
-#### Authentication Flow
-
-```
-User Request → Login/Signup Page
-    ↓
-Form Submission → useAuth Hook
-    ↓
-AuthContext → Supabase Client
-    ↓
-Supabase Auth API
-    ↓
-Session Created → Token Issued
-    ↓
-Context State Updated
-    ↓
-Protected Route Access Granted
-```
-
-#### Session Management
-- **Token Storage**: HTTP-only cookies (secure)
-- **Token Refresh**: Automatic via Supabase
-- **Session Duration**: Configurable (default: 1 hour)
-- **Refresh Token**: 30-day expiration
-
-#### Authorization Levels
-1. **Public**: Landing, Login, Signup
-2. **Authenticated**: Dashboard, Transform, Settings
-3. **Admin**: (Future) User management, analytics
-
 ---
 
 ## API Architecture
 
-### Supabase API Integration
+### Key Endpoints
 
-#### Authentication Endpoints
-```
-POST /auth/v1/signup          - User registration
-POST /auth/v1/token           - User login
-POST /auth/v1/logout          - User logout
-POST /auth/v1/recover         - Password reset
-GET  /auth/v1/user            - Get current user
-GET  /auth/v1/authorize       - OAuth initiation
-GET  /auth/v1/callback        - OAuth callback
-```
+#### AI Services
+- `POST /api/transform` - Text transformation (Supports Multi-Model & Instructions)
+- `POST /api/onboarding/generate` - Generate Identity from raw input
 
-#### Database Endpoints (Auto-generated)
-```
-GET    /rest/v1/identity_profiles    - List profiles
-POST   /rest/v1/identity_profiles    - Create profile
-PATCH  /rest/v1/identity_profiles    - Update profile
-DELETE /rest/v1/identity_profiles    - Delete profile
-```
-
-### API Client Configuration
-
-```typescript
-// lib/supabase.ts
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-```
+#### Data Management
+- `GET /api/personas/list` - List user personas
+- `POST /api/personas/create` - Create/Clone personas
+- `GET /api/settings/export` - Export user data
 
 ---
 
 ## Frontend Architecture
 
-### Page Structure
+### App Router Structure
 
-#### Landing Page (`pages/Landing.tsx`)
-- Hero section with value proposition
-- Feature highlights
-- Call-to-action buttons
-- Responsive design
-
-#### Dashboard (`pages/Dashboard.tsx`)
-- Identity profile overview
-- Recent transformations
-- Analytics charts
-- Quick actions
-
-#### Transform Page (`pages/Transform.tsx`)
-- Content input area
-- Transformation controls
-- Preview pane
-- History sidebar
-
-#### Login/Signup (`pages/Login.tsx`, `pages/Signup.tsx`)
-- Form validation
-- Error handling
-- OAuth buttons
-- Password strength indicator
+- `app/page.tsx`: Landing Page (Public)
+- `app/login/page.tsx`: Auth Page
+- `app/dashboard/page.tsx`: Main User Dashboard
+- `app/transform/page.tsx`: Transformation Interface
+- `app/personas/page.tsx`: Persona Management
 
 ### Component Design Patterns
 
-#### 1. Compound Components
-```typescript
-<Card>
-  <Card.Header>Title</Card.Header>
-  <Card.Body>Content</Card.Body>
-  <Card.Footer>Actions</Card.Footer>
-</Card>
-```
+#### 1. Server Components
+Used for data fetching and layout structure where interactivity is not needed.
 
-#### 2. Render Props
-```typescript
-<DataFetcher
-  render={(data, loading, error) => (
-    loading ? <Spinner /> : <DataDisplay data={data} />
-  )}
-/>
-```
-
-#### 3. Custom Hooks
-```typescript
-const { user, loading, signIn, signOut } = useAuth();
-```
-
----
-
-## State Management
-
-### Context-Based State
-
-#### AuthContext
-```typescript
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  signInWithGithub: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-}
-```
-
-### Local Component State
-- Form inputs
-- UI toggles
-- Temporary data
-
-### Server State (Supabase)
-- User data
-- Identity profiles
-- Transformations
-- Persistent settings
-
----
-
-## Routing & Navigation
-
-### Page Types
-```typescript
-type PageView =
-  | 'landing'      // Public landing page
-  | 'login'        // Authentication
-  | 'signup'       // Registration
-  | 'onboarding'   // Initial setup
-  | 'dashboard'    // Main dashboard
-  | 'transform'    // Content transformation
-  | 'editor'       // Profile editor
-  | 'analytics'    // Analytics view
-  | 'memory'       // Memory management
-  | 'personas'     // Persona management
-  | 'settings';    // User settings
-```
-
-### Route Protection
-
-```typescript
-const protectedPages: PageView[] = [
-  'dashboard',
-  'transform',
-  'editor',
-  'analytics',
-  'memory',
-  'personas',
-  'settings'
-];
-
-const handleNavigate = (page: PageView) => {
-  if (protectedPages.includes(page) && !user) {
-    setCurrentPage('login');
-    return;
-  }
-  setCurrentPage(page);
-};
-```
-
----
-
-## Security Architecture
-
-### Security Layers
-
-#### 1. Client-Side Security
-- Input validation
-- XSS prevention
-- CSRF protection
-- Secure form handling
-
-#### 2. Network Security
-- HTTPS enforcement
-- Secure headers
-- CORS configuration
-- Rate limiting (Supabase)
-
-#### 3. Authentication Security
-- Password hashing (bcrypt)
-- JWT tokens
-- Secure session storage
-- OAuth 2.0 compliance
-
-#### 4. Database Security
-- Row Level Security (RLS)
-- Prepared statements
-- SQL injection prevention
-- Encrypted storage
-
-### Environment Variables
-
-```env
-# Public (client-side accessible)
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxx...
-
-# Private (server-side only)
-SUPABASE_SERVICE_ROLE_KEY=eyJxxx...
-```
-
----
-
-## Performance Considerations
-
-### Optimization Strategies
-
-#### 1. Code Splitting
-- Next.js automatic code splitting
-- Dynamic imports for heavy components
-- Route-based splitting
-
-#### 2. Asset Optimization
-- Image optimization (Next.js Image)
-- CSS minification
-- JavaScript bundling
-
-#### 3. Caching
-- Browser caching
-- API response caching
-- Static page generation
-
-#### 4. Lazy Loading
-- Component lazy loading
-- Image lazy loading
-- Data pagination
-
-#### 5. Performance Monitoring
-- Core Web Vitals tracking
-- Load time monitoring
-- User interaction metrics
-
----
-
-## Deployment Architecture
-
-### Deployment Strategy
-
-#### Development Environment
-```
-Local Machine
-├── npm run dev (Next.js dev server)
-├── Hot module replacement
-└── Local Supabase instance (optional)
-```
-
-#### Staging Environment
-```
-Vercel Preview Deployment
-├── Automatic PR deployments
-├── Preview URLs
-└── Staging Supabase project
-```
-
-#### Production Environment
-```
-Vercel Production
-├── Optimized build
-├── CDN distribution
-├── Production Supabase project
-└── Custom domain
-```
-
-### CI/CD Pipeline
-
-```
-Git Push → GitHub
-    ↓
-Trigger Vercel Build
-    ↓
-Run Tests (if configured)
-    ↓
-Build Next.js App
-    ↓
-Deploy to Vercel
-    ↓
-Update DNS/CDN
-    ↓
-Production Live
-```
-
-### Environment Configuration
-
-```
-Development:
-  - .env.local (gitignored)
-  - Local database
-  - Debug mode enabled
-
-Staging:
-  - Vercel environment variables
-  - Staging database
-  - Error tracking enabled
-
-Production:
-  - Vercel environment variables
-  - Production database
-  - Performance monitoring
-  - Error tracking
-```
-
----
-
-## Monitoring & Logging
-
-### Monitoring Strategy
-
-#### 1. Application Monitoring
-- Error tracking (Sentry/similar)
-- Performance monitoring
-- User analytics
-
-#### 2. Infrastructure Monitoring
-- Vercel analytics
-- Supabase dashboard
-- Uptime monitoring
-
-#### 3. User Monitoring
-- Session tracking
-- Feature usage
-- Conversion funnels
-
-### Logging Levels
-
-```
-ERROR   - Critical failures
-WARN    - Potential issues
-INFO    - General information
-DEBUG   - Detailed debugging (dev only)
-```
-
----
-
-## Scalability Considerations
-
-### Current Capacity
-- **Users**: Unlimited (Supabase managed)
-- **Storage**: Based on Supabase plan
-- **Bandwidth**: Vercel limits apply
-
-### Scaling Strategy
-
-#### Horizontal Scaling
-- Serverless functions (automatic)
-- CDN edge caching
-- Database read replicas (Supabase Pro)
-
-#### Vertical Scaling
-- Upgrade Supabase plan
-- Optimize database queries
-- Implement caching layers
-
-#### Future Considerations
-- Microservices architecture
-- Dedicated AI service
-- Message queue for async tasks
-- Redis for session management
+#### 2. Client Components (`'use client'`)
+Used for interactive forms, AI streaming, and dynamic UI updates (charts).
 
 ---
 
@@ -766,38 +345,33 @@ DEBUG   - Detailed debugging (dev only)
 
 ### Planned Features
 
-#### Phase 1: Core Enhancements
-- [ ] Real-time collaboration
-- [ ] Advanced analytics dashboard
-- [ ] Export/import functionality
+#### Phase 1: Core Enhancements (Active)
+- [x] Real-time collaboration
+- [x] Advanced analytics dashboard
+- [x] Export/import functionality
 - [ ] Mobile responsive improvements
 
-#### Phase 2: AI Integration
-- [ ] Custom AI model training
-- [ ] Advanced NLP analysis
-- [ ] Sentiment analysis
+#### Phase 2: AI Integration (Active)
+- [x] Multi-Model Support (OpenAI + Gemini)
+- [x] Contextual Refinements
+- [ ] Custom AI model fine-tuning
 - [ ] Style transfer algorithms
 
 #### Phase 3: Platform Expansion
 - [ ] Browser extension
 - [ ] Mobile applications (React Native)
 - [ ] API for third-party integrations
-- [ ] Webhook support
 
 #### Phase 4: Enterprise Features
 - [ ] Team collaboration
 - [ ] Admin dashboard
 - [ ] Usage analytics
-- [ ] Custom branding
 - [ ] SSO integration
 
 ### Technical Debt
-
-#### Current Items
-- [ ] Add comprehensive unit tests
-- [ ] Implement E2E testing
-- [ ] Add API documentation
-- [ ] Improve error handling
+- [ ] Add comprehensive unit tests (Jest/Vitest)
+- [ ] Implement E2E testing (Playwright)
+- [ ] Improve error handling edge cases
 - [ ] Add loading states
 - [ ] Implement retry logic
 

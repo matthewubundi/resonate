@@ -33,10 +33,17 @@ describe('AI Prompt Builders', () => {
     describe('buildEvaluationPrompt', () => {
         const dummyIdentity = { tone: "Casual" }
 
-        it('includes identity and text to audit', () => {
-            const result = buildEvaluationPrompt(dummyIdentity, "Hey there")
+        it('includes identity, original input, contextual instructions and text to audit', () => {
+            const result = buildEvaluationPrompt(dummyIdentity, "Original text", "Make it funky", "Hey there")
             expect(result).toContain('tone":"Casual')
+            expect(result).toContain("ORIGINAL_INPUT:\nOriginal text")
+            expect(result).toContain("CONTEXTUAL_INSTRUCTIONS:\nMake it funky")
             expect(result).toContain("TEXT_TO_AUDIT:\nHey there")
+        })
+
+        it('handles missing contextual instructions', () => {
+            const result = buildEvaluationPrompt(dummyIdentity, "Original text", undefined, "Hey there")
+            expect(result).toContain("CONTEXTUAL_INSTRUCTIONS:\nNone")
         })
     })
 

@@ -1,18 +1,19 @@
 # Identity JSON Schema Registry
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Status**: Active
 **Purpose**: The single source of truth for the `identity_json` structure stored in the `identities` table. The application relies on this exact structure for the "Identity Construction" and "Transformation" phases.
 
 ---
 
-## 1. Schema Definition (v1.0)
+## 1. Schema Definition (v1.1)
 
 The `identity_json` column MUST adhere to this structure.
 
 ```json
 {
   "tone": "string",
+  "tone_description": "string",
   "formality": "string",
   "directness": "string",
   "sentence_structure": {
@@ -47,9 +48,10 @@ The `identity_json` column MUST adhere to this structure.
 
 | Field | Type | Required | Description | Validation Rule |
 |---|---|---|---|---|
-| `tone` | string | Yes | High-level summary of the user's voice. | Max 100 chars. |
-| `formality` | string | Yes | The level of formal address. | distinct enum: "High", "Medium", "Low". |
-| `directness` | string | Yes | How straight-forward the writing is. | e.g., "To the point", "Narrative". |
+| `tone` | string | Yes | High-level summary of the user's voice. | Comma-separated adjectives. |
+| `tone_description` | string | Yes | Specific description of nuance and exceptions. | e.g. "Formal but uses emojis internally". |
+| `formality` | string | Yes | The level of formal address. | distinct enum: "Casual", "Neutral", "Formal". |
+| `directness` | string | Yes | How straight-forward the writing is. | distinct enum: "Concise", "Balanced", "Elaborate". |
 | `humour` | string | Yes | Analysis of wit/humour. | e.g., "Dry", "None", "Sarcastic". |
 | `decision_style`| string | Yes | How they approach conclusions. | e.g., "Analytical", "Intuitive". |
 
@@ -93,12 +95,13 @@ Changing the `identity_json` structure (e.g., renaming `vocabulary` to `lexicon`
 
 ## 4. Migration Guide
 
-### Current Version: v1.0.0
+### Current Version: v1.1.0
+- Added `tone_description` for better nuance.
+- Standardized `formality` and `directness` enums.
 
-### Future: v1.1.0 (Draft)
+### Future: v1.2.0 (Draft)
 *Proposed changes:*
 - Add `examples: []` array to root to store "Fixed-Shot" examples for the LLM.
-- Split `tone` into `emotional_tone` and `intellectual_tone`.
 
 **Migration Strategy**:
 1.  **Database**: No schema change needed (`jsonb` allows flexibility), but old records need back-filling if new fields are required.

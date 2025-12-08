@@ -25,10 +25,18 @@ ${inputText}`;
 
 export const buildEvaluationPrompt = (
     identityJson: any,
+    originalInput: string,
+    contextualInstructions: string | undefined,
     rewrittenText: string
 ): string => {
     return `IDENTITY:
 ${JSON.stringify(identityJson)}
+
+ORIGINAL_INPUT: 
+${originalInput}
+
+CONTEXTUAL_INSTRUCTIONS: 
+${contextualInstructions || "None"}
 
 TEXT_TO_AUDIT:
 ${rewrittenText}`;

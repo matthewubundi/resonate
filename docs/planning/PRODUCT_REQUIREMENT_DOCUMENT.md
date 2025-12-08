@@ -1,9 +1,9 @@
 # PRODUCT REQUIREMENTS DOCUMENT (PRD)
 
-**Version:** 1.1
+**Version:** 1.2
 **Owner:** Matt Schramm
-**Status:** Draft
-**Last Updated:** 2025-12-03
+**Status:** In Development
+**Last Updated:** 2025-12-08
 
 ---
 
@@ -38,7 +38,7 @@ This aligns with Ubundi’s broader goal: **embedding human identity into automa
 ## **1.5 Design Aesthetics**
 
 * **Philosophy:** Premium, Calm, Hypnotic, Structured.
-* **Visuals:** High-end SaaS aesthetic with Azure Blue accents (`#2563EB`), glassmorphism, smooth gradients, and subtle micro-animations.
+* **Visuals:** High-end SaaS aesthetic with "Paper & Ink" theme (Paper background `#FFFFFF`, Ink text), Azure Blue accents (`#2563EB`), glassmorphism, smooth gradients, and subtle micro-animations.
 * **Experience:** Interactive elements with hover effects, fluid transitions, and a "living" interface feel.
 
 ---
@@ -86,6 +86,7 @@ This aligns with Ubundi’s broader goal: **embedding human identity into automa
 * Baseline analytics
 * **Public Landing Page** (Hero, Features, Onboarding preview, JSON transparency)
 * **Documentation Page** (Markdown-based docs viewer)
+* **Data Export** (Downloadable `identity_json`)
 
 ## **3.2 Out of Scope (for initial release)**
 
@@ -398,6 +399,7 @@ If score < threshold → run correction loop
 # **6.4 LLM Providers**
 
 * OpenAI GPT-4o-mini / GPT-4o
+* Google Gemini (gemini-1.5-flash)
 * Optional: Anthropic Claude 3.5
 
 ### **Cost Target**
@@ -489,13 +491,13 @@ Each transformation must log:
 
 ### Deliverables:
 
-* Onboarding interview
-* identity_json builder
-* transformer engine
-* evaluation loop
-* dashboard
-* identity editor
-* basic analytics
+* Onboarding interview [Done] (includes Voice Calibrator & Smart Analysis)
+* identity_json builder [Done]
+* transformer engine [Done]
+* evaluation loop [Done]
+* dashboard [Done]
+* identity editor [Done] (includes Data Export)
+* basic analytics [In Progress]
 
 ---
 
@@ -504,7 +506,7 @@ Each transformation must log:
 ### Deliverables:
 
 * Memory layer
-* persona system
+* persona system [Partially Implemented - Duplication added]
 * drift detection
 * enhanced analytics
 * versioning UI

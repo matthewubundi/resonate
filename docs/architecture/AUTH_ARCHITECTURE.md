@@ -3,24 +3,18 @@
 ## Component Hierarchy
 
 ```
-App (wrapped with AuthProvider)
-├── AuthContext (provides auth state & methods)
-│   ├── user
-│   ├── session
-│   ├── loading
-│   └── auth methods (signIn, signUp, signOut, etc.)
-│
-└── AppContent
-    ├── Landing Page (public)
-    ├── Login Page (public, uses useAuth)
-    ├── Signup Page (public, uses useAuth)
-    ├── Onboarding Page (semi-protected)
-    └── Protected Pages (requires authentication)
-        ├── Dashboard
-        ├── Transform
-        ├── Editor
-        ├── Analytics
-        └── Settings
+RootLayout (app/layout.tsx)
+├── AuthProvider (Context)
+│   └── Component Tree
+│       ├── Navbar (Client Component)
+│       └── Page Content (Server/Client Components)
+│           ├── Landing Page (app/page.tsx)
+│           ├── Login Page (app/login/page.tsx)
+│           ├── Signup Page (app/signup/page.tsx)
+│           └── Protected Routes
+│               ├── Dashboard (app/dashboard/page.tsx)
+│               ├── Transform (app/transform/page.tsx)
+│               └── ...
 ```
 
 ## Data Flow
@@ -28,17 +22,17 @@ App (wrapped with AuthProvider)
 ### Authentication Flow
 
 ```
-User Action → Component → useAuth Hook → AuthContext → Supabase Client → Supabase API
+User Action → Client Component → useAuth Hook → AuthContext → Supabase Client → Supabase API
                                             ↓
                                     Update Context State
                                             ↓
-                                    Re-render Components
+                                    Re-render Consuming Components
 ```
 
 ### Sign In Example
 
 ```
-1. User enters credentials in Login.tsx
+1. User enters credentials in Login Form
    ↓
 2. handleSubmit() calls signIn(email, password)
    ↓
@@ -56,9 +50,7 @@ User Action → Component → useAuth Hook → AuthContext → Supabase Client �
    ↓
 9. onAuthStateChange listener fires
    ↓
-10. Components re-render with new auth state
-    ↓
-11. App.tsx redirects to dashboard
+10. Router.push('/dashboard')
 ```
 
 ### OAuth Flow
@@ -76,15 +68,11 @@ User Action → Component → useAuth Hook → AuthContext → Supabase Client �
    ↓
 6. User authorizes app
    ↓
-7. Google redirects to /auth/callback
+7. Google redirects to /auth/callback (API Route)
    ↓
-8. Callback page processes auth
+8. Callback route exchanges code for session
    ↓
-9. supabase.auth.getSession()
-   ↓
-10. Session established
-    ↓
-11. Redirect to dashboard
+9. Redirect to dashboard
 ```
 
 ## State Management
@@ -122,34 +110,21 @@ User Action → Component → useAuth Hook → AuthContext → Supabase Client �
 
 ## Route Protection
 
-### Protection Logic
-
-```
-User navigates to protected route
-    ↓
-handleNavigate(page) called
-    ↓
-Check if page is in protectedPages array
-    ↓
-    ├─ YES → Check if user is authenticated
-    │         ├─ YES → Navigate to page
-    │         └─ NO  → Redirect to login
-    │
-    └─ NO  → Navigate to page (public)
-```
-
-### Protected Pages List
+### Middleware Protection (Recommended)
+While client-side checks exist, Next.js Middleware is the primary protection layer.
 
 ```typescript
-const protectedPages = [
-  'dashboard',
-  'transform',
-  'editor',
-  'analytics',
-  'memory',
-  'personas',
-  'settings'
-];
+// middleware.ts
+export async function middleware(req) {
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient({ req, res })
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session && req.nextUrl.pathname.startsWith('/dashboard')) {
+    return NextResponse.redirect(new URL('/login', req.url))
+  }
+  return res
+}
 ```
 
 ## Session Management
@@ -264,18 +239,16 @@ Production:
 ## File Dependencies
 
 ```
-App.tsx
-  └─ imports AuthProvider, useAuth
+app/layout.tsx
+  └─ imports AuthProvider
       └─ from contexts/AuthContext.tsx
           └─ imports supabase
               └─ from lib/supabase.ts
-                  └─ imports createClient
-                      └─ from @supabase/supabase-js
 
-Login.tsx / Signup.tsx
+app/login/page.tsx
   └─ imports useAuth
       └─ from contexts/AuthContext.tsx
-
+```
 hooks/useAuth.ts
   └─ imports useAuth
       └─ from contexts/AuthContext.tsx

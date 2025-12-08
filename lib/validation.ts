@@ -9,6 +9,12 @@ export const transformSchema = z.object({
         .max(1.5)
         .optional()
         .default(0.7),
+    instructions: z.string()
+        .max(1000, 'Instructions must be less than 1000 characters')
+        .optional(),
+    model_id: z.enum(['gpt-4o-mini', 'gemini-flash-latest'])
+        .optional()
+        .default('gpt-4o-mini'),
 });
 
 export const memorySchema = z.object({

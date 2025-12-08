@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Copy, RefreshCw, Sliders, Zap, Sidebar, ArrowRight, X, Check, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/Components';
+import { ModelSelector } from '../components/ModelSelector';
+import { ModelId } from '../lib/llm/types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -58,6 +60,22 @@ export const Transform: React.FC = () => {
     return null;
   });
 
+  const [instructions, setInstructions] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('transform_instructions') || '';
+    }
+    return '';
+  });
+
+  const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
+    if (typeof window !== 'undefined') {
+      return (sessionStorage.getItem('transform_model') as ModelId) || 'gpt-4o-mini';
+    }
+    return 'gpt-4o-mini';
+  });
+
+  const [showRefine, setShowRefine] = useState(false);
+
   // Persist state
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -67,8 +85,10 @@ export const Transform: React.FC = () => {
       sessionStorage.setItem('transform_reasoning', JSON.stringify(reasoning));
       sessionStorage.setItem('transform_temperature', temperature.toString());
       evaluation !== null ? sessionStorage.setItem('transform_evaluation', JSON.stringify(evaluation)) : sessionStorage.removeItem('transform_evaluation');
+      sessionStorage.setItem('transform_instructions', instructions);
+      sessionStorage.setItem('transform_model', selectedModel);
     }
-  }, [inputText, outputText, alignmentScore, reasoning, temperature, evaluation]);
+  }, [inputText, outputText, alignmentScore, reasoning, temperature, evaluation, instructions, selectedModel]);
 
   const diffWords = (a: string, b: string) => {
     const aWords = a.trim().split(/\s+/).filter(Boolean);
@@ -127,7 +147,7 @@ export const Transform: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ inputText, temperature: sanitizedTemperature })
+        body: JSON.stringify({ inputText, temperature: sanitizedTemperature, instructions, model_id: selectedModel })
       });
 
       if (!res.ok) throw new Error(await res.text());
@@ -163,6 +183,7 @@ export const Transform: React.FC = () => {
     setReasoning([]);
     setAlignmentScore(null);
     setEvaluation(null);
+    setInstructions('');
     if (typeof window !== 'undefined') {
       sessionStorage.clear(); // Or specific keys
     }
@@ -195,7 +216,19 @@ export const Transform: React.FC = () => {
           </div>
         </div>
 
+
+
         <div className="flex items-center gap-3">
+          <ModelSelector selectedModel={selectedModel} onModelChange={setSelectedModel} />
+          <div className="h-6 w-px bg-slate-200 mx-1"></div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowRefine(!showRefine)}
+            className={showRefine ? 'bg-slate-100 text-ink' : 'text-ink/60'}
+          >
+            <Zap size={16} className="mr-2" /> Refine
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -213,18 +246,55 @@ export const Transform: React.FC = () => {
             <Sidebar size={16} className="mr-2" /> Insights
           </Button>
         </div>
-      </div>
+      </div >
+
+      {/* Context/Refinement Panel */}
+      {
+        showRefine && (
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mx-2 mb-2 animate-in slide-in-from-top-2 duration-200">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start gap-4">
+                <div className="flex-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Contextual Refinements</label>
+                  <textarea
+                    className="w-full text-sm p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-azure focus:border-azure outline-none resize-none h-20"
+                    placeholder="e.g. 'Make it punchy for Slack', 'This is a formal email', 'Focus on empathy'..."
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                  />
+                </div>
+                <div className="w-1/3">
+                  <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Quick Chips</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Brief', 'Professional', 'Empathetic', 'Slack', 'Email', 'Linkedin'].map(chip => (
+                      <button
+                        key={chip}
+                        onClick={() => setInstructions(prev => prev ? `${prev}, ${chip}` : chip)}
+                        className="text-xs px-2 py-1 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-full transition-colors text-slate-600"
+                      >
+                        + {chip}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
 
       {/* Parameters Panel (collapsible) */}
-      {showParams && (
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mx-2 animate-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-semibold w-24">Temperature</span>
-            <input type="range" min="0" max="1.5" step="0.1" value={temperature} onChange={(e) => setTemperature(parseFloat(e.target.value))} className="flex-1 accent-azure h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer" />
-            <span className="text-xs font-mono font-bold bg-slate-100 px-2 py-1 rounded">{temperature.toFixed(1)}</span>
+      {
+        showParams && (
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mx-2 animate-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-semibold w-24">Temperature</span>
+              <input type="range" min="0" max="1.5" step="0.1" value={temperature} onChange={(e) => setTemperature(parseFloat(e.target.value))} className="flex-1 accent-azure h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer" />
+              <span className="text-xs font-mono font-bold bg-slate-100 px-2 py-1 rounded">{temperature.toFixed(1)}</span>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Main Editor Surface */}
       <div className="relative flex flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mx-2 mb-2">
@@ -268,8 +338,8 @@ export const Transform: React.FC = () => {
               <div className="flex items-center justify-between px-6 py-4 border-b border-dashed border-slate-100">
                 <div className="flex items-center gap-3 cursor-pointer" onClick={() => setShowInsights(true)}>
                   <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold border transition-colors ${(alignmentScore || 0) >= 8 ? 'bg-mint/10 text-mint border-mint/20' :
-                      (alignmentScore || 0) >= 6 ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
-                        'bg-red-50 text-red-600 border-red-200'
+                    (alignmentScore || 0) >= 6 ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
+                      'bg-red-50 text-red-600 border-red-200'
                     }`}>
                     {(alignmentScore || 0).toFixed(1)} / 10
                     <ArrowRight size={12} />
@@ -378,6 +448,6 @@ export const Transform: React.FC = () => {
         </div>
 
       </div>
-    </div>
+    </div >
   );
 };

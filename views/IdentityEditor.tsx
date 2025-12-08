@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Button, Input, TextArea, Card, CardHeader, CardTitle, CardContent, Chip, JsonViewer } from '../components/Components';
 import { GeneratedIdentity } from '../types';
-import { Copy, Check, AlertCircle, Save, Undo, Code, Layout as LayoutIcon, Sliders, Type, Shield, List, Plus, X, Search, ToggleLeft, ToggleRight, Sparkles } from 'lucide-react';
+import { Copy, Check, AlertCircle, Save, Undo, Code, Layout as LayoutIcon, Sliders, Type, Shield, List, Plus, X, Search, ToggleLeft, ToggleRight, Sparkles, Download } from 'lucide-react';
 
 export const IdentityEditor = () => {
     const { user } = useAuth();
@@ -325,6 +325,20 @@ export const IdentityEditor = () => {
         return <div className="p-8 text-center text-ink/60">No identity data available. Please complete onboarding.</div>;
     }
 
+    const handleDownload = () => {
+        if (!editableData) return;
+        const jsonString = JSON.stringify(editableData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${(identityName || 'identity').replace(/\s+/g, '_').toLowerCase()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="flex flex-col h-[calc(100vh-6rem)] relative"> {/* Adjust height for layout */}
 
@@ -353,6 +367,10 @@ export const IdentityEditor = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="sm" onClick={handleDownload} title="Download JSON">
+                        <Download size={18} />
+                        <span className="ml-2 hidden sm:inline">Download</span>
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={() => setShowJsonSplit(!showJsonSplit)} className={showJsonSplit ? 'text-azure bg-azure/10' : ''}>
                         {showJsonSplit ? <LayoutIcon size={18} /> : <Code size={18} />}
                         <span className="ml-2 hidden sm:inline">{showJsonSplit ? 'Hide JSON' : 'View JSON'}</span>
@@ -409,89 +427,129 @@ export const IdentityEditor = () => {
                         <div className="max-w-4xl mx-auto space-y-6">
 
                             {/* Active Tab Content */}
+                            {/* Active Tab Content */}
                             {activeTab === 'voice' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Tone Slider */}
-                                        <Card className="bg-white">
-                                            <CardHeader><CardTitle className="text-base">Tone & Formality</CardTitle></CardHeader>
-                                            <CardContent className="space-y-8">
+                                    <Card className="bg-white border border-ink/5 shadow-sm">
+                                        <CardHeader className="border-b border-ink/5 pb-4">
+                                            <CardTitle className="text-lg font-bold text-ink">The Voice Calibrator</CardTitle>
+                                            <p className="text-sm text-ink/50 mt-1">Fine-tune exactly how your persona sounds and communicates.</p>
+                                        </CardHeader>
+                                        <CardContent className="space-y-8 pt-6">
+
+                                            {/* 1. Tone Descriptors */}
+                                            <div>
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <label className="text-sm font-semibold text-ink/80">Tone Descriptors</label>
+                                                    <span className="text-xs text-ink/40">Select all that apply</span>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['Professional', 'Conversational', 'Authoritative', 'Friendly', 'Empathetic', 'Witty', 'Academic', 'Urgent', 'Optimistic'].map(tag => {
+                                                        const currentTones = editableData.tone ? editableData.tone.split(',').map(t => t.trim()) : [];
+                                                        const isSelected = currentTones.some(t => t.toLowerCase() === tag.toLowerCase());
+                                                        return (
+                                                            <button
+                                                                key={tag}
+                                                                onClick={() => {
+                                                                    let newTones;
+                                                                    if (isSelected) {
+                                                                        newTones = currentTones.filter(t => t.toLowerCase() !== tag.toLowerCase());
+                                                                    } else {
+                                                                        newTones = [...currentTones, tag];
+                                                                    }
+                                                                    updateField('tone', newTones.join(', '));
+                                                                }}
+                                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${isSelected
+                                                                        ? 'bg-azure text-white border-azure shadow-sm'
+                                                                        : 'bg-white text-ink/70 border-ink/10 hover:border-azure/30 hover:text-azure hover:bg-azure/5'
+                                                                    }`}
+                                                            >
+                                                                {tag}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
+                                            <div className="h-px bg-ink/5 w-full"></div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                {/* 2. Formality Level */}
                                                 <div>
-                                                    <div className="flex justify-between mb-2 text-sm text-ink/70">
-                                                        <span>Casual</span>
-                                                        <span className="font-semibold text-azure">{editableData.formality}</span>
-                                                        <span>Formal</span>
+                                                    <label className="text-sm font-semibold text-ink/80 mb-3 block">Formality Level</label>
+                                                    <div className="bg-paleslate rounded-lg p-1 flex relative">
+                                                        {['Casual', 'Neutral', 'Formal'].map((option) => (
+                                                            <button
+                                                                key={option}
+                                                                onClick={() => updateField('formality', option)}
+                                                                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${editableData.formality === option
+                                                                        ? 'bg-white text-azure shadow-sm'
+                                                                        : 'text-ink/60 hover:text-ink hover:bg-ink/5'
+                                                                    }`}
+                                                            >
+                                                                {option}
+                                                            </button>
+                                                        ))}
                                                     </div>
-                                                    {/* Visual Slider Simulation using Range Input is tricky to map text to range, 
-                                                 so we'll use a segmented control or just input for now but styled better 
-                                                 Since data is string (e.g. "Formal"), mapping to slider value 0-100 requires logic.
-                                                 For now, let's keep it editable but visually distinct.
-                                             */}
-                                                    <Input
-                                                        value={editableData.formality}
-                                                        onChange={(e) => updateField('formality', e.target.value)}
-                                                        placeholder="e.g. Formal, Casual"
-                                                    />
-                                                    <p className="text-xs text-ink/40 mt-1">Adjust the formality level of the persona.</p>
+                                                    <div className="mt-3 min-h-[40px] p-3 bg-azure/5 rounded-md border border-azure/10">
+                                                        <p className="text-xs text-azure/80 flex items-start gap-2">
+                                                            <span className="mt-0.5"><Sparkles size={12} /></span>
+                                                            {editableData.formality === 'Casual' && "Relaxed syntax, uses contractions, friendly vibe."}
+                                                            {editableData.formality === 'Neutral' && "Clear, standard communication without strong stylistic bias."}
+                                                            {editableData.formality === 'Formal' && "Proper grammar, complete sentences, professional demeanor."}
+                                                            {!['Casual', 'Neutral', 'Formal'].includes(editableData.formality) && "Select a formality level to see details."}
+                                                        </p>
+                                                    </div>
                                                 </div>
 
+                                                {/* 3. Directness Scale */}
                                                 <div>
-                                                    <div className="flex justify-between mb-2 text-sm text-ink/70">
-                                                        <span>Humorous</span>
-                                                        <span className="font-semibold text-azure">{editableData.tone}</span>
-                                                        <span>Serious</span>
+                                                    <label className="text-sm font-semibold text-ink/80 mb-3 block">Directness Scale</label>
+                                                    <div className="bg-paleslate rounded-lg p-1 flex relative">
+                                                        {['Concise', 'Balanced', 'Elaborate'].map((option) => (
+                                                            <button
+                                                                key={option}
+                                                                onClick={() => updateField('directness', option)}
+                                                                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${editableData.directness === option
+                                                                        ? 'bg-white text-azure shadow-sm'
+                                                                        : 'text-ink/60 hover:text-ink hover:bg-ink/5'
+                                                                    }`}
+                                                            >
+                                                                {option}
+                                                            </button>
+                                                        ))}
                                                     </div>
-                                                    <Input
-                                                        value={editableData.tone}
-                                                        onChange={(e) => updateField('tone', e.target.value)}
-                                                        placeholder="e.g. Professional, Witty"
+                                                    <div className="mt-3 min-h-[40px] p-3 bg-azure/5 rounded-md border border-azure/10">
+                                                        <p className="text-xs text-azure/80 flex items-start gap-2">
+                                                            <span className="mt-0.5"><Sparkles size={12} /></span>
+                                                            {editableData.directness === 'Concise' && "Bullet points, short sentences, zero fluff."}
+                                                            {editableData.directness === 'Balanced' && "Provides context but respects time."}
+                                                            {editableData.directness === 'Elaborate' && "Detailed storytelling and thorough context."}
+                                                            {!['Concise', 'Balanced', 'Elaborate'].includes(editableData.directness) && "Select a directness level to see details."}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="h-px bg-ink/5 w-full"></div>
+
+                                            {/* 4. Nuance & Instructions */}
+                                            <div>
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <label className="text-sm font-semibold text-ink/80">Nuance & Instructions</label>
+                                                    <span className="text-xs px-2 py-0.5 bg-highlight/10 text-highlight rounded-full font-medium">Exception Handler</span>
+                                                </div>
+                                                <div className="relative group">
+                                                    <TextArea
+                                                        value={editableData.tone_description || ''}
+                                                        onChange={(e) => updateField('tone_description', e.target.value)}
+                                                        rows={4}
+                                                        placeholder="Add specific instructions that defy the settings above (e.g., 'I am usually formal, but I use emojis in internal Slack messages')."
+                                                        className="font-sans text-sm leading-relaxed text-ink bg-white border border-ink/10 focus:border-azure focus:ring-1 focus:ring-azure transition-all p-4 resize-none rounded-lg shadow-sm group-hover:border-ink/20"
                                                     />
                                                 </div>
-                                            </CardContent>
-                                        </Card>
+                                            </div>
 
-                                        {/* Directness Toggle */}
-                                        <Card className="bg-white">
-                                            <CardHeader><CardTitle className="text-base">Directness</CardTitle></CardHeader>
-                                            <CardContent>
-                                                <div className="bg-paleslate rounded-lg p-1 flex relative">
-                                                    <div
-                                                        className={`flex-1 py-2 text-center text-sm font-medium rounded-md cursor-pointer transition-all ${editableData.directness.toLowerCase().includes('direct') ? 'bg-azure text-white shadow-sm' : 'text-ink/60 hover:text-ink'
-                                                            }`}
-                                                        onClick={() => updateField('directness', 'Direct & Concise')}
-                                                    >
-                                                        Direct
-                                                    </div>
-                                                    <div
-                                                        className={`flex-1 py-2 text-center text-sm font-medium rounded-md cursor-pointer transition-all ${!editableData.directness.toLowerCase().includes('direct') ? 'bg-white text-azure shadow-sm border border-azure/10' : 'text-ink/60 hover:text-ink'
-                                                            }`}
-                                                        onClick={() => updateField('directness', 'Verbose & Descriptive')}
-                                                    >
-                                                        Verbose
-                                                    </div>
-                                                </div>
-                                                <div className="mt-4">
-                                                    <Input
-                                                        value={editableData.directness}
-                                                        onChange={(e) => updateField('directness', e.target.value)}
-                                                        placeholder="Custom Directness..."
-                                                    />
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-
-                                    {/* Description */}
-                                    <Card className="bg-white">
-                                        <CardHeader><CardTitle className="text-base">Description & Nuance</CardTitle></CardHeader>
-                                        <CardContent>
-                                            <TextArea
-                                                value={editableData.tone_description || ''}
-                                                onChange={(e) => updateField('tone_description', e.target.value)}
-                                                rows={5}
-                                                placeholder="Describe the persona in detail..."
-                                                className="font-serif text-lg leading-relaxed text-ink/80 bg-paleslate/30 border-none focus:ring-0 resize-none p-4"
-                                            />
                                         </CardContent>
                                     </Card>
                                 </div>

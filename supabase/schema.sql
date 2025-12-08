@@ -47,6 +47,7 @@ create table identities (
   identity_json jsonb not null, -- The core structured object
   is_active boolean default true,
   version_number int default 1,
+  last_used_at timestamp with time zone,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -135,9 +136,10 @@ begin
   set is_active = false
   where user_id = p_user_id;
 
-  -- 2. Set the TARGET identity to active
+  -- 2. Set the TARGET identity to active and update last_used_at
   update identities
-  set is_active = true
+  set is_active = true,
+      last_used_at = now()
   where id = p_identity_id and user_id = p_user_id;
 end;
 $$;

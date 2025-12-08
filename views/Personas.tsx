@@ -26,6 +26,7 @@ interface ApiPersona {
   };
   is_active: boolean;
   created_at: string;
+  last_used_at?: string;
 }
 
 // Helper to generate consistent attribute values based on string seed
@@ -43,6 +44,26 @@ const getAttributes = (seed: string) => {
     humor: normalize(hash >> 2) > 20 ? normalize(hash >> 2) : 20 + normalize(hash >> 2)
   };
 };
+
+// Helper function to format relative time
+function timeAgo(dateString?: string) {
+  if (!dateString) return "Never used";
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  let interval = Math.floor(seconds / 31536000);
+  if (interval >= 1) return interval + "y ago";
+  interval = Math.floor(seconds / 2592000);
+  if (interval >= 1) return interval + "mo ago";
+  interval = Math.floor(seconds / 86400);
+  if (interval >= 1) return interval + "d ago";
+  interval = Math.floor(seconds / 3600);
+  if (interval >= 1) return interval + "h ago";
+  interval = Math.floor(seconds / 60);
+  if (interval >= 1) return interval + "m ago";
+  return "Just now";
+}
 
 const AttributeBar: React.FC<{ label: string; value: number; color?: string }> = ({ label, value, color = "bg-slate-400" }) => (
   <div className="flex flex-col gap-1 w-full">
@@ -104,6 +125,7 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [personaToDelete, setPersonaToDelete] = useState<{ id: string, name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -161,7 +183,7 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
           formality,
           description: p.identity_json?.description || '',
           isActive: p.is_active,
-          lastUsed: "2h ago" // Mock value as API doesn't return this yet
+          lastUsed: timeAgo(p.last_used_at)
         };
       });
 
@@ -260,6 +282,42 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
       setError(err.message || 'Failed to activate persona. Please try again.');
     } finally {
       setIsActivating(null);
+    }
+  };
+
+  const handleDuplicate = async (id: string) => {
+    setIsDuplicating(id);
+    setError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('You must be logged in to duplicate personas.');
+        setIsDuplicating(null);
+        return;
+      }
+
+      const response = await fetch('/api/personas/duplicate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to duplicate persona');
+      }
+
+      await fetchPersonas();
+      setActiveMenu(null); // Close the menu
+    } catch (err: any) {
+      console.error('Error duplicating persona:', err);
+      setError(err.message || 'Failed to duplicate persona. Please try again.');
+    } finally {
+      setIsDuplicating(null);
     }
   };
 
@@ -409,10 +467,14 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                           <Settings size={14} /> Edit Configuration
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); /* TODO: Duplicate */ }}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDuplicate(persona.id);
+                          }}
+                          disabled={isDuplicating === persona.id}
+                          className={`flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 ${isDuplicating === persona.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          <Copy size={14} /> Duplicate
+                          <Copy size={14} /> {isDuplicating === persona.id ? 'Duplicating...' : 'Duplicate'}
                         </button>
                         <div className="h-px bg-slate-100 my-1"></div>
                         <button

@@ -9,7 +9,7 @@ export async function GET(req: Request) {
     // RLS ensures user can only see their own identities
     const { data, error } = await supabase
       .from('identities')
-      .select('id, identity_json, is_active, created_at, name')
+      .select('id, identity_json, is_active, created_at, name, last_used_at')
       .eq('user_id', user.id)
       .order('is_active', { ascending: false })
       .order('created_at', { ascending: false });

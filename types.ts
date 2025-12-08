@@ -130,7 +130,7 @@ export interface Database {
           final_output: string | null;
           alignment_score: number | null; // numeric(3,1)
           processing_time_ms: number | null;
-          model_used: string | null;
+          model_used: 'gpt-4o-mini' | 'gemini-flash-latest' | string | null;
           created_at: string; // timestamp with time zone
         };
         Insert: {
@@ -141,7 +141,7 @@ export interface Database {
           final_output?: string | null;
           alignment_score?: number | null;
           processing_time_ms?: number | null;
-          model_used?: string | null;
+          model_used?: 'gpt-4o-mini' | 'gemini-flash-latest' | null;
           created_at?: string;
         };
         Update: {
@@ -152,7 +152,7 @@ export interface Database {
           final_output?: string | null;
           alignment_score?: number | null;
           processing_time_ms?: number | null;
-          model_used?: string | null;
+          model_used?: 'gpt-4o-mini' | 'gemini-flash-latest' | null;
           created_at?: string;
         };
       };

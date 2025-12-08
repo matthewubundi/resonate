@@ -31,344 +31,344 @@ const ResetPassword = React.lazy(() => import('./views/ResetPassword').then(modu
 // --- Main App Component ---
 
 const AppContent: React.FC = () => {
-  const router = useRouter();
-  const pathname = usePathname();
+    const router = useRouter();
+    const pathname = usePathname();
 
-  // Detect current route and map to view
-  const getInitialView = (): PageView => {
-    if (typeof window === 'undefined') return 'landing';
+    // Detect current route and map to view
+    const getInitialView = (): PageView => {
+        if (typeof window === 'undefined') return 'landing';
 
-    const routeMap: Record<string, PageView> = {
-      '/dashboard': 'dashboard',
-      '/transform': 'transform',
-      '/login': 'login',
-      '/signup': 'signup',
-      '/editor': 'editor',
-      '/analytics': 'analytics',
-      '/history': 'history',
-      '/auth/reset-password': 'reset-password',
-      '/settings': 'settings',
-      '/onboarding': 'onboarding',
-      '/memory': 'memory',
-      '/personas': 'personas',
-      '/documentation': 'documentation',
-      '/check-email': 'check-email',
-      '/verified': 'verified',
-      '/terms': 'terms',
-      '/privacy': 'privacy',
+        const routeMap: Record<string, PageView> = {
+            '/dashboard': 'dashboard',
+            '/transform': 'transform',
+            '/login': 'login',
+            '/signup': 'signup',
+            '/editor': 'editor',
+            '/analytics': 'analytics',
+            '/history': 'history',
+            '/auth/reset-password': 'reset-password',
+            '/settings': 'settings',
+            '/onboarding': 'onboarding',
+            '/memory': 'memory',
+            '/personas': 'personas',
+            '/documentation': 'documentation',
+            '/check-email': 'check-email',
+            '/verified': 'verified',
+            '/terms': 'terms',
+            '/privacy': 'privacy',
+        };
+
+        return routeMap[pathname || '/'] || 'landing';
     };
 
-    return routeMap[pathname || '/'] || 'landing';
-  };
+    const [view, setView] = useState<PageView>(getInitialView());
+    const [isDarkMode, setIsDarkMode] = useState(false); // Default to light
+    const { user, signOut, loading } = useAuth();
+    const { onboardingCompleted, loading: onboardingLoading, refetch: refetchOnboarding } = useOnboarding(user);
 
-  const [view, setView] = useState<PageView>(getInitialView());
-  const [isDarkMode, setIsDarkMode] = useState(false); // Default to light
-  const { user, signOut, loading } = useAuth();
-  const { onboardingCompleted, loading: onboardingLoading, refetch: refetchOnboarding } = useOnboarding(user);
+    const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+    // Only set initial view on mount, don't update on pathname changes
+    // This prevents unnecessary re-renders when switching browser tabs
+    useEffect(() => {
+        const currentView = getInitialView();
+        // Only update if view is different from current
+        setView(prev => {
+            if (prev !== currentView) {
+                return currentView;
+            }
+            return prev;
+        });
+    }, []); // Empty dependency array - only run on mount
 
-  // Only set initial view on mount, don't update on pathname changes
-  // This prevents unnecessary re-renders when switching browser tabs
-  useEffect(() => {
-    const currentView = getInitialView();
-    // Only update if view is different from current
-    setView(prev => {
-      if (prev !== currentView) {
-        return currentView;
-      }
-      return prev;
-    });
-  }, []); // Empty dependency array - only run on mount
-
-  // Check onboarding status and redirect if needed
-  useEffect(() => {
-    if (!loading && !onboardingLoading && user) {
-      // If user is authenticated but hasn't completed onboarding
-      if (onboardingCompleted === false) {
-        // Only redirect if not already on onboarding or public pages
-        const publicPages = ['landing', 'login', 'signup', 'onboarding', 'loading', 'documentation', 'check-email', 'verified', 'terms', 'privacy'];
-        if (!publicPages.includes(view)) {
-          router.push('/onboarding');
-          setView('onboarding');
+    // Check onboarding status and redirect if needed
+    useEffect(() => {
+        if (!loading && !onboardingLoading && user) {
+            // If user is authenticated but hasn't completed onboarding
+            if (onboardingCompleted === false) {
+                // Only redirect if not already on onboarding or public pages
+                const publicPages = ['landing', 'login', 'signup', 'onboarding', 'loading', 'documentation', 'check-email', 'verified', 'terms', 'privacy'];
+                if (!publicPages.includes(view)) {
+                    router.push('/onboarding');
+                    setView('onboarding');
+                }
+            }
         }
-      }
-    }
-  }, [user, loading, onboardingLoading, onboardingCompleted, view, router]);
+    }, [user, loading, onboardingLoading, onboardingCompleted, view, router]);
 
-  // Track if we're waiting for signup authentication
-  const [pendingSignup, setPendingSignup] = useState(false);
-  // Track if we're waiting for login authentication
-  const [pendingLogin, setPendingLogin] = useState(false);
-  // Track email for verification step
-  const [verificationEmail, setVerificationEmail] = useState<string | undefined>(undefined);
+    // Track if we're waiting for signup authentication
+    const [pendingSignup, setPendingSignup] = useState(false);
+    // Track if we're waiting for login authentication
+    const [pendingLogin, setPendingLogin] = useState(false);
+    // Track email for verification step
+    const [verificationEmail, setVerificationEmail] = useState<string | undefined>(undefined);
 
-  // Watch for user authentication after login
-  useEffect(() => {
-    if (pendingLogin && user && !onboardingLoading) {
-      setPendingLogin(false);
+    // Watch for user authentication after login
+    useEffect(() => {
+        if (pendingLogin && user && !onboardingLoading) {
+            setPendingLogin(false);
 
-      // Navigate immediately without artificial delay
-      if (onboardingCompleted === false) {
-        router.push('/onboarding');
-        setView('onboarding');
-      } else {
-        router.push('/dashboard');
-        setView('dashboard');
-      }
-    }
-  }, [user, pendingLogin, onboardingCompleted, onboardingLoading, router]);
+            // Navigate immediately without artificial delay
+            if (onboardingCompleted === false) {
+                router.push('/onboarding');
+                setView('onboarding');
+            } else {
+                router.push('/dashboard');
+                setView('dashboard');
+            }
+        }
+    }, [user, pendingLogin, onboardingCompleted, onboardingLoading, router]);
 
-  // Watch for user authentication after signup
-  useEffect(() => {
-    if (pendingSignup && user && !onboardingLoading) {
-      // User is now authenticated, check onboarding status
-      setPendingSignup(false);
+    // Watch for user authentication after signup
+    useEffect(() => {
+        if (pendingSignup && user && !onboardingLoading) {
+            // User is now authenticated, check onboarding status
+            setPendingSignup(false);
 
-      // Navigate immediately without artificial delay
-      if (onboardingCompleted === false) {
-        // New user needs onboarding
-        router.push('/onboarding');
-        setView('onboarding');
-      } else {
-        // User has completed onboarding, go to dashboard
-        router.push('/dashboard');
-        setView('dashboard');
-      }
-    }
-  }, [user, pendingSignup, onboardingCompleted, onboardingLoading, router]);
+            // Navigate immediately without artificial delay
+            if (onboardingCompleted === false) {
+                // New user needs onboarding
+                router.push('/onboarding');
+                setView('onboarding');
+            } else {
+                // User has completed onboarding, go to dashboard
+                router.push('/dashboard');
+                setView('dashboard');
+            }
+        }
+    }, [user, pendingSignup, onboardingCompleted, onboardingLoading, router]);
 
-  // Handle login
-  const handleLogin = () => {
-    // Set pending flag - navigation will happen in useEffect once auth state updates
-    setPendingLogin(true);
-  };
-
-  // Handle signup
-  const handleSignup = () => {
-    // If user is already authenticated, check onboarding status
-    // This happens when email confirmation is disabled in Supabase
-    if (user) {
-      // Navigate immediately without artificial delay
-      if (onboardingCompleted === false) {
-        router.push('/onboarding');
-        setView('onboarding');
-      } else {
-        router.push('/dashboard');
-        setView('dashboard');
-      }
-    } else {
-      // Auth state might still be updating after signup
-      // Set pending flag and wait for auth state to update via useEffect
-      setPendingSignup(true);
-      // Note: If email confirmation is required, the Signup component
-    }
-  };
-
-  // Handle logout
-  const handleLogout = async () => {
-    await signOut();
-    router.push('/');
-  };
-
-  // Protected route handler
-  const handleNavigate = (page: PageView) => {
-    // If trying to access protected pages without authentication, redirect to login
-    const protectedPages: PageView[] = ['dashboard', 'transform', 'editor', 'analytics', 'history', 'memory', 'personas', 'settings'];
-
-    if (protectedPages.includes(page) && !user) {
-      router.push('/login');
-      return;
-    }
-
-    // If user is authenticated but hasn't completed onboarding, redirect to onboarding
-    // (except if they're already going to onboarding or public pages)
-    if (user && onboardingCompleted === false && protectedPages.includes(page)) {
-      router.push('/onboarding');
-      return;
-    }
-
-    // Map page views to routes
-    const routeMap: Record<PageView, string> = {
-      'landing': '/',
-      'login': '/login',
-      'signup': '/signup',
-      'dashboard': '/dashboard',
-      'transform': '/transform',
-      'editor': '/editor',
-      'analytics': '/analytics',
-      'history': '/history',
-      'settings': '/settings',
-      'onboarding': '/onboarding',
-      'loading': '/loading',
-      'memory': '/memory',
-      'personas': '/personas',
-      'review': '/review',
-      'documentation': '/documentation',
-      'check-email': '/check-email',
-      'verified': '/verified',
-      'reset-password': '/auth/reset-password',
-      'terms': '/terms',
-      'privacy': '/privacy',
+    // Handle login
+    const handleLogin = () => {
+        // Set pending flag - navigation will happen in useEffect once auth state updates
+        setPendingLogin(true);
     };
 
-    router.push(routeMap[page] || '/');
-  };
-
-  // Show loading screen while checking authentication and onboarding status
-  if (loading || onboardingLoading) {
-    return <ResonateLoader />;
-  }
-
-  // Routing Logic
-  const renderView = () => {
-    switch (view) {
-      case 'landing':
-        return <Landing onLogin={() => handleNavigate('login')} onSignup={() => handleNavigate('signup')} onNavigate={handleNavigate} />;
-      case 'login':
-        return (
-          <Login
-            onLogin={handleLogin}
-            onNavigateToSignup={() => handleNavigate('signup')}
-            onBack={() => handleNavigate('landing')}
-            onNavigate={handleNavigate}
-          />
-        );
-      case 'signup':
-        return (
-          <Signup
-            onSignup={handleSignup}
-            onNavigateToLogin={() => handleNavigate('login')}
-            onBack={() => handleNavigate('landing')}
-            onNavigateToCheckEmail={(email) => {
-              setVerificationEmail(email);
-              // Handle view change manually since we want to pass state, 
-              // though handleNavigate updates URL which is fine.
-              // We'll trust handleNavigate to update view state via URL or internal logic if we implemented that,
-              // but here handleNavigate updates URL and view state syncs via useEffect or router.
-              // Actually handleNavigate uses router.push.
-              router.push('/check-email');
-              setView('check-email');
-            }}
-            onNavigate={handleNavigate}
-          />
-        );
-      case 'check-email':
-        return (
-          <CheckEmail
-            email={verificationEmail}
-            onNavigateToLogin={() => handleNavigate('login')}
-            onVerified={() => {
-              // When verified (session detected), go to dashboard
-              // Check onboarding status first?
-              // The main useEffect for auth changes will handle onboarding redirect if needed.
-              // But we can force a push here.
-              router.push('/dashboard');
-              setView('dashboard');
-            }}
-          />
-        );
-      case 'verified':
-        return (
-          <Verified
-            onNavigateToDashboard={() => {
-              handleNavigate('dashboard');
-            }}
-          />
-        );
-      case 'reset-password':
-        return (
-          <ResetPassword onNavigate={handleNavigate} />
-        );
-      case 'onboarding':
-        return (
-          <Onboarding
-            onComplete={async () => {
-              // Refetch onboarding status after completion
-              await refetchOnboarding();
-              // After onboarding completes, go to loading screen then dashboard
-              setView('loading');
-            }}
-            onBack={() => {
-              if (user) {
-                // If logged in, go to dashboard (they can't skip onboarding)
+    // Handle signup
+    const handleSignup = () => {
+        // If user is already authenticated, check onboarding status
+        // This happens when email confirmation is disabled in Supabase
+        if (user) {
+            // Navigate immediately without artificial delay
+            if (onboardingCompleted === false) {
+                router.push('/onboarding');
+                setView('onboarding');
+            } else {
                 router.push('/dashboard');
-              } else {
-                // If not logged in, go to landing
-                setView('landing');
-              }
-            }}
-          />
-        );
-      case 'loading':
-        return <ResonateLoader onComplete={() => {
-          setView('dashboard');
-          router.push('/dashboard');
-        }} />;
-      case 'dashboard':
-        return <Dashboard onNavigate={handleNavigate} />;
-      case 'transform':
-        return <Transform />;
-      case 'editor':
-        return <IdentityEditor />;
-      case 'analytics':
-        return <AnalyticsPage onNavigate={handleNavigate} />;
-      case 'history':
-        return <HistoryPage onNavigate={handleNavigate} />;
-      case 'memory':
-        return <Memory />;
-      case 'personas':
-        return <Personas onNavigate={handleNavigate} />;
-      case 'settings':
-        return <Settings onNavigate={handleNavigate} />;
-      case 'documentation':
-        return <Documentation onBack={() => handleNavigate('landing')} />;
-      case 'terms':
-        return <TermsOfService onBack={() => handleNavigate('landing')} />;
-      case 'privacy':
-        return <PrivacyPolicy onBack={() => handleNavigate('landing')} />;
-      default:
-        return <div className="p-8 text-center text-ink">Page: {view} (Placeholder)</div>;
+                setView('dashboard');
+            }
+        } else {
+            // Auth state might still be updating after signup
+            // Set pending flag and wait for auth state to update via useEffect
+            setPendingSignup(true);
+            // Note: If email confirmation is required, the Signup component
+        }
+    };
+
+    // Handle logout
+    const handleLogout = async () => {
+        await signOut();
+        router.push('/');
+    };
+
+    // Protected route handler
+    const handleNavigate = (page: PageView) => {
+        // If trying to access protected pages without authentication, redirect to login
+        const protectedPages: PageView[] = ['dashboard', 'transform', 'editor', 'analytics', 'history', 'memory', 'personas', 'settings'];
+
+        if (protectedPages.includes(page) && !user) {
+            router.push('/login');
+            return;
+        }
+
+        // If user is authenticated but hasn't completed onboarding, redirect to onboarding
+        // (except if they're already going to onboarding or public pages)
+        if (user && onboardingCompleted === false && protectedPages.includes(page)) {
+            router.push('/onboarding');
+            return;
+        }
+
+        // Map page views to routes
+        const routeMap: Record<PageView, string> = {
+            'landing': '/',
+            'login': '/login',
+            'signup': '/signup',
+            'dashboard': '/dashboard',
+            'transform': '/transform',
+            'editor': '/editor',
+            'analytics': '/analytics',
+            'history': '/history',
+            'settings': '/settings',
+            'onboarding': '/onboarding',
+            'loading': '/loading',
+            'memory': '/memory',
+            'personas': '/personas',
+            'review': '/review',
+            'documentation': '/documentation',
+            'check-email': '/check-email',
+            'verified': '/verified',
+            'reset-password': '/auth/reset-password',
+            'terms': '/terms',
+            'privacy': '/privacy',
+        };
+
+        router.push(routeMap[page] || '/');
+    };
+
+    // Show loading screen while checking authentication and onboarding status
+    if (loading || onboardingLoading) {
+        return <ResonateLoader />;
     }
-  };
+
+    // Routing Logic
+    const renderView = () => {
+        switch (view) {
+            case 'landing':
+                return <Landing onLogin={() => handleNavigate('login')} onSignup={() => handleNavigate('signup')} onNavigate={handleNavigate} />;
+            case 'login':
+                return (
+                    <Login
+                        onLogin={handleLogin}
+                        onNavigateToSignup={() => handleNavigate('signup')}
+                        onBack={() => handleNavigate('landing')}
+                        onNavigate={handleNavigate}
+                    />
+                );
+            case 'signup':
+                return (
+                    <Signup
+                        onSignup={handleSignup}
+                        onNavigateToLogin={() => handleNavigate('login')}
+                        onBack={() => handleNavigate('landing')}
+                        onNavigateToCheckEmail={(email) => {
+                            setVerificationEmail(email);
+                            // Handle view change manually since we want to pass state, 
+                            // though handleNavigate updates URL which is fine.
+                            // We'll trust handleNavigate to update view state via URL or internal logic if we implemented that,
+                            // but here handleNavigate updates URL and view state syncs via useEffect or router.
+                            // Actually handleNavigate uses router.push.
+                            router.push('/check-email');
+                            setView('check-email');
+                        }}
+                        onNavigate={handleNavigate}
+                    />
+                );
+            case 'check-email':
+                return (
+                    <CheckEmail
+                        email={verificationEmail}
+                        onNavigateToLogin={() => handleNavigate('login')}
+                        onVerified={() => {
+                            // When verified (session detected), go to dashboard
+                            // Check onboarding status first?
+                            // The main useEffect for auth changes will handle onboarding redirect if needed.
+                            // But we can force a push here.
+                            router.push('/dashboard');
+                            setView('dashboard');
+                        }}
+                    />
+                );
+            case 'verified':
+                return (
+                    <Verified
+                        onNavigateToDashboard={() => {
+                            handleNavigate('dashboard');
+                        }}
+                    />
+                );
+            case 'reset-password':
+                return (
+                    <ResetPassword onNavigate={handleNavigate} />
+                );
+            case 'onboarding':
+                return (
+                    <Onboarding
+                        onComplete={async () => {
+                            // Refetch onboarding status after completion
+                            await refetchOnboarding();
+                            // After onboarding completes, go to loading screen then dashboard
+                            setView('loading');
+                        }}
+                        onBack={() => {
+                            if (user) {
+                                // If logged in, go to dashboard (they can't skip onboarding)
+                                router.push('/dashboard');
+                            } else {
+                                // If not logged in, go to landing
+                                setView('landing');
+                            }
+                        }}
+                    />
+                );
+            case 'loading':
+                return <ResonateLoader onComplete={() => {
+                    setView('dashboard');
+                    router.push('/dashboard');
+                }} />;
+            case 'dashboard':
+                return <Dashboard onNavigate={handleNavigate} />;
+            case 'transform':
+                return <Transform />;
+            case 'editor':
+                return <IdentityEditor />;
+            case 'analytics':
+                return <AnalyticsPage onNavigate={handleNavigate} />;
+            case 'history':
+                return <HistoryPage onNavigate={handleNavigate} />;
+            case 'memory':
+                return <Memory />;
+            case 'personas':
+                return <Personas onNavigate={handleNavigate} />;
+            case 'settings':
+                return <Settings onNavigate={handleNavigate} />;
+            case 'documentation':
+                return <Documentation onBack={() => handleNavigate('landing')} />;
+            case 'terms':
+                return <TermsOfService onBack={() => handleNavigate('landing')} />;
+            case 'privacy':
+                return <PrivacyPolicy onBack={() => handleNavigate('landing')} />;
+            default:
+                return <div className="p-8 text-center text-ink">Page: {view} (Placeholder)</div>;
+        }
+    };
 
 
-  // Wrapper for logged-in pages
-  if (view === 'landing' || view === 'login' || view === 'signup' || view === 'onboarding' || view === 'loading' || view === 'documentation' || view === 'check-email' || view === 'verified' || view === 'terms' || view === 'privacy' || view === 'reset-password') {
+    // Wrapper for logged-in pages
+    if (view === 'landing' || view === 'login' || view === 'signup' || view === 'onboarding' || view === 'loading' || view === 'documentation' || view === 'check-email' || view === 'verified' || view === 'terms' || view === 'privacy' || view === 'reset-password') {
+        return (
+            <div className="bg-paper min-h-screen text-ink font-sans selection:bg-azure/20 selection:text-azure">
+                <Suspense fallback={<ResonateLoader />}>
+                    {renderView()}
+                </Suspense>
+            </div>
+        );
+    }
+
     return (
-      <div className="bg-paper min-h-screen text-ink font-sans selection:bg-azure/20 selection:text-azure">
-        <Suspense fallback={<ResonateLoader />}>
-          {renderView()}
-        </Suspense>
-      </div>
+        <div className="bg-paper min-h-screen text-ink font-sans selection:bg-azure/20 selection:text-azure">
+            <Layout
+                activePage={view}
+                onNavigate={handleNavigate}
+                isDarkMode={isDarkMode}
+                toggleTheme={toggleTheme}
+                onLogout={handleLogout}
+                user={user}
+            >
+                <Suspense fallback={<ResonateLoader />}>
+                    {renderView()}
+                </Suspense>
+            </Layout>
+        </div>
     );
-  }
-
-  return (
-    <div className="bg-paper min-h-screen text-ink font-sans selection:bg-azure/20 selection:text-azure">
-      <Layout
-        activePage={view}
-        onNavigate={handleNavigate}
-        isDarkMode={isDarkMode}
-        toggleTheme={toggleTheme}
-        onLogout={handleLogout}
-        user={user}
-      >
-        <Suspense fallback={<ResonateLoader />}>
-          {renderView()}
-        </Suspense>
-      </Layout>
-    </div>
-  );
 };
 
 // Wrap the app with AuthProvider
 const App: React.FC = () => {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
+    );
 };
 
 export default App;

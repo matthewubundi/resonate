@@ -21,8 +21,18 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignup, onBac
     const [resetEmail, setResetEmail] = useState('');
     const [resetSuccess, setResetSuccess] = useState(false);
     const [gravatarUrl, setGravatarUrl] = useState<string | null>(null);
+    const [rememberMe, setRememberMe] = useState(false);
 
     const { signIn, signInWithGoogle, signInWithGithub, resetPassword } = useAuth();
+
+    // Check for remembered email on mount
+    useEffect(() => {
+        const remembered = localStorage.getItem('resonate_user_email');
+        if (remembered) {
+            setEmail(remembered);
+            setRememberMe(true);
+        }
+    }, []);
 
     // Mock Gravatar/Avatar lookup
     useEffect(() => {
@@ -57,6 +67,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignup, onBac
             setError(signInError.message);
             setIsLoading(false);
         } else {
+            if (rememberMe) {
+                localStorage.setItem('resonate_user_email', email);
+            } else {
+                localStorage.removeItem('resonate_user_email');
+            }
             setIsLoading(false);
             onLogin();
         }
@@ -289,6 +304,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignup, onBac
                                         id="remember-me"
                                         name="remember-me"
                                         type="checkbox"
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
                                         className="h-4 w-4 rounded border-gray-300 text-azure focus:ring-azure"
                                     />
                                     <label htmlFor="remember-me" className="ml-2 block text-sm text-ink/60">

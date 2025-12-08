@@ -20,8 +20,8 @@ export async function POST(req: Request) {
         .single();
 
       if (fetchError || !activeIdentity) {
-        return NextResponse.json({ 
-          error: 'No active identity found to clone. Please create an identity first or start from scratch.' 
+        return NextResponse.json({
+          error: 'No active identity found to clone. Please create an identity first or start from scratch.'
         }, { status: 400 });
       }
 
@@ -36,8 +36,9 @@ export async function POST(req: Request) {
       identityJson = {
         name: name || "New Persona",
         description: description || "",
-        tone: "Neutral",
-        formality: "Medium",
+        tone: "Friendly, Professional",
+        formality: "Neutral",
+        directness: "Balanced",
         vocabulary: { frequent_words: [], avoid_words: [] },
         rules: { always: [], never: [] },
         formatting_preferences: { default: "paragraphs" }
@@ -47,11 +48,11 @@ export async function POST(req: Request) {
     // Insert new identity (RLS ensures user can only insert their own)
     const { data, error } = await supabase
       .from('identities')
-      .insert({ 
-        user_id: user.id, 
-        identity_json: identityJson, 
+      .insert({
+        user_id: user.id,
+        identity_json: identityJson,
         name: name || "New Persona",
-        is_active: false 
+        is_active: false
       })
       .select()
       .single();

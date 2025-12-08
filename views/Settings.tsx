@@ -15,7 +15,9 @@ import {
     Copy,
     RefreshCw,
     Camera,
-    Upload
+    Upload,
+    Download,
+    FileJson
 } from 'lucide-react';
 import { PageView } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -120,6 +122,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
@@ -303,6 +306,52 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
             setShowConfirm(false);
             setDeleteStep('initial');
             setDeleteConfirmation('');
+        }
+    };
+
+    const handleExportData = async () => {
+        setIsExporting(true);
+        setError(null);
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                throw new Error('Not authenticated');
+            }
+
+            const response = await fetch('/api/settings/export', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to export data');
+            }
+
+            const data = await response.json();
+
+            // Create downloadable file
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `resonate-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            setSuccess('Data export started successfully!');
+            setTimeout(() => setSuccess(null), 3000);
+
+        } catch (err: any) {
+            console.error('Error exporting data:', err);
+            setError(err.message || 'Failed to export data');
+        } finally {
+            setIsExporting(false);
         }
     };
 
@@ -543,6 +592,37 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                             <div className="flex justify-between items-center text-sm text-slate-500">
                                 <span>Used for sign in and notifications.</span>
                                 <span>Cannot be changed</span>
+                            </div>
+                        </div>
+
+                        {/* Data Management */}
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="p-4 md:p-8 border-b border-slate-100">
+                                <h3 className="text-lg font-bold text-ink mb-1">Data Management</h3>
+                                <p className="text-slate-500">Manage your personal data and privacy.</p>
+                            </div>
+
+                            <div className="p-4 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-azure/10 flex items-center justify-center flex-shrink-0 mt-1">
+                                        <FileJson className="text-azure" size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-ink">Export Your Data</h4>
+                                        <p className="text-sm text-slate-500 mt-1 max-w-md">
+                                            Download a copy of all your personas, memories, and transformation history in JSON format.
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    onClick={handleExportData}
+                                    isLoading={isExporting}
+                                    variant="outline"
+                                    className="gap-2 whitespace-nowrap"
+                                >
+                                    <Download size={16} />
+                                    Export Data
+                                </Button>
                             </div>
                         </div>
 

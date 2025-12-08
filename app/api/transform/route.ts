@@ -8,6 +8,9 @@ import { sanitizeError } from '@/lib/errors';
 import { handleCors, corsHeaders } from '@/lib/cors';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { buildTransformationPrompt, buildEvaluationPrompt, buildRetryPrompt } from '@/lib/ai';
+import { LLMFactory } from '@/lib/llm/LLMFactory';
+import { Message } from '@/lib/llm/types';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -42,7 +45,7 @@ export async function POST(req: Request) {
     // Input Validation
     const body = await req.json();
     const validated = transformSchema.parse(body);
-    const { inputText, temperature } = validated;
+    const { inputText, temperature, instructions, model_id } = validated; // Extract instructions and model_id
 
     const sanitizedTemp = typeof temperature === 'number'
       ? Math.min(1.5, Math.max(0, temperature))
@@ -71,7 +74,6 @@ export async function POST(req: Request) {
     }
 
     // Memory Retrieval Layer
-    let memoryContext = "No relevant memories found.";
     let memories: any[] = [];
 
     try {
@@ -92,7 +94,6 @@ export async function POST(req: Request) {
 
       if (!memoryError && memoryData && memoryData.length > 0) {
         memories = memoryData;
-        memoryContext = memories.map((m: any) => `- ${m.content}`).join('\n');
         logger.info('Context injected', { userId: user.id, memoryCount: memories.length });
       }
     } catch (memoryErr) {
@@ -113,7 +114,8 @@ export async function POST(req: Request) {
       { role: "system", content: TRANSFORMATION_SYSTEM_PROMPT },
       {
         role: "user",
-        content: `IDENTITY_PROFILE:\n${JSON.stringify(identityRecord.identity_json)}\n\nRELEVANT_MEMORIES:\n${memoryContext}\n\nINPUT_TEXT:\n${inputText}`
+        // USES NEW HELPER FUNCTION
+        content: buildTransformationPrompt(identityRecord.identity_json, memories, inputText, instructions)
       }
     ];
 
@@ -122,12 +124,15 @@ export async function POST(req: Request) {
       attempts++;
 
       // Generate Rewrite
-      const rewriteResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: conversationHistory,
+      const userMessages = conversationHistory.filter(msg => msg.role !== 'system') as Message[];
+
+      const provider = LLMFactory.getProvider(model_id);
+      const providerResponse = await provider.generate({
+        systemPrompt: TRANSFORMATION_SYSTEM_PROMPT,
+        messages: userMessages,
         temperature: sanitizedTemp,
       });
-      currentText = rewriteResponse.choices[0].message.content || "";
+      currentText = providerResponse.content;
 
       // Audit (Evaluate)
       try {
@@ -135,7 +140,11 @@ export async function POST(req: Request) {
           model: "gpt-4o-mini",
           messages: [
             { role: "system", content: EVALUATION_SYSTEM_PROMPT },
-            { role: "user", content: `IDENTITY:\n${JSON.stringify(identityRecord.identity_json)}\n\nTEXT_TO_AUDIT:\n${currentText}` }
+            {
+              role: "user",
+              // USES NEW HELPER FUNCTION
+              content: buildEvaluationPrompt(identityRecord.identity_json, currentText)
+            }
           ],
           response_format: { type: "json_object" }
         });
@@ -159,7 +168,8 @@ export async function POST(req: Request) {
         conversationHistory.push({ role: "assistant", content: currentText });
         conversationHistory.push({
           role: "user",
-          content: `CRITICAL FEEDBACK: The alignment score was only ${finalScore}/10. Reasoning: ${evalData.reasoning}. \n\nFix the text specifically to address: ${evalData.suggestions}.`
+          // USES NEW HELPER FUNCTION
+          content: buildRetryPrompt(finalScore, evalData.reasoning, evalData.suggestions)
         });
       }
     }
@@ -171,7 +181,7 @@ export async function POST(req: Request) {
       user_id: user.id,
       input_text: inputText,
       final_output: currentText,
-      model_used: 'gpt-4o-mini',
+      model_used: model_id,
       alignment_score: finalScore,
       processing_time_ms: processingTime,
       raw_llm_output: currentText

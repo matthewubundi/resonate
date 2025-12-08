@@ -15,6 +15,7 @@ You will receive a JSON object containing:
 - vocabulary: Tone preferences and word usage.
 - writingSamples: Raw text written by the user.
 
+
 ### INSTRUCTIONS
 
 1. CRITICAL: Analyze the "writingSamples" deeply. Extract sentence length patterns, humidity, and structure from these samples.
@@ -24,9 +25,10 @@ You will receive a JSON object containing:
 3. Output ONLY valid JSON matching this exact schema:
 
 {
-  "tone": "String summary of tone (e.g., 'Professional, Direct, Academic')",
-  "formality": "String (High/Medium/Low)",
-  "directness": "String (e.g., 'To the point', 'Narrative')",
+  "tone": "Comma-separated string of adjectives. PREFER these tags: 'Professional', 'Conversational', 'Authoritative', 'Friendly', 'Empathetic', 'Witty', 'Academic', 'Urgent', 'Optimistic'. You may include others if specifically observed.",
+  "tone_description": "A specific description of the voice's nuance and any exceptions (e.g., 'Generally formal but uses emojis in internal chats').",
+  "formality": "Must be exactly one of: 'Casual', 'Neutral', 'Formal'",
+  "directness": "Must be exactly one of: 'Concise', 'Balanced', 'Elaborate'",
   "sentence_structure": {
     "typical_length": "String",
     "patterns": ["Array of observed patterns (e.g. 'frequently uses semicolon', 'starts sentences with verbs')"]

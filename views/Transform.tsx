@@ -5,6 +5,8 @@ import { ModelSelector } from '../components/ModelSelector';
 import { ModelId } from '../lib/llm/types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../hooks/useSubscription';
+import { AlertCircle } from 'lucide-react';
 
 export const Transform: React.FC = () => {
   const { user } = useAuth();
@@ -67,6 +69,9 @@ export const Transform: React.FC = () => {
     return '';
   });
 
+  const { tier } = useSubscription();
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
     if (typeof window !== 'undefined') {
       return (sessionStorage.getItem('transform_model') as ModelId) || 'gpt-4o-mini';
@@ -89,6 +94,15 @@ export const Transform: React.FC = () => {
       sessionStorage.setItem('transform_model', selectedModel);
     }
   }, [inputText, outputText, alignmentScore, reasoning, temperature, evaluation, instructions, selectedModel]);
+
+  const handleModelChange = (model: ModelId) => {
+    if (model === 'gemini-flash-latest' && tier === 'free') {
+      setToastMessage("Upgrade to Pro to use Gemini Flash 2.5");
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+    setSelectedModel(model);
+  };
 
   const diffWords = (a: string, b: string) => {
     const aWords = a.trim().split(/\s+/).filter(Boolean);
@@ -219,7 +233,7 @@ export const Transform: React.FC = () => {
 
 
         <div className="flex items-center gap-3">
-          <ModelSelector selectedModel={selectedModel} onModelChange={setSelectedModel} />
+          <ModelSelector selectedModel={selectedModel} onModelChange={handleModelChange} />
           <div className="h-6 w-px bg-slate-200 mx-1"></div>
           <Button
             variant="ghost"
@@ -448,6 +462,14 @@ export const Transform: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 flex items-center gap-3 bg-ink text-white px-4 py-3 rounded-lg shadow-xl z-50 animate-in slide-in-from-bottom-5 duration-300">
+          <AlertCircle size={20} className="text-red-400" />
+          <span className="text-sm font-medium">{toastMessage}</span>
+        </div>
+      )}
     </div >
   );
 };

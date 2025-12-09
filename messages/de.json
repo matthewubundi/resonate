@@ -1,0 +1,122 @@
+{
+    "Settings": {
+        "title": "Einstellungen",
+        "description": "Verwalten Sie Ihr Kommandozentrum.",
+        "language": "Sprache",
+        "save": "Änderungen speichern",
+        "subtitle": "Verwalten Sie Ihr Kommandozentrum.",
+        "sections": {
+            "general": "Allgemein",
+            "account": "Konto",
+            "notifications": "Benachrichtigungen",
+            "apiIntegrations": "API und Integrationen",
+            "billing": "Abrechnung",
+            "avatar": "Avatar",
+            "profilePicture": "Profilbild",
+            "profileInformation": "Profilinformationen",
+            "plan": "Plan",
+            "timezone": "Zeitzone",
+            "workflowPreferences": "Workflow und Präferenzen",
+            "privacyData": "Datenschutz und Daten",
+            "accountCredentials": "Kontozugangsdaten",
+            "dataManagement": "Datenverwaltung",
+            "personalAccessTokens": "Persönliche Zugriffstoken",
+            "subscriptionStatus": "Abonnementstatus",
+            "usageLimits": "Nutzung und Limits"
+        },
+        "avatar": {
+            "uploadDescription": "Laden Sie einen benutzerdefinierten Avatar hoch oder verwenden Sie Ihren Gravatar.",
+            "remove": "Entfernen",
+            "uploadNew": "Neuen Avatar hochladen"
+        },
+        "profile": {
+            "displayName": "Anzeigename"
+        },
+        "plan": {
+            "power": "power",
+            "change": "Ändern"
+        },
+        "languageSection": {
+            "label": "Sprache"
+        },
+        "timezone": {
+            "label": "Zeitzone",
+            "current": "UTC"
+        },
+        "workflow": {
+            "defaultLandingPage": "Standard-Startseite",
+            "defaultLandingPageDescription": "Die erste Seite, die Sie nach der Anmeldung sehen.",
+            "dashboard": "dashboard",
+            "autoCopy": "Automatisch in die Zwischenablage kopieren",
+            "autoCopyDescription": "Kopiert automatisch das Ergebnis, wenn eine Umschreibung eine Bewertung von über 8.0 erreicht.",
+            "clearInputOnSuccess": "Eingabe nach Erfolg löschen",
+            "clearInputOnSuccessDescription": "Löscht das Eingabefeld automatisch nach einer erfolgreichen Transformation."
+        },
+        "privacy": {
+            "historyRetention": "Aufbewahrungsdauer des Verlaufs",
+            "historyDescription": "Wie lange Resonate Ihre Transformationsprotokolle speichert. Firmenkunden verlangen oft „30 Tage“.",
+            "forever": "für immer"
+        },
+        "accountCredentials": {
+            "email": "E-Mail-Adresse",
+            "emailValue": "matthew@ubundi.co.za",
+            "emailDescription": "Wird für die Anmeldung und Benachrichtigungen verwendet.",
+            "cannotChange": "Kann nicht geändert werden"
+        },
+        "dataManagement": {
+            "description": "Verwalten Sie Ihre persönlichen Daten und Ihren Datenschutz.",
+            "exportYourData": "Daten exportieren",
+            "exportYourDataDescription": "Laden Sie eine Kopie aller Ihrer Personas, Erinnerungen und Transformationsverläufe im JSON-Format herunter.",
+            "exportData": "Daten exportieren",
+            "deleteAccount": "Konto löschen",
+            "deleteAccountDescription": "Entfernen Sie dauerhaft Ihre Identität und Daten.",
+            "deleteWarning": "Warnung: Diese Aktion ist nicht umkehrbar. Bitte seien Sie sicher.",
+            "deleteAccountButton": "Konto löschen",
+            "comingSoon": "Dieser Abschnitt ist bald verfügbar."
+        },
+        "personalAccessTokens": {
+            "description": "Verwalten Sie Ihre programmgesteuerten Zugriffsschlüssel.",
+            "generateNewToken": "Neuen Token erstellen",
+            "defaultToken": "Standard-Token",
+            "hidden": "(Ausgeblendet)",
+            "securityNote": "Tokens ermöglichen vollständigen Zugriff auf Ihr Konto. Bewahren Sie sie sicher auf."
+        },
+        "subscriptionStatus": {
+            "currentPlan": "Aktueller Plan",
+            "planName": "power",
+            "billingCycle": "Abrechnungszeitraum",
+            "billingCycleValue": "Monatlich",
+            "nextRenewal": "Nächste Verlängerung",
+            "nextRenewalValue": "08/01/2026",
+            "manageSubscription": "Abonnement verwalten"
+        },
+        "usageLimits": {
+            "transformations": "Transformationen",
+            "transformationsValue": "1 / Unbegrenzt",
+            "resetInfo": "Setzt zurück am 08/01/2026."
+        },
+        "actions": {
+            "saveChanges": "Änderungen speichern"
+        }
+    },
+    "Layout": {
+        "dashboard": "Dashboard",
+        "transform": "Text transformieren",
+        "editor": "Identitätseditor",
+        "history": "Verlauf",
+        "analytics": "Analytik",
+        "memory": "Gedächtnis & Kontext",
+        "personas": "Personas",
+        "plans": "Pläne",
+        "settings": "Einstellungen",
+        "signOut": "Abmelden",
+        "guest": "Gast",
+        "user": "Benutzer",
+        "tier": {
+            "free": "Resonate Kostenlos",
+            "pro": "Resonate Pro",
+            "power": "Resonate Power",
+            "notLoggedIn": "Nicht angemeldet"
+        }
+    }
+}

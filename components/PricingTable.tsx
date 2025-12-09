@@ -124,6 +124,35 @@ export default function PricingTable() {
         }
     };
 
+    const handlePortal = async () => {
+        if (!user) return;
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch("/api/billing/portal", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session?.access_token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to create portal session");
+            }
+
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        } catch (err: any) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
+
     const currentTier = profile?.subscription_tier || "free";
 
     return (
@@ -145,6 +174,8 @@ export default function PricingTable() {
                 {TIERS.map((tier) => {
                     const isCurrent = currentTier === tier.id;
                     const isPro = tier.id === "pro";
+                    // If user has a paid plan (not free), any plan change should go through portal to avoid duplicates/errors
+                    const isPaidUser = currentTier !== 'free';
 
                     return (
                         <div
@@ -177,8 +208,15 @@ export default function PricingTable() {
                             </div>
 
                             <button
-                                onClick={() => tier.priceId && !isCurrent ? handleCheckout(tier.priceId) : undefined}
-                                disabled={isCurrent || (tier.id !== 'free' && loading) || (!tier.priceId && tier.id !== 'free')}
+                                onClick={() => {
+                                    if (isCurrent) return;
+                                    if (isPaidUser) {
+                                        handlePortal();
+                                    } else if (tier.priceId) {
+                                        handleCheckout(tier.priceId);
+                                    }
+                                }}
+                                disabled={isCurrent || loading || (!tier.priceId && !isPaidUser && tier.id !== 'free')} // Allow 'free' button click if isPaidUser (to downgrade)
                                 className={`
                                     w-full py-3 px-6 rounded-lg font-bold text-sm transition-all duration-200
                                     ${isCurrent
@@ -194,7 +232,7 @@ export default function PricingTable() {
                                     ? "Current Plan"
                                     : tier.id === "free"
                                         ? "Downgrade"
-                                        : tier.buttonText}
+                                        : isPaidUser ? "Switch Plan" : tier.buttonText}
                             </button>
                         </div>
                     );

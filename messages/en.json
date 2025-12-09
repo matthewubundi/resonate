@@ -1,0 +1,122 @@
+{
+    "Settings": {
+        "title": "Settings",
+        "description": "Manage your command center.",
+        "language": "Language",
+        "save": "Save Changes",
+        "subtitle": "Manage your command center.",
+        "sections": {
+            "general": "General",
+            "account": "Account",
+            "notifications": "Notifications",
+            "apiIntegrations": "API & Integrations",
+            "billing": "Billing",
+            "avatar": "Avatar",
+            "profilePicture": "Profile Picture",
+            "profileInformation": "Profile Information",
+            "plan": "Plan",
+            "timezone": "Timezone",
+            "workflowPreferences": "Workflow & Preferences",
+            "privacyData": "Privacy & Data",
+            "accountCredentials": "Account Credentials",
+            "dataManagement": "Data Management",
+            "personalAccessTokens": "Personal Access Tokens",
+            "subscriptionStatus": "Subscription Status",
+            "usageLimits": "Usage & Limits"
+        },
+        "avatar": {
+            "uploadDescription": "Upload a custom avatar or use your Gravatar.",
+            "remove": "Remove",
+            "uploadNew": "Upload New"
+        },
+        "profile": {
+            "displayName": "Display Name"
+        },
+        "plan": {
+            "power": "power",
+            "change": "Change"
+        },
+        "languageSection": {
+            "label": "Language"
+        },
+        "timezone": {
+            "label": "Timezone",
+            "current": "UTC"
+        },
+        "workflow": {
+            "defaultLandingPage": "Default Landing Page",
+            "defaultLandingPageDescription": "The first screen you see after logging in.",
+            "dashboard": "dashboard",
+            "autoCopy": "Auto-Copy to Clipboard",
+            "autoCopyDescription": "Automatically copy the result when a rewrite achieves a score > 8.0.",
+            "clearInputOnSuccess": "Clear Input on Success",
+            "clearInputOnSuccessDescription": "Automatically clears the input pane after a successful transformation."
+        },
+        "privacy": {
+            "historyRetention": "History Retention Period",
+            "historyDescription": "How long Resonate keeps your transformation logs. Corporate clients often require \"30 days\".",
+            "forever": "forever"
+        },
+        "accountCredentials": {
+            "email": "Email Address",
+            "emailValue": "matthew@ubundi.co.za",
+            "emailDescription": "Used for sign in and notifications.",
+            "cannotChange": "Cannot be changed"
+        },
+        "dataManagement": {
+            "description": "Manage your personal data and privacy.",
+            "exportYourData": "Export Your Data",
+            "exportYourDataDescription": "Download a copy of all your personas, memories, and transformation history in JSON format.",
+            "exportData": "Export Data",
+            "deleteAccount": "Delete Account",
+            "deleteAccountDescription": "Permanently remove your identity and data.",
+            "deleteWarning": "Warning: This action is not reversible. Please be certain.",
+            "deleteAccountButton": "Delete Account",
+            "comingSoon": "This section is coming soon."
+        },
+        "personalAccessTokens": {
+            "description": "Manage your programmatic access keys.",
+            "generateNewToken": "Generate New Token",
+            "defaultToken": "Default Token",
+            "hidden": "(Hidden)",
+            "securityNote": "Tokens allow full access to your account. Keep them secure."
+        },
+        "subscriptionStatus": {
+            "currentPlan": "Current Plan",
+            "planName": "power",
+            "billingCycle": "Billing Cycle",
+            "billingCycleValue": "Monthly",
+            "nextRenewal": "Next Renewal",
+            "nextRenewalValue": "08/01/2026",
+            "manageSubscription": "Manage Subscription"
+        },
+        "usageLimits": {
+            "transformations": "Transformations",
+            "transformationsValue": "1 / Unlimited",
+            "resetInfo": "Resets on 08/01/2026."
+        },
+        "actions": {
+            "saveChanges": "Save Changes"
+        }
+    },
+    "Layout": {
+        "dashboard": "Dashboard",
+        "transform": "Transform Text",
+        "editor": "Identity Editor",
+        "history": "History",
+        "analytics": "Analytics",
+        "memory": "Memory & Context",
+        "personas": "Personas",
+        "plans": "Plans",
+        "settings": "Settings",
+        "signOut": "Sign Out",
+        "guest": "Guest",
+        "user": "User",
+        "tier": {
+            "free": "Resonate Free",
+            "pro": "Resonate Pro",
+            "power": "Resonate Power",
+            "notLoggedIn": "Not logged in"
+        }
+    }
+}

@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from 'next-intl';
+import { useRouter, usePathname } from '@/src/i18n/navigation';
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/Components';
@@ -150,6 +152,9 @@ const ToggleSwitch = ({
 import { useSearchParams } from 'next/navigation';
 
 export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ onNavigate }) => {
+    const t = useTranslations('Settings');
+    const router = useRouter();
+    const pathname = usePathname();
     const { user, signOut } = useAuth();
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'General');
@@ -345,6 +350,16 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
             });
 
             setSuccess('Settings saved successfully!');
+
+            // Switch locale
+            const localeMap: Record<string, string> = {
+                'English (US)': 'en',
+                'French': 'fr',
+                'German': 'de'
+            };
+            const targetLocale = localeMap[language] || 'en';
+            router.replace(pathname, { locale: targetLocale });
+
             setTimeout(() => setSuccess(null), 3000);
         } catch (err: any) {
             console.error('Error saving settings:', err);
@@ -493,20 +508,29 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
             {/* Header */}
             <div className="flex flex-col gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-ink tracking-tight mb-2">Settings</h1>
-                    <p className="text-slate-500 text-lg">Manage your command center.</p>
+                    <h1 className="text-3xl font-bold text-ink tracking-tight mb-2">{t('title')}</h1>
+                    <p className="text-slate-500 text-lg">{t('description')}</p>
                 </div>
 
                 {/* Horizontal Tabs */}
                 <div className="flex items-center gap-6 border-b border-slate-200 overflow-x-auto pb-px touch-pan-x">
-                    {['General', 'Account', 'Notifications', 'API & Integrations', 'Billing'].map((tab) => (
-                        <TabButton
-                            key={tab}
-                            active={activeTab === tab}
-                            label={tab}
-                            onClick={() => setActiveTab(tab)}
-                        />
-                    ))}
+                    {['General', 'Account', 'Notifications', 'API & Integrations', 'Billing'].map((tab) => {
+                        const keyMap: Record<string, string> = {
+                            'General': 'general',
+                            'Account': 'account',
+                            'Notifications': 'notifications',
+                            'API & Integrations': 'apiIntegrations',
+                            'Billing': 'billing'
+                        };
+                        return (
+                            <TabButton
+                                key={tab}
+                                active={activeTab === tab}
+                                label={t(`sections.${keyMap[tab]}` as any)}
+                                onClick={() => setActiveTab(tab)}
+                            />
+                        );
+                    })}
                 </div>
             </div>
 
@@ -579,8 +603,8 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                 />
                             </div>
                             <div className="flex-1 text-center md:text-left">
-                                <h3 className="text-lg font-bold text-ink">Profile Picture</h3>
-                                <p className="text-slate-500 text-sm">Upload a custom avatar or use your Gravatar.</p>
+                                <h3 className="text-lg font-bold text-ink">{t('sections.profilePicture')}</h3>
+                                <p className="text-slate-500 text-sm">{t('avatar.uploadDescription')}</p>
                             </div>
                             <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                                 {avatarUrl && (
@@ -588,13 +612,13 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                         onClick={() => setAvatarUrl(null)}
                                         className="text-sm font-medium text-red-500 hover:text-red-700 transition-colors w-full sm:w-auto text-center"
                                     >
-                                        Remove
+                                        {t('avatar.remove')}
                                     </button>
                                 )}
                                 <label htmlFor="avatar-upload" className="w-full sm:w-auto">
                                     <span className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 h-10 px-4 py-2 cursor-pointer w-full sm:w-auto ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                         <Upload size={16} />
-                                        {uploadingAvatar ? 'Uploading...' : 'Upload New'}
+                                        {uploadingAvatar ? 'Uploading...' : t('avatar.uploadNew')}
                                     </span>
                                 </label>
                             </div>
@@ -603,9 +627,9 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                         {/* Settings Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 md:p-8 bg-white rounded-xl border border-slate-200 shadow-sm">
                             <div className="md:col-span-2 flex items-center justify-between">
-                                <h3 className="text-lg font-bold text-ink">Profile Information</h3>
+                                <h3 className="text-lg font-bold text-ink">{t('sections.profileInformation')}</h3>
                                 <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg">
-                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Plan</span>
+                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('sections.plan')}</span>
                                     <span className={`text-sm font-bold capitalize ${subscriptionTier === 'free' ? 'text-slate-600' : 'text-azure'}`}>
                                         {subscriptionTier}
                                     </span>
@@ -613,7 +637,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                         onClick={() => onNavigate('plans')}
                                         className="text-xs text-azure hover:text-azure/80 font-semibold ml-2 hover:underline"
                                     >
-                                        Change
+                                        {t('plan.change')}
                                     </button>
                                 </div>
                             </div>
@@ -622,7 +646,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                             <div className="md:col-span-2">
                                 <FloatingLabelInput
                                     id="display-name"
-                                    label="Display Name"
+                                    label={t('profile.displayName')}
                                     value={displayName}
                                     onChange={(e) => setDisplayName(e.target.value)}
                                 />
@@ -631,19 +655,17 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                             {/* Row 2: Language | Timezone */}
                             <div>
                                 <SelectInput
-                                    label="Language"
+                                    label={t('language')}
                                     value={language}
                                     onChange={(e) => setLanguage(e.target.value)}
                                     options={[
-                                        'English (US)', 'English (UK)', 'Spanish', 'French',
-                                        'German', 'Italian', 'Portuguese', 'Japanese',
-                                        'Chinese (Simplified)', 'Chinese (Traditional)'
+                                        'English (US)', 'French', 'German'
                                     ]}
                                 />
                             </div>
                             <div>
                                 <SelectInput
-                                    label="Timezone"
+                                    label={t('timezone.label')}
                                     value={timezone}
                                     onChange={(e) => setTimezone(e.target.value)}
                                     options={[
@@ -661,19 +683,19 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                             <div className="md:col-span-2 pt-6 border-t border-slate-100 mt-2">
                                 <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 flex items-center gap-2">
                                     <div className="w-1 h-4 bg-azure rounded-full"></div>
-                                    Workflow & Preferences
+                                    {t('sections.workflowPreferences')}
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Default Landing Page */}
                                     <div className="md:col-span-2">
                                         <SelectInput
-                                            label="Default Landing Page"
+                                            label={t('workflow.defaultLandingPage')}
                                             value={defaultLandingPage}
                                             onChange={(e) => setDefaultLandingPage(e.target.value)}
                                             options={['dashboard', 'transform', 'history']}
                                         />
                                         <p className="text-xs text-slate-400 mt-2 ml-1">
-                                            The first screen you see after logging in.
+                                            {t('workflow.defaultLandingPageDescription')}
                                         </p>
                                     </div>
                                 </div>
@@ -682,15 +704,15 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                             {/* Toggles */}
                             <div className="md:col-span-2 space-y-2">
                                 <ToggleSwitch
-                                    label="Auto-Copy to Clipboard"
-                                    description="Automatically copy the result when a rewrite achieves a score > 8.0."
+                                    label={t('workflow.autoCopy')}
+                                    description={t('workflow.autoCopyDescription')}
                                     checked={autoCopy}
                                     onChange={setAutoCopy}
                                 />
                                 <div className="border-t border-slate-50 my-1"></div>
                                 <ToggleSwitch
-                                    label="Clear Input on Success"
-                                    description="Automatically clears the input pane after a successful transformation."
+                                    label={t('workflow.clearInputOnSuccess')}
+                                    description={t('workflow.clearInputOnSuccessDescription')}
                                     checked={clearInput}
                                     onChange={setClearInput}
                                 />
@@ -700,17 +722,17 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                             <div className="md:col-span-2 pt-6 border-t border-slate-100 mt-2">
                                 <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 flex items-center gap-2">
                                     <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
-                                    Privacy & Data
+                                    {t('sections.privacyData')}
                                 </h4>
                                 <div>
                                     <SelectInput
-                                        label="History Retention Period"
+                                        label={t('privacy.historyRetention')}
                                         value={historyRetention}
                                         onChange={(e) => setHistoryRetention(e.target.value)}
                                         options={['forever', '30_days', '7_days', 'none']}
                                     />
                                     <p className="text-xs text-slate-400 mt-2 ml-1">
-                                        How long Resonate keeps your transformation logs. Corporate clients often require "30 days".
+                                        {t('privacy.historyDescription')}
                                     </p>
                                 </div>
                             </div>
@@ -728,7 +750,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                     disabled={!hasChanges() || saving || loading}
                                     className="px-8"
                                 >
-                                    Save Changes
+                                    {t('actions.saveChanges')}
                                 </Button>
                             </div>
                         </div>
@@ -738,24 +760,24 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                 {activeTab === 'Account' && (
                     <div className="space-y-8 animate-fade-in-up">
                         <div className="p-4 md:p-8 bg-white rounded-xl border border-slate-200 shadow-sm space-y-6">
-                            <h3 className="text-lg font-bold text-ink">Account Credentials</h3>
+                            <h3 className="text-lg font-bold text-ink">{t('sections.accountCredentials')}</h3>
                             <FloatingLabelInput
                                 id="email"
-                                label="Email Address"
+                                label={t('accountCredentials.email')}
                                 value={user?.email || ''}
                                 disabled={true}
                             />
                             <div className="flex justify-between items-center text-sm text-slate-500">
-                                <span>Used for sign in and notifications.</span>
-                                <span>Cannot be changed</span>
+                                <span>{t('accountCredentials.emailDescription')}</span>
+                                <span>{t('accountCredentials.cannotChange')}</span>
                             </div>
                         </div>
 
                         {/* Data Management */}
                         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                             <div className="p-4 md:p-8 border-b border-slate-100">
-                                <h3 className="text-lg font-bold text-ink mb-1">Data Management</h3>
-                                <p className="text-slate-500">Manage your personal data and privacy.</p>
+                                <h3 className="text-lg font-bold text-ink mb-1">{t('sections.dataManagement')}</h3>
+                                <p className="text-slate-500">{t('dataManagement.description')}</p>
                             </div>
 
                             <div className="p-4 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -764,9 +786,9 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                         <FileJson className="text-azure" size={20} />
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-ink">Export Your Data</h4>
+                                        <h4 className="font-semibold text-ink">{t('dataManagement.exportYourData')}</h4>
                                         <p className="text-sm text-slate-500 mt-1 max-w-md">
-                                            Download a copy of all your personas, memories, and transformation history in JSON format.
+                                            {t('dataManagement.exportYourDataDescription')}
                                         </p>
                                     </div>
                                 </div>
@@ -777,7 +799,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                     className="gap-2 whitespace-nowrap"
                                 >
                                     <Download size={16} />
-                                    Export Data
+                                    {t('dataManagement.exportData')}
                                 </Button>
                             </div>
                         </div>
@@ -785,18 +807,18 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                         {/* Danger Zone */}
                         <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
                             <div className="p-4 md:p-8">
-                                <h3 className="text-lg font-bold text-ink mb-1">Delete Account</h3>
-                                <p className="text-slate-500 mb-6">Permanently remove your identity and data.</p>
+                                <h3 className="text-lg font-bold text-ink mb-1">{t('dataManagement.deleteAccount')}</h3>
+                                <p className="text-slate-500 mb-6">{t('dataManagement.deleteAccountDescription')}</p>
 
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-red-50/50 rounded-lg border border-red-100">
                                     <div className="text-sm text-red-900/80 max-w-lg">
-                                        Warning: This action is not reversible. Please be certain.
+                                        {t('dataManagement.deleteWarning')}
                                     </div>
                                     <button
                                         onClick={() => setShowConfirm(true)}
                                         className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-md text-sm font-medium hover:bg-red-600 hover:text-white hover:border-red-600 transition-all duration-200 shadow-sm"
                                     >
-                                        Delete Account
+                                        {t('dataManagement.deleteAccountButton')}
                                     </button>
                                 </div>
                             </div>
@@ -810,12 +832,12 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                             <div className="p-4 md:p-8 border-b border-slate-100">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
-                                        <h3 className="text-lg font-bold text-ink mb-1">Personal Access Tokens</h3>
-                                        <p className="text-slate-500">Manage your programmatic access keys.</p>
+                                        <h3 className="text-lg font-bold text-ink mb-1">{t('sections.personalAccessTokens')}</h3>
+                                        <p className="text-slate-500">{t('personalAccessTokens.description')}</p>
                                     </div>
                                     <Button size="sm" className="gap-2">
                                         <Key size={14} />
-                                        Generate New Token
+                                        {t('personalAccessTokens.generateNewToken')}
                                     </Button>
                                 </div>
                             </div>
@@ -826,10 +848,10 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                         <Key className="text-azure" size={20} />
                                     </div>
                                     <div className="flex-1 font-mono text-sm">
-                                        <div className="text-slate-400 text-xs mb-1">Default Token</div>
+                                        <div className="text-slate-400 text-xs mb-1">{t('personalAccessTokens.defaultToken')}</div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-slate-900 blur-[4px] select-none text-base">res_sk_78sfd8s7f6d8s9f7d8s</span>
-                                            <span className="text-slate-400 text-xs ml-2">(Hidden)</span>
+                                            <span className="text-slate-400 text-xs ml-2">{t('personalAccessTokens.hidden')}</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -842,7 +864,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                     </div>
                                 </div>
                                 <div className="mt-4 text-xs text-slate-500 text-center">
-                                    Tokens allow full access to your account. Keep them secure.
+                                    {t('personalAccessTokens.securityNote')}
                                 </div>
                             </div>
                         </div>
@@ -866,25 +888,49 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                                 <h3 className="text-lg font-bold text-ink mb-4 flex items-center gap-2">
                                     <CreditCard size={20} className="text-azure" />
-                                    Subscription Status
+                                    {t('sections.subscriptionStatus')}
                                 </h3>
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                                        <span className="text-slate-500">Current Plan</span>
+                                        <span className="text-slate-500">{t('subscriptionStatus.currentPlan')}</span>
                                         <div className="flex items-center gap-2">
                                             <span className="font-bold text-ink capitalize">{subscriptionTier}</span>
                                             {subscriptionTier !== 'free' && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
                                         </div>
                                     </div>
                                     <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                                        <span className="text-slate-500">Billing Cycle</span>
-                                        <span className="font-medium text-ink">Monthly</span>
+                                        <span className="text-slate-500">{t('subscriptionStatus.billingCycle')}</span>
+                                        <span className="font-medium text-ink">{t('subscriptionStatus.billingCycleValue')}</span>
                                     </div>
                                     <div className="flex justify-between items-center py-2">
-                                        <span className="text-slate-500">Next Renewal</span>
+                                        <span className="text-slate-500">{t('subscriptionStatus.nextRenewal')}</span>
                                         <span className="font-medium text-ink">
                                             {currentPeriodEnd ? new Date(currentPeriodEnd).toLocaleDateString() : 'N/A'}
                                         </span>
+                                    </div>
+                                    <div className="pt-4">
+                                        <Button
+                                            onClick={async () => {
+                                                try {
+                                                    setLoading(true);
+                                                    const res = await fetch('/api/billing/portal', {
+                                                        method: 'POST',
+                                                    });
+                                                    const data = await res.json();
+                                                    if (data.url) window.location.href = data.url;
+                                                    else throw new Error(data.error || 'Failed to redirect');
+                                                } catch (err: any) {
+                                                    setError(err.message);
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            }}
+                                            variant="outline"
+                                            className="w-full justify-center"
+                                            disabled={loading || subscriptionTier === 'free'}
+                                        >
+                                            {t('subscriptionStatus.manageSubscription')}
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
@@ -893,12 +939,12 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                                 <h3 className="text-lg font-bold text-ink mb-4 flex items-center gap-2">
                                     <RefreshCw size={20} className="text-amber-500" />
-                                    Usage & Limits
+                                    {t('sections.usageLimits')}
                                 </h3>
                                 <div className="space-y-6">
                                     <div>
                                         <div className="flex justify-between text-sm mb-2">
-                                            <span className="text-slate-600 font-medium">Transformations</span>
+                                            <span className="text-slate-600 font-medium">{t('usageLimits.transformations')}</span>
                                             <span className="text-ink font-bold">
                                                 {transformationsUsage} / {subscriptionTier === 'power' ? 'Unlimited' : (subscriptionTier === 'pro' ? '2,000' : '50')}
                                             </span>
@@ -914,7 +960,11 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                             />
                                         </div>
                                         <p className="text-xs text-slate-400 mt-2">
-                                            Resets on {currentPeriodEnd ? new Date(currentPeriodEnd).toLocaleDateString() : 'next billing cycle'}.
+                                            {t.rich('usageLimits.resetInfo', {
+                                                date: currentPeriodEnd ? new Date(currentPeriodEnd).toLocaleDateString() : 'next billing cycle',
+                                                b: (chunks) => <b>{chunks}</b>
+                                            })
+                                            }
                                         </p>
                                     </div>
                                 </div>

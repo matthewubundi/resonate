@@ -29,21 +29,24 @@ interface LayoutProps {
   user: User | null;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'transform', label: 'Transform Text', icon: Sparkles },
-  { id: 'editor', label: 'Identity Editor', icon: FileEdit },
-  { id: 'history', label: 'History', icon: History },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-  { id: 'memory', label: 'Memory & Context', icon: Brain },
-  { id: 'personas', label: 'Personas', icon: Users },
-  { id: 'plans', label: 'Plans', icon: CreditCard },
-  { id: 'settings', label: 'Settings', icon: Settings },
+import { useTranslations } from 'next-intl';
+
+const NAV_ITEMS: { id: NavItem['id']; icon: any }[] = [
+  { id: 'dashboard', icon: LayoutDashboard },
+  { id: 'transform', icon: Sparkles },
+  { id: 'editor', icon: FileEdit },
+  { id: 'history', icon: History },
+  { id: 'analytics', icon: BarChart3 },
+  { id: 'memory', icon: Brain },
+  { id: 'personas', icon: Users },
+  { id: 'plans', icon: CreditCard },
+  { id: 'settings', icon: Settings },
 ];
 
 export const Layout: React.FC<LayoutProps> = ({
   children, activePage, onNavigate, onLogout, user
 }) => {
+  const t = useTranslations('Layout');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const [subscriptionTier, setSubscriptionTier] = React.useState<string>('free');
@@ -67,8 +70,8 @@ export const Layout: React.FC<LayoutProps> = ({
 
   // Get user display name from metadata or email
   const getUserDisplayName = () => {
-    if (!user) return 'Guest';
-    return user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    if (!user) return t('guest');
+    return user.user_metadata?.full_name || user.email?.split('@')[0] || t('user');
   };
 
   // Get user initials for avatar
@@ -79,11 +82,11 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   const getSubscriptionDisplay = () => {
-    if (!user) return 'Not logged in';
+    if (!user) return t('tier.notLoggedIn');
     switch (subscriptionTier) {
-      case 'pro': return 'Resonate Pro';
-      case 'power': return 'Resonate Power';
-      default: return 'Resonate Free';
+      case 'pro': return t('tier.pro');
+      case 'power': return t('tier.power');
+      default: return t('tier.free');
     }
   };
 
@@ -105,14 +108,14 @@ export const Layout: React.FC<LayoutProps> = ({
             return (
               <button
                 key={item.id}
-                onClick={() => onNavigate(item.id)}
+                onClick={() => onNavigate(item.id as PageView)}
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all duration-200 group ${isActive
                   ? 'bg-white text-azure shadow-sm ring-1 ring-ink/5'
                   : 'text-ink/60 hover:bg-white/60 hover:text-ink'
                   }`}
               >
                 <Icon size={18} className={isActive ? 'text-azure' : 'text-ink/60 group-hover:text-ink'} />
-                {item.label}
+                {t(item.id)}
               </button>
             );
           })}
@@ -124,7 +127,7 @@ export const Layout: React.FC<LayoutProps> = ({
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-ink/60 hover:bg-white/60 hover:text-ink transition-colors"
           >
             <LogOut size={18} />
-            Sign Out
+            {t('signOut')}
           </button>
         </div>
       </aside>
@@ -142,7 +145,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
           <div className="hidden md:flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-azure"></div>
-            <h2 className="text-xs font-bold text-ink/50 uppercase tracking-widest">{activePage}</h2>
+            <h2 className="text-xs font-bold text-ink/50 uppercase tracking-widest">{t(activePage as any)}</h2>
           </div>
 
           <div className="flex items-center gap-4">
@@ -188,7 +191,7 @@ export const Layout: React.FC<LayoutProps> = ({
                       }`}
                   >
                     <item.icon size={18} />
-                    {item.label}
+                    {t(item.id)}
                   </button>
                 ))}
               </nav>
@@ -201,7 +204,7 @@ export const Layout: React.FC<LayoutProps> = ({
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-ink/60 hover:text-ink hover:bg-white/60 transition-colors"
                 >
                   <LogOut size={18} />
-                  Sign Out
+                  {t('signOut')}
                 </button>
               </div>
             </div>

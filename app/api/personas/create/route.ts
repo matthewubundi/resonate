@@ -8,6 +8,31 @@ export async function POST(req: Request) {
 
     const { name, baseConfig, description } = await req.json();
 
+    // --- BILLING CHECKS START ---
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .single();
+
+    const tier = profile?.subscription_tier || 'free';
+
+    const { count } = await supabase
+      .from('identities')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    const currentCount = count || 0;
+    const LIMITS = { free: 1, pro: 5, power: Infinity };
+    const limit = LIMITS[tier as keyof typeof LIMITS] || 1;
+
+    if (currentCount >= limit) {
+      return NextResponse.json({
+        error: `You have reached your limit of ${limit} personas. Upgrade to create more.`
+      }, { status: 403 });
+    }
+    // --- BILLING CHECKS END ---
+
     let identityJson: any;
 
     if (baseConfig === 'clone') {

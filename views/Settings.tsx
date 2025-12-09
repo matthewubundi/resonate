@@ -23,6 +23,7 @@ import { PageView } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
+
 // --- Components ---
 
 const FloatingLabelInput = ({
@@ -114,11 +115,44 @@ const SelectInput = ({
     </div>
 );
 
+const ToggleSwitch = ({
+    label,
+    description,
+    checked,
+    onChange
+}: {
+    label: string;
+    description?: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+}) => (
+    <div className="flex items-center justify-between w-full py-4 px-1">
+        <div className="flex flex-col gap-1 pr-4">
+            <span className="text-sm font-medium text-ink">{label}</span>
+            {description && <span className="text-xs text-slate-500">{description}</span>}
+        </div>
+        <button
+            onClick={() => onChange(!checked)}
+            type="button"
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-azure focus:ring-offset-2 flex-shrink-0 ${checked ? 'bg-azure' : 'bg-slate-200'
+                }`}
+        >
+            <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${checked ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+            />
+        </button>
+    </div>
+);
+
 // --- Main Page Component ---
+
+import { useSearchParams } from 'next/navigation';
 
 export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ onNavigate }) => {
     const { user, signOut } = useAuth();
-    const [activeTab, setActiveTab] = useState('General');
+    const searchParams = useSearchParams();
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'General');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -133,20 +167,32 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
 
     // Form state
     const [displayName, setDisplayName] = useState('');
-    const [theme, setTheme] = useState('Paper White');
     const [language, setLanguage] = useState('English (US)');
     const [timezone, setTimezone] = useState('UTC');
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+    const [subscriptionTier, setSubscriptionTier] = useState('free');
+    const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
+    const [transformationsUsage, setTransformationsUsage] = useState(0);
+
     // Original values to detect changes
     const [originalValues, setOriginalValues] = useState({
         displayName: '',
-        theme: '',
         language: '',
         timezone: '',
         avatarUrl: null as string | null,
+        defaultLandingPage: 'dashboard',
+        autoCopy: false,
+        clearInput: false,
+        historyRetention: 'forever',
     });
+
+    // New Settings State
+    const [defaultLandingPage, setDefaultLandingPage] = useState('dashboard');
+    const [autoCopy, setAutoCopy] = useState(false);
+    const [clearInput, setClearInput] = useState(false);
+    const [historyRetention, setHistoryRetention] = useState('forever');
 
     // Fetch profile data
     useEffect(() => {
@@ -160,32 +206,55 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
             setError(null);
 
             try {
+
+                // Fetch Profiles
                 const { data, error: fetchError } = await supabase
                     .from('profiles')
-                    .select('full_name, theme, language, timezone, avatar_url')
+                    .select('full_name, language, timezone, avatar_url, subscription_tier, current_period_end, transformations_usage, default_landing_page, auto_copy_to_clipboard, clear_input_on_success, history_retention_period')
                     .eq('id', user.id)
                     .single();
 
                 if (fetchError) throw fetchError;
 
+
+
                 const displayNameValue = data?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || '';
-                const themeValue = data?.theme || 'Paper White';
                 const languageValue = data?.language || 'English (US)';
                 const timezoneValue = data?.timezone || 'UTC';
                 const avatarUrlValue = data?.avatar_url || null;
+                const tierValue = data?.subscription_tier || 'free';
+                const periodEndValue = data?.current_period_end || null;
+                const usageValue = data?.transformations_usage || 0;
+
+                // New Settings
+                const defaultLandingPageValue = data?.default_landing_page || 'dashboard';
+                const autoCopyValue = data?.auto_copy_to_clipboard || false;
+                const clearInputValue = data?.clear_input_on_success || false;
+                const historyRetentionValue = data?.history_retention_period || 'forever';
+
 
                 setDisplayName(displayNameValue);
-                setTheme(themeValue);
                 setLanguage(languageValue);
                 setTimezone(timezoneValue);
                 setAvatarUrl(avatarUrlValue);
+                setSubscriptionTier(tierValue);
+                setCurrentPeriodEnd(periodEndValue);
+                setTransformationsUsage(usageValue);
+
+                setDefaultLandingPage(defaultLandingPageValue);
+                setAutoCopy(autoCopyValue);
+                setClearInput(clearInputValue);
+                setHistoryRetention(historyRetentionValue);
 
                 setOriginalValues({
                     displayName: displayNameValue,
-                    theme: themeValue,
                     language: languageValue,
                     timezone: timezoneValue,
                     avatarUrl: avatarUrlValue,
+                    defaultLandingPage: defaultLandingPageValue,
+                    autoCopy: autoCopyValue,
+                    clearInput: clearInputValue,
+                    historyRetention: historyRetentionValue,
                 });
             } catch (err: any) {
                 console.error('Error fetching profile:', err);
@@ -201,10 +270,13 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     const hasChanges = () => {
         return (
             displayName !== originalValues.displayName ||
-            theme !== originalValues.theme ||
             language !== originalValues.language ||
             timezone !== originalValues.timezone ||
-            avatarUrl !== originalValues.avatarUrl
+            avatarUrl !== originalValues.avatarUrl ||
+            defaultLandingPage !== originalValues.defaultLandingPage ||
+            autoCopy !== originalValues.autoCopy ||
+            clearInput !== originalValues.clearInput ||
+            historyRetention !== originalValues.historyRetention
         );
     };
 
@@ -234,10 +306,13 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                 },
                 body: JSON.stringify({
                     display_name: displayName,
-                    theme,
                     language,
                     timezone,
                     avatar_url: avatarUrl,
+                    default_landing_page: defaultLandingPage,
+                    auto_copy_to_clipboard: autoCopy,
+                    clear_input_on_success: clearInput,
+                    history_retention_period: historyRetention
                 }),
             });
 
@@ -247,10 +322,13 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
             // Update original values to reflect saved state
             setOriginalValues({
                 displayName,
-                theme,
                 language,
                 timezone,
                 avatarUrl,
+                defaultLandingPage,
+                autoCopy,
+                clearInput,
+                historyRetention,
             });
 
             setSuccess('Settings saved successfully!');
@@ -265,10 +343,13 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
 
     const handleReset = () => {
         setDisplayName(originalValues.displayName);
-        setTheme(originalValues.theme);
         setLanguage(originalValues.language);
         setTimezone(originalValues.timezone);
         setAvatarUrl(originalValues.avatarUrl);
+        setDefaultLandingPage(originalValues.defaultLandingPage);
+        setAutoCopy(originalValues.autoCopy);
+        setClearInput(originalValues.clearInput);
+        setHistoryRetention(originalValues.historyRetention);
         setError(null);
         setSuccess(null);
     };
@@ -508,8 +589,20 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
 
                         {/* Settings Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 md:p-8 bg-white rounded-xl border border-slate-200 shadow-sm">
-                            <div className="md:col-span-2">
-                                <h3 className="text-lg font-bold text-ink mb-6">Profile Information</h3>
+                            <div className="md:col-span-2 flex items-center justify-between">
+                                <h3 className="text-lg font-bold text-ink">Profile Information</h3>
+                                <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg">
+                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Plan</span>
+                                    <span className={`text-sm font-bold capitalize ${subscriptionTier === 'free' ? 'text-slate-600' : 'text-azure'}`}>
+                                        {subscriptionTier}
+                                    </span>
+                                    <button
+                                        onClick={() => onNavigate('plans')}
+                                        className="text-xs text-azure hover:text-azure/80 font-semibold ml-2 hover:underline"
+                                    >
+                                        Change
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Row 1: Display Name */}
@@ -549,14 +642,64 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                                 />
                             </div>
 
-                            {/* Theme Selection - Added to grid */}
-                            <div className="md:col-span-2 pt-4 border-t border-slate-100 mt-2">
-                                <SelectInput
-                                    label="Interface Theme"
-                                    value={theme}
-                                    onChange={(e) => setTheme(e.target.value)}
-                                    options={['Paper White', 'Dark Mode', 'Auto']}
+
+
+                            {/* Workflow Section */}
+                            <div className="md:col-span-2 pt-6 border-t border-slate-100 mt-2">
+                                <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 flex items-center gap-2">
+                                    <div className="w-1 h-4 bg-azure rounded-full"></div>
+                                    Workflow & Preferences
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Default Landing Page */}
+                                    <div className="md:col-span-2">
+                                        <SelectInput
+                                            label="Default Landing Page"
+                                            value={defaultLandingPage}
+                                            onChange={(e) => setDefaultLandingPage(e.target.value)}
+                                            options={['dashboard', 'transform', 'history']}
+                                        />
+                                        <p className="text-xs text-slate-400 mt-2 ml-1">
+                                            The first screen you see after logging in.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Toggles */}
+                            <div className="md:col-span-2 space-y-2">
+                                <ToggleSwitch
+                                    label="Auto-Copy to Clipboard"
+                                    description="Automatically copy the result when a rewrite achieves a score > 8.0."
+                                    checked={autoCopy}
+                                    onChange={setAutoCopy}
                                 />
+                                <div className="border-t border-slate-50 my-1"></div>
+                                <ToggleSwitch
+                                    label="Clear Input on Success"
+                                    description="Automatically clears the input pane after a successful transformation."
+                                    checked={clearInput}
+                                    onChange={setClearInput}
+                                />
+                            </div>
+
+                            {/* Privacy & Data */}
+                            <div className="md:col-span-2 pt-6 border-t border-slate-100 mt-2">
+                                <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 flex items-center gap-2">
+                                    <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
+                                    Privacy & Data
+                                </h4>
+                                <div>
+                                    <SelectInput
+                                        label="History Retention Period"
+                                        value={historyRetention}
+                                        onChange={(e) => setHistoryRetention(e.target.value)}
+                                        options={['forever', '30_days', '7_days', 'none']}
+                                    />
+                                    <p className="text-xs text-slate-400 mt-2 ml-1">
+                                        How long Resonate keeps your transformation logs. Corporate clients often require "30 days".
+                                    </p>
+                                </div>
                             </div>
 
                             {/* Save Actions */}
@@ -693,100 +836,168 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
                     </div>
                 )}
 
-                {(activeTab === 'Notifications' || activeTab === 'Billing') && (
+                {activeTab === 'Notifications' && (
                     <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-slate-200 border-dashed animate-fade-in-up">
                         <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                            {activeTab === 'Notifications' ? <Bell className="text-slate-300" /> : <CreditCard className="text-slate-300" />}
+                            <Bell className="text-slate-300" />
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 mb-1">{activeTab}</h3>
                         <p className="text-slate-500">This section is coming soon.</p>
                     </div>
                 )}
+
+                {activeTab === 'Billing' && (
+                    <div className="space-y-6 animate-fade-in-up">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Subscription Status */}
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="text-lg font-bold text-ink mb-4 flex items-center gap-2">
+                                    <CreditCard size={20} className="text-azure" />
+                                    Subscription Status
+                                </h3>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                                        <span className="text-slate-500">Current Plan</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-ink capitalize">{subscriptionTier}</span>
+                                            {subscriptionTier !== 'free' && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                                        <span className="text-slate-500">Billing Cycle</span>
+                                        <span className="font-medium text-ink">Monthly</span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-2">
+                                        <span className="text-slate-500">Next Renewal</span>
+                                        <span className="font-medium text-ink">
+                                            {currentPeriodEnd ? new Date(currentPeriodEnd).toLocaleDateString() : 'N/A'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Usage Stats (Transformations) */}
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="text-lg font-bold text-ink mb-4 flex items-center gap-2">
+                                    <RefreshCw size={20} className="text-amber-500" />
+                                    Usage & Limits
+                                </h3>
+                                <div className="space-y-6">
+                                    <div>
+                                        <div className="flex justify-between text-sm mb-2">
+                                            <span className="text-slate-600 font-medium">Transformations</span>
+                                            <span className="text-ink font-bold">
+                                                {transformationsUsage} / {subscriptionTier === 'power' ? 'Unlimited' : (subscriptionTier === 'pro' ? '2,000' : '50')}
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${transformationsUsage > (subscriptionTier === 'pro' ? 2000 : 50) * 0.9 ? 'bg-red-500' : 'bg-azure'}`}
+                                                style={{
+                                                    width: subscriptionTier === 'power'
+                                                        ? '2%'
+                                                        : `${Math.min((transformationsUsage / (subscriptionTier === 'pro' ? 2000 : 50)) * 100, 100)}%`
+                                                }}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-slate-400 mt-2">
+                                            Resets on {currentPeriodEnd ? new Date(currentPeriodEnd).toLocaleDateString() : 'next billing cycle'}.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+
             </div>
 
             {/* Confirmation Modal */}
-            {showConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-6 space-y-6">
-                        {deleteStep === 'initial' ? (
-                            <>
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3 text-red-600">
-                                        <AlertCircle size={24} />
-                                        <h3 className="text-lg font-bold text-slate-900">Delete Account?</h3>
+            {
+                showConfirm && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-6 space-y-6">
+                            {deleteStep === 'initial' ? (
+                                <>
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-3 text-red-600">
+                                            <AlertCircle size={24} />
+                                            <h3 className="text-lg font-bold text-slate-900">Delete Account?</h3>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <p className="text-slate-600 leading-relaxed">
-                                    Are you sure you want to delete your account? All your identities, memories, and transformation history will be permanently removed.
-                                </p>
-
-                                <div className="flex gap-3 justify-end pt-4">
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() => setShowConfirm(false)}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        className="bg-red-600 hover:bg-red-700 text-white border-transparent"
-                                        onClick={() => setDeleteStep('confirm')}
-                                    >
-                                        Yes, Delete Account
-                                    </Button>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3 text-red-600">
-                                        <AlertCircle size={24} />
-                                        <h3 className="text-lg font-bold text-slate-900">Final Confirmation</h3>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <p className="text-slate-600">
-                                        This action cannot be undone. To confirm, please type <span className="font-mono font-bold text-red-600">delete my account</span> below.
+                                    <p className="text-slate-600 leading-relaxed">
+                                        Are you sure you want to delete your account? All your identities, memories, and transformation history will be permanently removed.
                                     </p>
 
-                                    <div className="relative group">
-                                        <input
-                                            value={deleteConfirmation}
-                                            onChange={(e) => setDeleteConfirmation(e.target.value)}
-                                            placeholder="Type 'delete my account'"
-                                            className="w-full bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-900 placeholder-red-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
-                                        />
+                                    <div className="flex gap-3 justify-end pt-4">
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => setShowConfirm(false)}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            className="bg-red-600 hover:bg-red-700 text-white border-transparent"
+                                            onClick={() => setDeleteStep('confirm')}
+                                        >
+                                            Yes, Delete Account
+                                        </Button>
                                     </div>
-                                </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-3 text-red-600">
+                                            <AlertCircle size={24} />
+                                            <h3 className="text-lg font-bold text-slate-900">Final Confirmation</h3>
+                                        </div>
+                                    </div>
 
-                                <div className="flex gap-3 justify-end pt-4">
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() => {
-                                            setShowConfirm(false);
-                                            setDeleteStep('initial');
-                                            setDeleteConfirmation('');
-                                        }}
-                                        disabled={isDeleting}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        className="bg-red-600 hover:bg-red-700 text-white border-transparent"
-                                        onClick={handleDeleteAccount}
-                                        isLoading={isDeleting}
-                                        disabled={deleteConfirmation !== 'delete my account'}
-                                    >
-                                        Permanently Delete
-                                    </Button>
-                                </div>
-                            </>
-                        )}
+                                    <div className="space-y-4">
+                                        <p className="text-slate-600">
+                                            This action cannot be undone. To confirm, please type <span className="font-mono font-bold text-red-600">delete my account</span> below.
+                                        </p>
+
+                                        <div className="relative group">
+                                            <input
+                                                value={deleteConfirmation}
+                                                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                                                placeholder="Type 'delete my account'"
+                                                className="w-full bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-900 placeholder-red-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3 justify-end pt-4">
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setShowConfirm(false);
+                                                setDeleteStep('initial');
+                                                setDeleteConfirmation('');
+                                            }}
+                                            disabled={isDeleting}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            className="bg-red-600 hover:bg-red-700 text-white border-transparent"
+                                            onClick={handleDeleteAccount}
+                                            isLoading={isDeleting}
+                                            disabled={deleteConfirmation !== 'delete my account'}
+                                        >
+                                            Permanently Delete
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-        </div>
+        </div >
     );
 };

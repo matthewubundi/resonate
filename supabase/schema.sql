@@ -35,8 +35,24 @@ create table profiles (
   theme text default 'Paper White',
   language text default 'English (US)',
   timezone text default 'UTC',
-  avatar_url text -- URL to the user's profile picture in Supabase Storage
+  avatar_url text, -- URL to the user's profile picture in Supabase Storage
+  
+  -- Editor Preferences
+  default_landing_page text default 'dashboard',
+  auto_copy_to_clipboard boolean default false,
+  clear_input_on_success boolean default false,
+  history_retention_period text default 'forever',
+  
+  -- Billing Fields
+  stripe_customer_id text,
+  subscription_status text DEFAULT 'active', -- 'active', 'canceled', 'past_due' (Free tier is 'active')
+  subscription_tier text DEFAULT 'free',     -- 'free', 'pro', 'power'
+  current_period_end timestamp with time zone,
+  transformations_usage integer DEFAULT 0    -- Monthly usage counter
 );
+
+-- Index for faster webhook lookups
+create index if not exists idx_profiles_stripe_customer_id on profiles(stripe_customer_id);
 
 -- 2. Identities Table (Stores the active identity_json)
 -- Stores user identity configurations and versions

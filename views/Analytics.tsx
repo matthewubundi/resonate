@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '../components/Components';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../hooks/useSubscription';
+import { UpgradeGate } from '../components/UpgradeGate';
 import { supabase } from '../lib/supabase';
 import { PageView } from '../types';
 import {
@@ -131,6 +133,7 @@ const DriftBadge = ({ status }: { status: 'stable' | 'drifting' }) => {
 
 export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> = ({ onNavigate }) => {
   const { user } = useAuth();
+  const { tier, loading: tierLoading } = useSubscription();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
@@ -321,9 +324,18 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
     };
   };
 
+
+
+  // ... calculateMetrics function ...
+
   const fetchAnalytics = async () => {
     if (!user) {
       setLoading(false);
+      return;
+    }
+
+    // Don't fetch if not eligible (though UI will block it mostly)
+    if (tier === 'free' || tier === 'pro') {
       return;
     }
 
@@ -350,18 +362,61 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && tier && tier !== 'free' && tier !== 'pro') {
       fetchAnalytics();
     }
-  }, [user]);
+  }, [user, tier]);
 
 
 
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-paleslate"><Loader2 className="animate-spin text-azure" size={48} /></div>;
-  if (error) return <div className="p-12 text-center text-highlight font-bold">Error: {error}</div>;
 
-  if (!metrics || metrics.totalTransformations === 0) return (
+
+  // Determine lock state
+  const isLocked = tier !== 'power' && !tierLoading;
+
+  // Use real metrics or dummy metrics for the blurred background
+  const displayMetrics = isLocked ? {
+    averageAlignmentScore: 8.5,
+    totalTransformations: 124,
+    recentAverageScore: 8.7,
+    olderAverageScore: 8.2,
+    driftDetected: false,
+    driftDirection: 'stable' as const,
+    lowScoreCount: 1,
+    commonMisalignments: [],
+    mostUsedWords: [{ word: 'synergy', count: 12 }, { word: 'leverage', count: 8 }, { word: 'drill-down', count: 5 }],
+    scoreOverTime: Array.from({ length: 30 }, (_, i) => ({
+      date: new Date(Date.now() - (29 - i) * 86400000).toISOString(),
+      score: 7 + Math.random() * 3
+    })),
+    scoreDistribution: [
+      { range: '9-10', count: 45 },
+      { range: '8-9', count: 30 },
+      { range: '7-8', count: 15 },
+      { range: '6-7', count: 10 },
+      { range: '<6', count: 5 }
+    ],
+    averageProcessingTime: 1200,
+    identityAttributes: [
+      { subject: 'Tone', baseline: 10, actual: 8 },
+      { subject: 'Formality', baseline: 10, actual: 9 },
+      { subject: 'Directness', baseline: 10, actual: 7 },
+      { subject: 'Humor', baseline: 10, actual: 8 },
+      { subject: 'Empathy', baseline: 10, actual: 9 },
+    ],
+    categoryBreakdown: { toneViolations: 2, vocabBreaches: 5, formattingErrors: 1 }
+  } : metrics;
+
+  // Loading overrides lock check (don't show lock until we know tier)
+  if (tierLoading || loading) {
+    if (!displayMetrics && loading) return <div className="min-h-screen flex items-center justify-center bg-paleslate"><Loader2 className="animate-spin text-azure" size={48} /></div>;
+  }
+
+  if (error && !isLocked) return <div className="p-12 text-center text-highlight font-bold">Error: {error}</div>;
+
+  // If unlocked and no metrics (empty state)
+  if (!isLocked && (!metrics || metrics.totalTransformations === 0)) return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-6 bg-paleslate">
       <div className="bg-white p-8 rounded-full shadow-sm"><Activity size={64} className="text-azure/20" /></div>
       <div className="max-w-md space-y-2">
@@ -374,342 +429,361 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
     </div>
   );
 
+  const finalMetrics = displayMetrics || {
+    averageAlignmentScore: 0,
+    totalTransformations: 0,
+    recentAverageScore: 0,
+    olderAverageScore: 0,
+    driftDetected: false,
+    driftDirection: 'stable',
+    lowScoreCount: 0,
+    commonMisalignments: [],
+    mostUsedWords: [],
+    scoreOverTime: [],
+    scoreDistribution: [],
+    averageProcessingTime: 0,
+    identityAttributes: [],
+    categoryBreakdown: { toneViolations: 0, vocabBreaches: 0, formattingErrors: 0 }
+  };
+
   return (
-    <div className="space-y-8 pb-20 min-h-screen bg-paleslate p-6 md:p-12">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-black text-ink tracking-tight mb-2">Identity Health Report</h1>
-          <p className="text-ink/60 text-lg">Real-time monitoring of your AI voice integrity.</p>
+    <UpgradeGate requiredTier="power" isLocked={isLocked}>
+      <div className="space-y-8 pb-20 min-h-screen bg-paleslate p-6 md:p-12">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-black text-ink tracking-tight mb-2">Identity Health Report</h1>
+            <p className="text-ink/60 text-lg">Real-time monitoring of your AI voice integrity.</p>
+          </div>
+          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-ink/5 shadow-sm">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span className="text-xs font-bold text-ink/40 uppercase tracking-wider">System Online</span>
+          </div>
         </div>
-        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-ink/5 shadow-sm">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          <span className="text-xs font-bold text-ink/40 uppercase tracking-wider">System Online</span>
-        </div>
-      </div>
 
-      {/* A. The Pulse (Hero) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Gauge Card */}
-        <Card className="lg:col-span-2 bg-white shadow-sm border-ink/5 overflow-hidden ring-1 ring-ink/5">
-          <CardHeader className="pb-0 border-b border-gray-50 bg-gray-50/50 py-4 px-6">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-                <Fingerprint size={14} /> Identity Alignment Score
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-8 pb-8 px-8">
-            <div className="flex flex-col md:flex-row items-center justify-around gap-8">
-              <Gauge value={metrics.recentAverageScore} metrics={metrics} />
+        {/* A. The Pulse (Hero) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Gauge Card */}
+          <Card className="lg:col-span-2 bg-white shadow-sm border-ink/5 overflow-hidden ring-1 ring-ink/5">
+            <CardHeader className="pb-0 border-b border-gray-50 bg-gray-50/50 py-4 px-6">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+                  <Fingerprint size={14} /> Identity Alignment Score
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-8 pb-8 px-8">
+              <div className="flex flex-col md:flex-row items-center justify-around gap-8">
+                <Gauge value={finalMetrics.recentAverageScore} metrics={metrics} />
 
-              <div className="flex flex-col gap-4 w-full md:w-auto md:min-w-[260px]">
-                <DriftBadge status={metrics.driftDetected ? 'drifting' : 'stable'} />
+                <div className="flex flex-col gap-4 w-full md:w-auto md:min-w-[260px]">
+                  <DriftBadge status={finalMetrics.driftDetected ? 'drifting' : 'stable'} />
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-paleslate p-4 rounded-xl border border-ink/5">
-                    <div className="text-[10px] font-bold text-ink/40 uppercase mb-1">Total Ops</div>
-                    <div className="text-2xl font-bold text-ink">{metrics.totalTransformations}</div>
-                  </div>
-                  <div className="bg-paleslate p-4 rounded-xl border border-ink/5">
-                    <div className="text-[10px] font-bold text-ink/40 uppercase mb-1">Latency</div>
-                    <div className="text-2xl font-bold text-ink">{(metrics.averageProcessingTime / 1000).toFixed(2)}s</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-paleslate p-4 rounded-xl border border-ink/5">
+                      <div className="text-[10px] font-bold text-ink/40 uppercase mb-1">Total Ops</div>
+                      <div className="text-2xl font-bold text-ink">{finalMetrics.totalTransformations}</div>
+                    </div>
+                    <div className="bg-paleslate p-4 rounded-xl border border-ink/5">
+                      <div className="text-[10px] font-bold text-ink/40 uppercase mb-1">Latency</div>
+                      <div className="text-2xl font-bold text-ink">{(finalMetrics.averageProcessingTime / 1000).toFixed(2)}s</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* B. Drift Radar */}
-        <Card className="bg-white shadow-sm border-ink/5 flex flex-col ring-1 ring-ink/5">
-          <CardHeader className="pb-2 border-b border-gray-50 bg-gray-50/50 py-4 px-6">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-              <Activity size={14} /> Drift Radar
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-center items-center pt-6 pb-6 px-2 min-h-[320px]">
-            <ResponsiveContainer width="100%" height={280}>
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={metrics.identityAttributes}>
-                <PolarGrid stroke="#E2E8F0" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748B', fontSize: 10, fontWeight: 700 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 10]} tick={false} axisLine={false} />
-                <Radar
-                  name="Baseline"
-                  dataKey="baseline"
-                  stroke="#94A3B8"
-                  strokeDasharray="4 4"
-                  fill="#94A3B8"
-                  fillOpacity={0.1}
-                />
-                <Radar
-                  name="Recent"
-                  dataKey="actual"
-                  stroke="#2563EB"
-                  fill="#2563EB"
-                  fillOpacity={0.4}
-                />
-                <Legend iconSize={8} wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#FFFFFF',
-                    color: '#111111',
-                    borderRadius: '8px',
-                    border: 'none',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-            <p className="text-xs text-center text-ink/40 mt-2 px-6">
-              Gap between <span className="text-azure font-bold">Blue</span> and <span className="text-slate-400 font-bold">Grey</span> represents identity drift.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          {/* B. Drift Radar */}
+          <Card className="bg-white shadow-sm border-ink/5 flex flex-col ring-1 ring-ink/5">
+            <CardHeader className="pb-2 border-b border-gray-50 bg-gray-50/50 py-4 px-6">
+              <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+                <Activity size={14} /> Drift Radar
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col justify-center items-center pt-6 pb-6 px-2 min-h-[320px]">
+              <ResponsiveContainer width="100%" height={280}>
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={finalMetrics.identityAttributes}>
+                  <PolarGrid stroke="#E2E8F0" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748B', fontSize: 10, fontWeight: 700 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 10]} tick={false} axisLine={false} />
+                  <Radar
+                    name="Baseline"
+                    dataKey="baseline"
+                    stroke="#94A3B8"
+                    strokeDasharray="4 4"
+                    fill="#94A3B8"
+                    fillOpacity={0.1}
+                  />
+                  <Radar
+                    name="Recent"
+                    dataKey="actual"
+                    stroke="#2563EB"
+                    fill="#2563EB"
+                    fillOpacity={0.4}
+                  />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#FFFFFF',
+                      color: '#111111',
+                      borderRadius: '8px',
+                      border: 'none',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+              <p className="text-xs text-center text-ink/40 mt-2 px-6">
+                Gap between <span className="text-azure font-bold">Blue</span> and <span className="text-slate-400 font-bold">Grey</span> represents identity drift.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Row 2: Trends & Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Identity Velocity (Line Chart) */}
-        <Card className="lg:col-span-2 bg-white shadow-sm border-ink/5 ring-1 ring-ink/5">
-          <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-              <TrendingUp size={14} /> Identity Velocity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="h-[250px] w-full">
-              {metrics.scoreOverTime.length > 0 ? (
+        {/* Row 2: Trends & Distribution */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Identity Velocity (Line Chart) */}
+          <Card className="lg:col-span-2 bg-white shadow-sm border-ink/5 ring-1 ring-ink/5">
+            <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
+              <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+                <TrendingUp size={14} /> Identity Velocity
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="h-[250px] w-full">
+                {finalMetrics.scoreOverTime.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={finalMetrics.scoreOverTime}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748B', fontSize: 10 }}
+                        dy={10}
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }}
+                      />
+                      <YAxis
+                        domain={[0, 10]}
+                        hide={false}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748B', fontSize: 10 }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#FFFFFF',
+                          borderRadius: '8px',
+                          border: 'none',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                        cursor={{ stroke: '#2563EB', strokeWidth: 1, strokeDasharray: '4 4' }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke="#2563EB"
+                        strokeWidth={3}
+                        dot={{ fill: '#2563EB', strokeWidth: 0, r: 3 }}
+                        activeDot={{ r: 6, stroke: '#EFF6FF', strokeWidth: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-ink/40 text-sm">
+                    Not enough data to calculate velocity
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Score Distribution (Bar Chart) */}
+          <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5">
+            <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
+              <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+                <Activity size={14} className="rotate-90" /> Score Spread
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={metrics.scoreOverTime}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                  <BarChart data={finalMetrics.scoreDistribution} layout="vertical" margin={{ left: 0, right: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
                     <XAxis
-                      dataKey="date"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#64748B', fontSize: 10 }}
-                      dy={10}
-                      tickFormatter={(value) => {
-                        const date = new Date(value);
-                        return `${date.getMonth() + 1}/${date.getDate()}`;
-                      }}
-                    />
+                      type="number"
+                      hide />
                     <YAxis
-                      domain={[0, 10]}
-                      hide={false}
+                      dataKey="range"
+                      type="category"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#64748B', fontSize: 10 }}
+                      tick={{ fill: '#64748B', fontSize: 10, fontWeight: 600 }}
+                      width={30}
                     />
                     <Tooltip
+                      cursor={{ fill: '#F1F5F9' }}
                       contentStyle={{
                         backgroundColor: '#FFFFFF',
                         borderRadius: '8px',
                         border: 'none',
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                       }}
-                      cursor={{ stroke: '#2563EB', strokeWidth: 1, strokeDasharray: '4 4' }}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="score"
-                      stroke="#2563EB"
-                      strokeWidth={3}
-                      dot={{ fill: '#2563EB', strokeWidth: 0, r: 3 }}
-                      activeDot={{ r: 6, stroke: '#EFF6FF', strokeWidth: 4 }}
-                    />
-                  </LineChart>
+                    <Bar
+                      dataKey="count"
+                      fill="#2563EB"
+                      radius={[0, 4, 4, 0]}
+                      barSize={24}
+                    >
+                      {finalMetrics.scoreDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.range === '9-10' || entry.range === '8-9' ? '#2563EB' : '#94A3B8'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-ink/40 text-sm">
-                  Not enough data to calculate velocity
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* C. Vocabulary Analysis ("The Fingerprint") */}
+          <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5 h-full">
+            <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6 flex flex-row items-center justify-between">
+              <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+                <Search size={14} /> Signature Cloud
+              </CardTitle>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-azure"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Signature</span>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Score Distribution (Bar Chart) */}
-        <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5">
-          <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-              <Activity size={14} className="rotate-90" /> Score Spread
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={metrics.scoreDistribution} layout="vertical" margin={{ left: 0, right: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
-                  <XAxis
-                    type="number"
-                    hide />
-                  <YAxis
-                    dataKey="range"
-                    type="category"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#64748B', fontSize: 10, fontWeight: 600 }}
-                    width={30}
-                  />
-                  <Tooltip
-                    cursor={{ fill: '#F1F5F9' }}
-                    contentStyle={{
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '8px',
-                      border: 'none',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill="#2563EB"
-                    radius={[0, 4, 4, 0]}
-                    barSize={24}
-                  >
-                    {metrics.scoreDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.range === '9-10' || entry.range === '8-9' ? '#2563EB' : '#94A3B8'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* C. Vocabulary Analysis ("The Fingerprint") */}
-        <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5 h-full">
-          <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6 flex flex-row items-center justify-between">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-              <Search size={14} /> Signature Cloud
-            </CardTitle>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-azure"></div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Signature</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-highlight"></div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Intrusion</span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-8 h-full">
-            <div className="flex flex-wrap justify-center content-center gap-3 h-full min-h-[250px]">
-              {metrics.mostUsedWords.map((item, idx) => {
-                // Visual logic for size and color
-                const isTop = idx < 3;
-                const isMid = idx >= 3 && idx < 8;
-                const sizeClass = isTop ? 'text-2xl px-6 py-3' : (isMid ? 'text-lg px-4 py-2' : 'text-sm px-3 py-1');
-                const colorClass = isTop
-                  ? 'bg-azure text-white shadow-lg shadow-azure/20'
-                  : (isMid ? 'bg-paleslate text-ink border border-ink/5' : 'bg-white text-ink/60 border border-gray-100');
-
-                return (
-                  <div
-                    key={idx}
-                    className={`rounded-full font-semibold transition-all hover:scale-110 cursor-default flex items-center gap-2 ${sizeClass} ${colorClass}`}
-                  >
-                    {item.word}
-                    {isTop && <span className="text-[10px] bg-white/20 px-1.5 rounded-full">{item.count}</span>}
-                  </div>
-                );
-              })}
-
-              {/* Mock Banned Words for Visual */}
-              <div className="rounded-full bg-highlight/10 text-highlight border border-highlight/20 px-4 py-2 text-sm font-bold flex items-center gap-2 hover:bg-highlight/20 transition-colors animate-pulse">
-                <AlertCircle size={14} />
-                delve
-              </div>
-              <div className="rounded-full bg-highlight/10 text-highlight border border-highlight/20 px-3 py-1 text-xs font-bold flex items-center gap-1 hover:bg-highlight/20 transition-colors">
-                <AlertCircle size={12} />
-                tapestry
-              </div>
-            </div>
-
-          </CardContent>
-        </Card>
-
-        {/* D. Misalignment Insights (Actionable Fixes) */}
-        <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5 h-full">
-          <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-              <AlertTriangle size={14} /> Misalignment Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-
-            {/* Insight Card 1: Tone Violations */}
-            <div className="border border-ink/10 rounded-xl overflow-hidden transition-all duration-200">
-              <div
-                className="bg-white p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => setExpandedInsight(expandedInsight === 'tone' ? null : 'tone')}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-highlight/10 flex items-center justify-center text-highlight font-black text-lg">
-                    {metrics.categoryBreakdown.toneViolations}
-                  </div>
-                  <div>
-                    <div className="font-bold text-ink text-lg">Tone Violations</div>
-                    <div className="text-sm text-ink/50">Detected passive voice & generic phrasing</div>
-                  </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-highlight"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Intrusion</span>
                 </div>
-                {expandedInsight === 'tone' ? <ChevronUp size={20} className="text-ink/30" /> : <ChevronDown size={20} className="text-ink/30" />}
               </div>
+            </CardHeader>
+            <CardContent className="p-8 h-full">
+              <div className="flex flex-wrap justify-center content-center gap-3 h-full min-h-[250px]">
+                {finalMetrics.mostUsedWords.map((item, idx) => {
+                  // Visual logic for size and color
+                  const isTop = idx < 3;
+                  const isMid = idx >= 3 && idx < 8;
+                  const sizeClass = isTop ? 'text-2xl px-6 py-3' : (isMid ? 'text-lg px-4 py-2' : 'text-sm px-3 py-1');
+                  const colorClass = isTop
+                    ? 'bg-azure text-white shadow-lg shadow-azure/20'
+                    : (isMid ? 'bg-paleslate text-ink border border-ink/5' : 'bg-white text-ink/60 border border-gray-100');
 
-              {expandedInsight === 'tone' && (
-                <div className="bg-gray-50 p-4 border-t border-ink/5 space-y-3 animate-fade-in">
-                  {metrics.commonMisalignments.slice(0, 3).map((m, i) => (
-                    <div key={i} className="bg-white p-4 rounded-lg border border-ink/5 text-sm shadow-sm">
-                      <div className="flex justify-between mb-2">
-                        <span className="font-semibold text-xs text-ink/40 bg-paleslate px-2 py-0.5 rounded">{m.date}</span>
-                        <span className="font-bold text-xs text-white bg-highlight px-2 py-0.5 rounded">Score: {m.score.toFixed(1)}</span>
-                      </div>
-                      <p className="text-ink/80 italic font-serif">"...{m.preview}..."</p>
+                  return (
+                    <div
+                      key={idx}
+                      className={`rounded-full font-semibold transition-all hover:scale-110 cursor-default flex items-center gap-2 ${sizeClass} ${colorClass}`}
+                    >
+                      {item.word}
+                      {isTop && <span className="text-[10px] bg-white/20 px-1.5 rounded-full">{item.count}</span>}
                     </div>
-                  ))}
-                  {metrics.commonMisalignments.length === 0 && <p className="text-sm text-center text-ink/40 py-4">No significant tone violations detected.</p>}
-                </div>
-              )}
-            </div>
+                  );
+                })}
 
-            {/* Insight Card 2: Vocabulary Breaches */}
-            <div className="border border-ink/10 rounded-xl overflow-hidden transition-all duration-200">
-              <div
-                className="bg-white p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => setExpandedInsight(expandedInsight === 'vocab' ? null : 'vocab')}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-lg">
-                    {metrics.categoryBreakdown.vocabBreaches + 2} {/* +2 for the mocked ones */}
-                  </div>
-                  <div>
-                    <div className="font-bold text-ink text-lg">Vocabulary Breaches</div>
-                    <div className="text-sm text-ink/50">Use of banned words 'delve', 'synergy'</div>
-                  </div>
+                {/* Mock Banned Words for Visual */}
+                <div className="rounded-full bg-highlight/10 text-highlight border border-highlight/20 px-4 py-2 text-sm font-bold flex items-center gap-2 hover:bg-highlight/20 transition-colors animate-pulse">
+                  <AlertCircle size={14} />
+                  delve
                 </div>
-                {expandedInsight === 'vocab' ? <ChevronUp size={20} className="text-ink/30" /> : <ChevronDown size={20} className="text-ink/30" />}
+                <div className="rounded-full bg-highlight/10 text-highlight border border-highlight/20 px-3 py-1 text-xs font-bold flex items-center gap-1 hover:bg-highlight/20 transition-colors">
+                  <AlertCircle size={12} />
+                  tapestry
+                </div>
               </div>
-              {expandedInsight === 'vocab' && (
-                <div className="bg-gray-50 p-4 border-t border-ink/5 space-y-3 animate-fade-in">
-                  <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-ink/5 shadow-sm">
-                    <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">BAN</span>
-                    <span className="text-sm text-ink"><span className="line-through text-ink/40">Using the word</span> <span className="font-bold text-red-500 bg-red-50 px-1 rounded">delve</span> in intro...</span>
-                  </div>
-                  <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-ink/5 shadow-sm">
-                    <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">BAN</span>
-                    <span className="text-sm text-ink">...creates a rich <span className="font-bold text-red-500 bg-red-50 px-1 rounded">tapestry</span> of...</span>
-                  </div>
-                  <div className="text-xs text-center text-ink/40 pt-2">These words dilute your unique brand voice.</div>
-                </div>
-              )}
-            </div>
 
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* D. Misalignment Insights (Actionable Fixes) */}
+          <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5 h-full">
+            <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
+              <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
+                <AlertTriangle size={14} /> Misalignment Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+
+              {/* Insight Card 1: Tone Violations */}
+              <div className="border border-ink/10 rounded-xl overflow-hidden transition-all duration-200">
+                <div
+                  className="bg-white p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setExpandedInsight(expandedInsight === 'tone' ? null : 'tone')}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-highlight/10 flex items-center justify-center text-highlight font-black text-lg">
+                      {finalMetrics.categoryBreakdown.toneViolations}
+                    </div>
+                    <div>
+                      <div className="font-bold text-ink text-lg">Tone Violations</div>
+                      <div className="text-sm text-ink/50">Detected passive voice & generic phrasing</div>
+                    </div>
+                  </div>
+                  {expandedInsight === 'tone' ? <ChevronUp size={20} className="text-ink/30" /> : <ChevronDown size={20} className="text-ink/30" />}
+                </div>
+
+                {expandedInsight === 'tone' && (
+                  <div className="bg-gray-50 p-4 border-t border-ink/5 space-y-3 animate-fade-in">
+                    {finalMetrics.commonMisalignments.slice(0, 3).map((m, i) => (
+                      <div key={i} className="bg-white p-4 rounded-lg border border-ink/5 text-sm shadow-sm">
+                        <div className="flex justify-between mb-2">
+                          <span className="font-semibold text-xs text-ink/40 bg-paleslate px-2 py-0.5 rounded">{m.date}</span>
+                          <span className="font-bold text-xs text-white bg-highlight px-2 py-0.5 rounded">Score: {m.score.toFixed(1)}</span>
+                        </div>
+                        <p className="text-ink/80 italic font-serif">"...{m.preview}..."</p>
+                      </div>
+                    ))}
+                    {finalMetrics.commonMisalignments.length === 0 && <p className="text-sm text-center text-ink/40 py-4">No significant tone violations detected.</p>}
+                  </div>
+                )}
+              </div>
+
+              {/* Insight Card 2: Vocabulary Breaches */}
+              <div className="border border-ink/10 rounded-xl overflow-hidden transition-all duration-200">
+                <div
+                  className="bg-white p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setExpandedInsight(expandedInsight === 'vocab' ? null : 'vocab')}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-lg">
+                      {finalMetrics.categoryBreakdown.vocabBreaches + 2} {/* +2 for the mocked ones */}
+                    </div>
+                    <div>
+                      <div className="font-bold text-ink text-lg">Vocabulary Breaches</div>
+                      <div className="text-sm text-ink/50">Use of banned words 'delve', 'synergy'</div>
+                    </div>
+                  </div>
+                  {expandedInsight === 'vocab' ? <ChevronUp size={20} className="text-ink/30" /> : <ChevronDown size={20} className="text-ink/30" />}
+                </div>
+                {expandedInsight === 'vocab' && (
+                  <div className="bg-gray-50 p-4 border-t border-ink/5 space-y-3 animate-fade-in">
+                    <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-ink/5 shadow-sm">
+                      <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">BAN</span>
+                      <span className="text-sm text-ink"><span className="line-through text-ink/40">Using the word</span> <span className="font-bold text-red-500 bg-red-50 px-1 rounded">delve</span> in intro...</span>
+                    </div>
+                    <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-ink/5 shadow-sm">
+                      <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">BAN</span>
+                      <span className="text-sm text-ink">...creates a rich <span className="font-bold text-red-500 bg-red-50 px-1 rounded">tapestry</span> of...</span>
+                    </div>
+                    <div className="text-xs text-center text-ink/40 pt-2">These words dilute your unique brand voice.</div>
+                  </div>
+                )}
+              </div>
+
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </UpgradeGate>
   );
 };

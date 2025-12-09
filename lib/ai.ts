@@ -32,10 +32,10 @@ export const buildEvaluationPrompt = (
     return `IDENTITY:
 ${JSON.stringify(identityJson)}
 
-ORIGINAL_INPUT: 
+ORIGINAL_INPUT:
 ${originalInput}
 
-CONTEXTUAL_INSTRUCTIONS: 
+CONTEXTUAL_INSTRUCTIONS:
 ${contextualInstructions || "None"}
 
 TEXT_TO_AUDIT:

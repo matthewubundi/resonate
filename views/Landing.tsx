@@ -347,7 +347,7 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void; onNa
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={36} height={36} className="object-contain" />
+            <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={36} height={36} className="w-9 h-9 object-contain" />
             <span className="font-bold text-xl tracking-tight text-blue-600">Resonate</span>
           </div>
           <div className="flex items-center gap-6">
@@ -587,7 +587,7 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void; onNa
           {/* Left Side: Brand */}
           <div className="max-w-xl">
             <div className="flex items-center gap-3 mb-6">
-              <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={48} height={48} className="object-contain" />
+              <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={48} height={48} className="w-12 h-12 object-contain" />
               <span className="font-bold text-2xl tracking-tight text-blue-600">Resonate</span>
             </div>
             <p className="text-slate-500 text-lg leading-relaxed mb-8">

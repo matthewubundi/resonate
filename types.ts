@@ -19,7 +19,8 @@ export type PageView =
   | 'verified'
   | 'terms'
   | 'privacy'
-  | 'reset-password';
+  | 'reset-password'
+  | 'plans';
 
 export interface NavItem {
   id: PageView;
@@ -78,18 +79,33 @@ export interface Database {
           email: string | null;
           created_at: string; // timestamp with time zone
           full_name: string | null;
+          stripe_customer_id: string | null;
+          subscription_status: string | null; // e.g., active, past_due
+          subscription_tier: 'free' | 'pro' | 'power';
+          current_period_end: string | null; // timestamp with time zone
+          transformations_usage: number;
         };
         Insert: {
           id: string; // uuid (references auth.users)
           email?: string | null;
           created_at?: string;
           full_name?: string | null;
+          stripe_customer_id?: string | null;
+          subscription_status?: string | null;
+          subscription_tier?: 'free' | 'pro' | 'power';
+          current_period_end?: string | null;
+          transformations_usage?: number;
         };
         Update: {
           id?: string;
           email?: string | null;
           created_at?: string;
           full_name?: string | null;
+          stripe_customer_id?: string | null;
+          subscription_status?: string | null;
+          subscription_tier?: 'free' | 'pro' | 'power';
+          current_period_end?: string | null;
+          transformations_usage?: number;
         };
       };
       identities: {

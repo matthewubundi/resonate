@@ -9,6 +9,17 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const limit = parseInt(url.searchParams.get('limit') || '50');
 
+    // Check subscription tier
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile || profile.subscription_tier === 'free') {
+      return NextResponse.json({ error: 'Upgrade required for Memory access' }, { status: 403 });
+    }
+
     // RLS ensures user can only see their own memories
     const { data, error } = await supabase
       .from('memories')

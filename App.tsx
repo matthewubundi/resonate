@@ -25,6 +25,7 @@ const TermsOfService = React.lazy(() => import('./views/TermsOfService').then(mo
 const PrivacyPolicy = React.lazy(() => import('./views/PrivacyPolicy').then(module => ({ default: module.PrivacyPolicy })));
 const IdentityEditor = React.lazy(() => import('./views/IdentityEditor').then(module => ({ default: module.IdentityEditor })));
 const ResetPassword = React.lazy(() => import('./views/ResetPassword').then(module => ({ default: module.ResetPassword })));
+const Plans = React.lazy(() => import('./views/Plans').then(module => ({ default: module.Plans })));
 
 
 
@@ -56,6 +57,7 @@ const AppContent: React.FC = () => {
             '/verified': 'verified',
             '/terms': 'terms',
             '/privacy': 'privacy',
+            '/plans': 'plans',
         };
 
         return routeMap[pathname || '/'] || 'landing';
@@ -174,7 +176,7 @@ const AppContent: React.FC = () => {
     // Protected route handler
     const handleNavigate = (page: PageView) => {
         // If trying to access protected pages without authentication, redirect to login
-        const protectedPages: PageView[] = ['dashboard', 'transform', 'editor', 'analytics', 'history', 'memory', 'personas', 'settings'];
+        const protectedPages: PageView[] = ['dashboard', 'transform', 'editor', 'analytics', 'history', 'memory', 'personas', 'settings', 'plans'];
 
         if (protectedPages.includes(page) && !user) {
             router.push('/login');
@@ -210,6 +212,7 @@ const AppContent: React.FC = () => {
             'reset-password': '/auth/reset-password',
             'terms': '/terms',
             'privacy': '/privacy',
+            'plans': '/plans',
         };
 
         router.push(routeMap[page] || '/');
@@ -321,6 +324,8 @@ const AppContent: React.FC = () => {
                 return <Personas onNavigate={handleNavigate} />;
             case 'settings':
                 return <Settings onNavigate={handleNavigate} />;
+            case 'plans':
+                return <Plans />;
             case 'documentation':
                 return <Documentation onBack={() => handleNavigate('landing')} />;
             case 'terms':

@@ -384,7 +384,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
                   onClick={handleQuickTransform}
                   isLoading={isTransforming}
                   disabled={isTransforming || !quickInput.trim() || !identity}
-                  className="shadow-lg shadow-azure/20 text-base font-semibold px-8 py-6 h-auto rounded-xl"
+                  className="shadow-lg shadow-azure/20 rounded-full px-10 transition-transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {isTransforming ? 'Resonating...' : <>Resonate Text <ArrowRight size={18} className="ml-2" /></>}
                 </Button>

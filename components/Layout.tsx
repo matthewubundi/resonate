@@ -10,7 +10,8 @@ import {
   Settings,
   Menu,
   LogOut,
-  Cpu
+  Cpu,
+  CreditCard
 } from 'lucide-react';
 import Image from 'next/image';
 import { NavItem, PageView } from '../types';
@@ -36,6 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'memory', label: 'Memory & Context', icon: Brain },
   { id: 'personas', label: 'Personas', icon: Users },
+  { id: 'plans', label: 'Plans', icon: CreditCard },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
@@ -44,17 +46,19 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = React.useState<string>('free');
 
   React.useEffect(() => {
     if (user) {
       const fetchProfile = async () => {
         const { data } = await supabase
           .from('profiles')
-          .select('avatar_url')
+          .select('avatar_url, subscription_tier')
           .eq('id', user.id)
           .single();
-        if (data?.avatar_url) {
-          setAvatarUrl(data.avatar_url);
+        if (data) {
+          if (data.avatar_url) setAvatarUrl(data.avatar_url);
+          if (data.subscription_tier) setSubscriptionTier(data.subscription_tier);
         }
       };
       fetchProfile();
@@ -74,13 +78,22 @@ export const Layout: React.FC<LayoutProps> = ({
     return name.charAt(0).toUpperCase();
   };
 
+  const getSubscriptionDisplay = () => {
+    if (!user) return 'Not logged in';
+    switch (subscriptionTier) {
+      case 'pro': return 'Resonate Pro';
+      case 'power': return 'Resonate Power';
+      default: return 'Resonate Free';
+    }
+  };
+
   return (
     <div className="flex h-screen w-full bg-paper text-ink overflow-hidden">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex w-64 flex-col bg-paleslate border-r border-ink/10">
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={32} height={32} className="object-contain" />
+            <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={32} height={32} className="w-8 h-8 object-contain" />
             <span className="font-bold text-lg tracking-tight text-azure">Resonate</span>
           </div>
         </div>
@@ -137,7 +150,7 @@ export const Layout: React.FC<LayoutProps> = ({
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-bold text-ink">{getUserDisplayName()}</p>
                 <p className="text-[10px] text-azure font-bold uppercase tracking-wider">
-                  {user?.email || 'Not logged in'}
+                  {getSubscriptionDisplay()}
                 </p>
               </div>
               <div className="h-9 w-9 rounded-full bg-paleslate border border-ink/10 text-azure flex items-center justify-center font-bold overflow-hidden relative">
@@ -160,7 +173,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <div className="absolute inset-0 z-50 bg-ink/20 md:hidden backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="h-full w-64 bg-paleslate p-4 border-r border-ink/10 shadow-xl" onClick={e => e.stopPropagation()}>
               <div className="flex items-center gap-2 mb-8 px-2">
-                <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={32} height={32} className="object-contain" />
+                <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={32} height={32} className="w-8 h-8 object-contain" />
                 <span className="font-bold text-lg text-azure">Resonate</span>
               </div>
               <nav className="space-y-1">

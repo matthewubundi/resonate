@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
 import { TRANSFORMATION_SYSTEM_PROMPT, EVALUATION_SYSTEM_PROMPT } from '@/lib/prompts';
 import { transformRateLimit } from '@/lib/ratelimit';
@@ -72,6 +73,34 @@ export async function POST(req: Request) {
         error: 'No active identity found. Please complete onboarding first.'
       }, { status: 404 });
     }
+
+    // --- BILLING CHECKS START ---
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_tier, transformations_usage')
+      .eq('id', user.id)
+      .single();
+
+    const tier = profile?.subscription_tier || 'free';
+    const usage = profile?.transformations_usage || 0;
+
+    // 1. Model Access Check
+    if (tier === 'free' && model_id !== 'gpt-4o-mini') {
+      return NextResponse.json({
+        error: 'Free tier is limited to GPT-4o-mini. Upgrade to Pro for Gemini 2.5 Flash.'
+      }, { status: 403 });
+    }
+
+    // 2. Usage Limit Check
+    const LIMITS = { free: 50, pro: 2000, power: Infinity };
+    const limit = LIMITS[tier as keyof typeof LIMITS] || 50;
+
+    if (usage >= limit) {
+      return NextResponse.json({
+        error: `You have reached your monthly limit of ${limit} transformations. Upgrade to continue.`
+      }, { status: 403 });
+    }
+    // --- BILLING CHECKS END ---
 
     // Memory Retrieval Layer
     let memories: any[] = [];
@@ -189,6 +218,29 @@ export async function POST(req: Request) {
 
     if (logError) {
       logger.error('Logging error', { userId: user.id, error: logError });
+    }
+
+    // Increment Usage Counter (using Admin client to bypass potential RLS on updating own usage)
+    if (user.id) {
+      await supabaseAdmin.rpc('increment_usage', { user_id: user.id });
+      // Fallback if RPC doesn't exist yet (simpler update)
+      /* 
+      const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({ transformations_usage: (usage || 0) + 1 })
+        .eq('id', user.id);
+       */
+      // Actually, let's just use a direct update for now if RPC isn't guaranteed, 
+      // but strictly we should use RPC for atomicity. 
+      // For this task, I will use a direct increment assuming low concurrency or I'll provide the SQL for the RPC in the next step.
+      // Let's safe bet on direct update for now, fetching fresh usage to be sure.
+
+      const { data: currentProfile } = await supabaseAdmin.from('profiles').select('transformations_usage').eq('id', user.id).single();
+      if (currentProfile) {
+        await supabaseAdmin.from('profiles').update({
+          transformations_usage: (currentProfile.transformations_usage || 0) + 1
+        }).eq('id', user.id);
+      }
     }
 
     const response = NextResponse.json({

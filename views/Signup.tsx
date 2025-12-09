@@ -109,7 +109,7 @@ export const Signup: React.FC<SignupProps> = ({ onSignup, onNavigateToLogin, onB
                 {/* Logo */}
                 <div className="relative z-10">
                     <div className="flex items-center gap-4">
-                        <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={64} height={64} className="opacity-90" />
+                        <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={64} height={64} className="w-16 h-16 opacity-90" />
                         <span className="text-azure text-4xl font-bold tracking-tight">Resonate</span>
                     </div>
                 </div>

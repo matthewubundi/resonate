@@ -18,9 +18,15 @@ An AI-powered application that helps preserve and maintain your unique communica
 - 📜 **Version History** - Track changes to your identity with rollback capabilities
 - ⚙️ **Settings Management** - Customize display name, theme, language, and timezone preferences
 
+### Premium Features
+- 💳 **Subscription Management** - Tiered access (Free, Pro, Power) powered by Stripe
+- ⚡ **Smart Model Routing** - Access to advanced models (Gemini 2.5 Flash) for premium tiers
+- 🔒 **Upgrade Gates** - Premium UI components for feature locking and upselling
+- 📈 **Advanced Analytics** - Deeper insights into your usage and transformation quality
+
 ### Platform Features
 - 🔐 **Secure Authentication** - Email/password and OAuth (Google, GitHub) via Supabase
-- 🎨 **Modern UI** - Beautiful, responsive design with Tailwind CSS and custom components
+- 🎨 **Modern UI** - Beautiful, responsive design with Tailwind CSS and Framer Motion
 - 🔒 **Protected Routes** - Automatic authentication checks for secure pages
 - 📚 **Documentation Viewer** - Built-in markdown documentation system
 - 🚀 **Performance Optimized** - Rate limiting, error handling, and efficient data fetching
@@ -50,9 +56,23 @@ An AI-powered application that helps preserve and maintain your unique communica
 
    Create a `.env.local` file in the root directory:
    ```env
+   # App
+   NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+   # Supabase
    NEXT_PUBLIC_SUPABASE_URL=your-project-url.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+
+   # OpenAI (Legacy/Fallback)
    OPENAI_API_KEY=your-openai-api-key-here
+
+   # Google Gemini (Primary for Premium)
+   GEMINI_API_KEY=your-gemini-api-key-here
+
+   # Stripe
+   STRIPE_SECRET_KEY=sk_test_...
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+   STRIPE_WEBHOOK_SECRET=whsec_...
    ```
 
    📖 **For detailed setup instructions**, see [SUPABASE_SETUP.md](./docs/architecture/SUPABASE_SETUP.md)
@@ -79,7 +99,9 @@ identity-preserver/
 │   │   ├── personas/      # Persona management
 │   │   ├── memory/        # Memory CRUD operations
 │   │   ├── history/       # Transformation history
-│   │   └── settings/      # User settings
+│   │   ├── settings/      # User settings
+│   │   ├── billing/       # Billing & checkout
+│   │   └── webhooks/      # Stripe webhooks
 │   ├── dashboard/         # Dashboard page
 │   ├── transform/         # Transformation interface
 │   ├── editor/            # Identity editor
@@ -88,6 +110,7 @@ identity-preserver/
 │   ├── analytics/         # Analytics dashboard
 │   ├── history/           # History viewer
 │   ├── settings/          # Settings page
+│   ├── plans/             # Subscription plans page
 │   └── documentation/     # Documentation viewer
 ├── components/            # Reusable UI components
 │   ├── ui/                # UI component library
@@ -124,8 +147,9 @@ identity-preserver/
 - **Language**: TypeScript
 - **Authentication**: Supabase Auth
 - **Database**: Supabase (PostgreSQL with vector extension)
-- **AI/ML**: OpenAI GPT-4o-mini, text-embedding-3-small
-- **Styling**: Tailwind CSS 4
+- **AI/ML**: Google Gemini (Flash 2.5), OpenAI GPT-4o-mini
+- **Payments**: Stripe
+- **Styling**: Tailwind CSS 4, Framer Motion
 - **UI Components**: Custom components with Lucide React icons
 - **Charts**: Recharts
 - **Validation**: Zod
@@ -201,6 +225,11 @@ Required environment variables:
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Yes |
 | `OPENAI_API_KEY` | Your OpenAI API key | Yes |
+| `GEMINI_API_KEY` | Your Google Gemini API key | Yes |
+| `STRIPE_SECRET_KEY` | Stripe Secret Key | Yes |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe Publishable Key | Yes |
+| `STRIPE_WEBHOOK_SECRET` | Stripe Webhook Secret | Yes |
+| `NEXT_PUBLIC_BASE_URL` | App Base URL (e.g., http://localhost:3000) | Yes |
 
 Optional (for rate limiting):
 - `UPSTASH_REDIS_REST_URL` - Upstash Redis URL

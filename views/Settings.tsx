@@ -165,6 +165,19 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     const [deleteStep, setDeleteStep] = useState<'initial' | 'confirm'>('initial');
     const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
+    // Handle Stripe redirect status
+    useEffect(() => {
+        if (searchParams.get('success') === 'true') {
+            setSuccess('Subscription updated successfully!');
+            const timer = setTimeout(() => setSuccess(null), 5000);
+            return () => clearTimeout(timer);
+        }
+        if (searchParams.get('canceled') === 'true') {
+            // Optional: could show a message for cancellation
+            // setError('Subscription update canceled.');
+        }
+    }, [searchParams]);
+
     // Form state
     const [displayName, setDisplayName] = useState('');
     const [language, setLanguage] = useState('English (US)');

@@ -32,10 +32,7 @@ export async function POST(req: Request) {
         const customerId = profile?.stripe_customer_id;
         const email = user.email;
 
-        const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-        // Ensure origin has protocol
-        const baseUrl = origin.startsWith('http') ? origin : `https://${origin}`;
+        const domain = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
         const sessionParams: Stripe.Checkout.SessionCreateParams = {
             payment_method_types: ['card'],
@@ -46,8 +43,8 @@ export async function POST(req: Request) {
                 },
             ],
             mode: 'subscription',
-            success_url: `${baseUrl}/settings?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${baseUrl}/settings`,
+            success_url: `${domain}/settings?tab=Billing&success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${domain}/settings?tab=Billing&canceled=true`,
             metadata: {
                 userId: user.id,
             },

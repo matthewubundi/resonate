@@ -15,6 +15,14 @@ You can authenticate using either:
 
 ---
 
+## Internationalization
+The Resonate API currently operates primarily in **English**.
+- **Response Data**: System messages, errors, and logic-based text are returned in English.
+- **Frontend Handling**: The client application (Next.js) handles localization for **English (en)**, **French (fr)**, and **German (de)** using `next-intl`.
+- **Future Support**: Future API versions may support the `Accept-Language` header to return localized error messages.
+
+---
+
 ## Endpoints
 
 ### 1. Transform Text
@@ -122,7 +130,37 @@ Duplicates a specific persona by ID.
 
 ---
 
-### 4. Data Export
+### 4. Billing & Subscription
+
+#### Create Checkout Session
+**Endpoint**: `POST /api/billing/checkout`
+Creates a Stripe Checkout session for upgrading to a Pro plan.
+
+**Response**:
+```json
+{
+  "sessionId": "cs_test_..."
+}
+```
+
+#### Customer Portal
+**Endpoint**: `POST /api/billing/portal`
+Creates a session for the Stripe Customer Portal where users can manage their subscription (downgrade, cancel, update payment methods).
+
+**Response**:
+```json
+{
+  "url": "https://billing.stripe.com/..."
+}
+```
+
+#### Stripe Webhooks
+**Endpoint**: `POST /api/webhooks/stripe`
+Handles asynchronous events from Stripe (e.g., `checkout.session.completed`, `customer.subscription.updated`). Verified via Stripe signature.
+
+---
+
+### 5. Data Export
 **Endpoint**: `GET /api/settings/export`
 
 Downloads all user data (profiles, identities, memories, transformations) in a JSON format. Cleaned of internal system fields.
@@ -138,13 +176,13 @@ Downloads all user data (profiles, identities, memories, transformations) in a J
   "metadata": {
       "export_date": "2024-12-08T...",
       "version": "1.0"
+    }
   }
-}
 ```
 
 ---
 
-### 5. Get Documentation
+### 6. Get Documentation
 **Endpoint**: `GET /api/docs`
 
 Retrieves all markdown documentation files from the server's `docs` directory.

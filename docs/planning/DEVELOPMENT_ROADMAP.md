@@ -1,7 +1,7 @@
 # Development Roadmap (The "Living" Plan)
 
 **Status**: Active
-**Last Updated**: 2025-12-08
+**Last Updated**: 2025-12-10
 **Purpose**: This document tracks the strategic direction of Resonate. It is a living document and changes as we learn more from our users.
 
 ---
@@ -43,9 +43,15 @@
 - [x] **Analytics & Drift Detection**:
   - [x] "Voice Consistency Score" over time.
   - [x] Detailed logs and insights.
-- [ ] **Billing Integration**: Stripe setup for "Pro" tiers.
+- [x] **Billing Integration**: Stripe setup for "Pro" tiers, Upgrade Gates, and Billing Portal.
 - [ ] **Context-Aware "Smart Switching"**: Auto-detect context (Email vs Tweet) to suggest identity.
 - [ ] **"Active Learning" Loop**: A/B testing feedback to refine identity weights.
+- [x] **Internationalization (i18n)**:
+  - [x] Full support for English, French, and German.
+  - [x] Middleware (Proxy) routing for locale detection.
+- [x] **Landing Page Refactor**:
+  - [x] Modular component architecture (`TransformationVisual`, `BentoGridFeatures`, etc.).
+  - [x] Integrated translation keys.
 - [ ] **"Living" Identity Visualization**: Dynamic abstract avatar representing tone.
 - [ ] **Advanced Chrome Extension**: "Ghostwriter" overlay for in-place rewrites.
 

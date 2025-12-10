@@ -1,6 +1,6 @@
 # PRODUCT REQUIREMENTS DOCUMENT (PRD)
 
-**Version:** 1.2
+**Version:** 1.3
 **Owner:** Matt Schramm
 **Status:** In Development
 **Last Updated:** 2025-12-10
@@ -150,8 +150,8 @@ These may be added in Phase 2 or 3.
 * German (de)
 
 ### **Implementation**
-* **Routing:** Sub-path routing (e.g., `/en/dashboard`, `/fr/dashboard`) via `next-intl`.
-* **Detection:** Automatic locale detection based on browser headers with middleware redirection.
+* **Routing:** Sub-path routing (e.g., `/en/dashboard`, `/fr/dashboard`) via `next-intl` (using `proxy.ts`).
+* **Detection:** Automatic locale detection based on browser headers.
 * **Content:** All user-facing text extracted to JSON message dictionaries (`messages/en.json`, etc.).
 
 ---
@@ -368,9 +368,10 @@ If score < threshold → run correction loop
 # **5.10 Public Website Features**
 
 ### **Landing Page**
-* **Hero Section:** "Connected mesh" or "network" animation (Azure Blue particles).
-* **3-Step Onboarding Display:** Visual explanation of "The Interview," "The Extraction," and "The Filter."
-* **Under the Hood:** "Transparency" section featuring a floating JSON code snippet to show how identity is structured.
+* **Hero Section:** "Connected mesh" or "network" animation (Azure Blue particles) with `TransformationVisual`.
+* **Component Architecture:** Modular sub-components including `BentoGridFeatures`, `SchematicDiagram`, and `InteractiveComparison`.
+* **3-Step Onboarding Display:** `ThreeStepOnboarding` component visualizing "The Interview," "The Extraction," and "The Filter."
+* **Under the Hood:** `JSONPreviewSection` featuring a floating JSON code snippet to show how identity is structured.
 
 ### **Documentation**
 * Dedicated `/docs` route.
@@ -546,7 +547,8 @@ Each transformation must log:
 * Memory layer [Done] (Context Studio)
 * persona system [Done] (Duplication & Context)
 * billing integration [Done] (Stripe, Upgrade Gates)
-* internationalization [Done] (EN, FR, DE)
+* internationalization [Done] (EN, FR, DE, Proxy setup)
+* landing page refactor [Done] (Modular Components)
 * drift detection [Done]
 * enhanced analytics [Done]
 * versioning UI [Done]

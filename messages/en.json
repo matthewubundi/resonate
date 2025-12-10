@@ -573,5 +573,115 @@
                 "geminiFlash": "Gemini 2.5 Flash"
             }
         }
+    },
+    "IdentityEditor": {
+        "messages": {
+            "noData": "No identity data available. Please complete onboarding.",
+            "saved": "Identity Configuration Saved",
+            "cannotSave": "Cannot save: Missing identity data",
+            "saveError": "Failed to save identity data",
+            "loadError": "Failed to load identity data"
+        },
+        "header": {
+            "namePlaceholder": "Identity Name",
+            "unsavedChanges": "Unsaved Changes",
+            "download": "Download",
+            "hideJson": "Hide JSON",
+            "viewJson": "View JSON",
+            "discard": "Discard",
+            "saveVersion": "Save Version"
+        },
+        "tabs": {
+            "voice": "Core Voice",
+            "vocabulary": "Vocabulary",
+            "values": "Values & Ethics",
+            "rules": "Rules Engine",
+            "json": "JSON Source"
+        },
+        "voice": {
+            "title": "The Voice Calibrator",
+            "subtitle": "Fine-tune exactly how your persona sounds and communicates.",
+            "toneDescriptors": "Tone Descriptors",
+            "selectAll": "Select all that apply",
+            "tones": {
+                "Professional": "Professional",
+                "Conversational": "Conversational",
+                "Authoritative": "Authoritative",
+                "Friendly": "Friendly",
+                "Empathetic": "Empathetic",
+                "Witty": "Witty",
+                "Academic": "Academic",
+                "Urgent": "Urgent",
+                "Optimistic": "Optimistic"
+            },
+            "formality": {
+                "label": "Formality Level",
+                "Casual": "Casual",
+                "Neutral": "Neutral",
+                "Formal": "Formal",
+                "descriptions": {
+                    "Casual": "Relaxed syntax, uses contractions, friendly vibe.",
+                    "Neutral": "Clear, standard communication without strong stylistic bias.",
+                    "Formal": "Proper grammar, complete sentences, professional demeanor.",
+                    "default": "Select a formality level to see details."
+                }
+            },
+            "directness": {
+                "label": "Directness Scale",
+                "Concise": "Concise",
+                "Balanced": "Balanced",
+                "Elaborate": "Elaborate",
+                "descriptions": {
+                    "Concise": "Bullet points, short sentences, zero fluff.",
+                    "Balanced": "Provides context but respects time.",
+                    "Elaborate": "Detailed storytelling and thorough context.",
+                    "default": "Select a directness level to see details."
+                }
+            },
+            "nuance": {
+                "label": "Nuance & Instructions",
+                "exceptionHandler": "Exception Handler",
+                "placeholder": "Add specific instructions that defy the settings above (e.g., 'I am usually formal, but I use emojis in internal Slack messages')."
+            }
+        },
+        "vocabulary": {
+            "frequent": {
+                "title": "Frequent Vocabulary",
+                "subtitle": "Words and phrases this persona favors.",
+                "placeholder": "Type a word and hit Enter..."
+            },
+            "restricted": {
+                "title": "Restricted Vocabulary",
+                "subtitle": "Words this persona should never use.",
+                "placeholder": "Type a banned word and hit Enter..."
+            }
+        },
+        "values": {
+            "core": {
+                "title": "Core Values",
+                "placeholder": "Add Value..."
+            },
+            "ethics": {
+                "title": "Ethics & Guidelines",
+                "placeholder": "Add Ethic..."
+            }
+        },
+        "rules": {
+            "always": {
+                "title": "Always Rules",
+                "badge": "High Priority",
+                "placeholder": "Add a new 'Always' rule..."
+            },
+            "never": {
+                "title": "Never Rules",
+                "badge": "Negative Constraints",
+                "placeholder": "Add a new 'Never' rule..."
+            },
+            "add": "Add"
+        },
+        "jsonView": {
+            "title": "Live Preview",
+            "close": "Close"
+        }
     }
 }

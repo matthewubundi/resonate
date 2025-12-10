@@ -573,5 +573,115 @@
                 "geminiFlash": "Gemini 2.5 Flash"
             }
         }
+    },
+    "IdentityEditor": {
+        "messages": {
+            "noData": "Keine Identitätsdaten verfügbar. Bitte schließen Sie das Onboarding ab.",
+            "saved": "Identitätskonfiguration gespeichert",
+            "cannotSave": "Speichern nicht möglich: Fehlende Identitätsdaten",
+            "saveError": "Speichern der Identitätsdaten fehlgeschlagen",
+            "loadError": "Laden der Identitätsdaten fehlgeschlagen"
+        },
+        "header": {
+            "namePlaceholder": "Name der Identität",
+            "unsavedChanges": "Ungespeicherte Änderungen",
+            "download": "Herunterladen",
+            "hideJson": "JSON ausblenden",
+            "viewJson": "JSON anzeigen",
+            "discard": "Verwerfen",
+            "saveVersion": "Version speichern"
+        },
+        "tabs": {
+            "voice": "Kernstimme",
+            "vocabulary": "Vokabular",
+            "values": "Werte & Ethik",
+            "rules": "Regelwerk",
+            "json": "JSON-Quelle"
+        },
+        "voice": {
+            "title": "Stimm-Kalibrierer",
+            "subtitle": "Feinabstimmung, wie Ihre Persona klingt und kommuniziert.",
+            "toneDescriptors": "Ton-Deskriptoren",
+            "selectAll": "Alle zutreffenden auswählen",
+            "tones": {
+                "Professional": "Professionell",
+                "Conversational": "Gesprächig",
+                "Authoritative": "Autoritär",
+                "Friendly": "Freundlich",
+                "Empathetic": "Empathisch",
+                "Witty": "Witzig",
+                "Academic": "Akademisch",
+                "Urgent": "Dringend",
+                "Optimistic": "Optimistisch"
+            },
+            "formality": {
+                "label": "Formalitätsgrad",
+                "Casual": "Locker",
+                "Neutral": "Neutral",
+                "Formal": "Formell",
+                "descriptions": {
+                    "Casual": "Lockere Syntax, verwendet Abkürzungen, freundliche Atmosphäre.",
+                    "Neutral": "Klare, standardmäßige Kommunikation ohne starke stilistische Tendenz.",
+                    "Formal": "Korrekte Grammatik, vollständige Sätze, professionelles Auftreten.",
+                    "default": "Wählen Sie einen Formalitätsgrad, um Details zu sehen."
+                }
+            },
+            "directness": {
+                "label": "Direktheitsskala",
+                "Concise": "Prägnant",
+                "Balanced": "Ausgewogen",
+                "Elaborate": "Ausführlich",
+                "descriptions": {
+                    "Concise": "Stichpunkte, kurze Sätze, kein Geschwafel.",
+                    "Balanced": "Liefert Kontext, respektiert aber die Zeit.",
+                    "Elaborate": "Detailliertes Erzählen und gründlicher Kontext.",
+                    "default": "Wählen Sie einen Direktheitsgrad, um Details zu sehen."
+                }
+            },
+            "nuance": {
+                "label": "Nuancen & Anweisungen",
+                "exceptionHandler": "Ausnahmebehandlung",
+                "placeholder": "Fügen Sie spezifische Anweisungen hinzu, die den obigen Einstellungen trotzen (z.B. 'Ich bin normalerweise formell, aber ich benutze Emojis in internen Slack-Nachrichten')."
+            }
+        },
+        "vocabulary": {
+            "frequent": {
+                "title": "Häufiges Vokabular",
+                "subtitle": "Wörter und Phrasen, die diese Persona bevorzugt.",
+                "placeholder": "Geben Sie ein Wort ein und drücken Sie Enter..."
+            },
+            "restricted": {
+                "title": "Eingeschränktes Vokabular",
+                "subtitle": "Wörter, die diese Persona niemals verwenden sollte.",
+                "placeholder": "Geben Sie ein verbanntes Wort ein und drücken Sie Enter..."
+            }
+        },
+        "values": {
+            "core": {
+                "title": "Kernwerte",
+                "placeholder": "Wert hinzufügen..."
+            },
+            "ethics": {
+                "title": "Ethik & Richtlinien",
+                "placeholder": "Ethik hinzufügen..."
+            }
+        },
+        "rules": {
+            "always": {
+                "title": "Immer-Regeln",
+                "badge": "Hohe Priorität",
+                "placeholder": "Fügen Sie eine neue 'Immer'-Regel hinzu..."
+            },
+            "never": {
+                "title": "Niemals-Regeln",
+                "badge": "Negative Einschränkungen",
+                "placeholder": "Fügen Sie eine neue 'Niemals'-Regel hinzu..."
+            },
+            "add": "Hinzufügen"
+        },
+        "jsonView": {
+            "title": "Live-Vorschau",
+            "close": "Schließen"
+        }
     }
 }

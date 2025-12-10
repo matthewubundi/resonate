@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Button, Input, TextArea, Card, CardHeader, CardTitle, CardContent, Chip, JsonViewer } from '../components/Components';
@@ -6,6 +7,7 @@ import { GeneratedIdentity } from '../types';
 import { Copy, Check, AlertCircle, Save, Undo, Code, Layout as LayoutIcon, Sliders, Type, Shield, List, Plus, X, Search, ToggleLeft, ToggleRight, Sparkles, Download } from 'lucide-react';
 
 export const IdentityEditor = () => {
+    const t = useTranslations('IdentityEditor');
     const { user, loading: authLoading } = useAuth();
     const [identityId, setIdentityId] = useState<string | null>(null);
     const [identityName, setIdentityName] = useState<string>('');
@@ -80,7 +82,7 @@ export const IdentityEditor = () => {
                 }
             } catch (err: any) {
                 console.error('Error fetching identity:', err);
-                setError(err.message || 'Failed to load identity data');
+                setError(err.message || t('messages.loadError'));
             } finally {
                 setLoading(false);
             }
@@ -91,7 +93,7 @@ export const IdentityEditor = () => {
 
     const handleSave = async () => {
         if (!user || !identityId || !editableData) {
-            setError('Cannot save: Missing identity data');
+            setError(t('messages.cannotSave'));
             return;
         }
 
@@ -122,11 +124,11 @@ export const IdentityEditor = () => {
                 updatedData.description = updatedData.tone_description;
             }
             setIdentityData(updatedData);
-            setSuccess('Identity Configuration Saved');
+            setSuccess(t('messages.saved'));
             setTimeout(() => setSuccess(null), 3000);
         } catch (err: any) {
             console.error('Error saving identity:', err);
-            setError(err.message || 'Failed to save identity data');
+            setError(err.message || t('messages.saveError'));
         } finally {
             setSaving(false);
         }
@@ -324,7 +326,7 @@ export const IdentityEditor = () => {
     }
 
     if (!editableData) {
-        return <div className="p-8 text-center text-ink/60">No identity data available. Please complete onboarding.</div>;
+        return <div className="p-8 text-center text-ink/60">{t('messages.noData')}</div>;
     }
 
     const handleDownload = () => {
@@ -354,7 +356,7 @@ export const IdentityEditor = () => {
                             value={identityName}
                             onChange={(e) => setIdentityName(e.target.value)}
                             className="text-xl font-bold text-ink bg-transparent border-b border-transparent hover:border-ink/20 focus:border-azure focus:outline-none transition-colors px-1 py-0.5"
-                            placeholder="Identity Name"
+                            placeholder={t('header.namePlaceholder')}
                         />
                         <span className="absolute -right-4 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-ink/30">
                             <Type size={12} />
@@ -363,7 +365,7 @@ export const IdentityEditor = () => {
 
                     {hasChanges() && (
                         <span className="bg-highlight/10 text-highlight text-xs px-2 py-0.5 rounded-full font-medium border border-highlight/20 animate-pulse">
-                            Unsaved Changes
+                            {t('header.unsavedChanges')}
                         </span>
                     )}
                 </div>
@@ -371,24 +373,24 @@ export const IdentityEditor = () => {
                 <div className="flex items-center gap-3">
                     <Button variant="ghost" size="sm" onClick={handleDownload} title="Download JSON">
                         <Download size={18} />
-                        <span className="ml-2 hidden sm:inline">Download</span>
+                        <span className="ml-2 hidden sm:inline">{t('header.download')}</span>
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setShowJsonSplit(!showJsonSplit)} className={showJsonSplit ? 'text-azure bg-azure/10' : ''}>
                         {showJsonSplit ? <LayoutIcon size={18} /> : <Code size={18} />}
-                        <span className="ml-2 hidden sm:inline">{showJsonSplit ? 'Hide JSON' : 'View JSON'}</span>
+                        <span className="ml-2 hidden sm:inline">{showJsonSplit ? t('header.hideJson') : t('header.viewJson')}</span>
                     </Button>
 
                     <div className="h-6 w-px bg-ink/10 mx-1"></div>
 
                     <Button variant="outline" size="sm" onClick={handleReset} disabled={!hasChanges() || saving}>
                         <Undo size={16} className="mr-2" />
-                        Discard
+                        {t('header.discard')}
                     </Button>
                     <Button variant="primary" size="sm" onClick={handleSave} isLoading={saving} disabled={!hasChanges() || saving}
                         className={hasChanges() ? 'ring-2 ring-highlight/50 ring-offset-1' : ''}
                     >
                         <Save size={16} className="mr-2" />
-                        Save Version
+                        {t('header.saveVersion')}
                     </Button>
                 </div>
             </div>
@@ -416,11 +418,11 @@ export const IdentityEditor = () => {
                     {/* Tabs */}
                     <div className="bg-white border-b border-ink/5 px-6">
                         <nav className="flex gap-1 overflow-x-auto no-scrollbar">
-                            {renderTabButton('voice', 'Core Voice', Sliders)}
-                            {renderTabButton('vocabulary', 'Vocabulary', Type)}
-                            {renderTabButton('values', 'Values & Ethics', Shield)}
-                            {renderTabButton('rules', 'Rules Engine', List)}
-                            {!showJsonSplit && renderTabButton('json', 'JSON Source', Code)}
+                            {renderTabButton('voice', t('tabs.voice'), Sliders)}
+                            {renderTabButton('vocabulary', t('tabs.vocabulary'), Type)}
+                            {renderTabButton('values', t('tabs.values'), Shield)}
+                            {renderTabButton('rules', t('tabs.rules'), List)}
+                            {!showJsonSplit && renderTabButton('json', t('tabs.json'), Code)}
                         </nav>
                     </div>
 
@@ -434,16 +436,16 @@ export const IdentityEditor = () => {
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                                     <Card className="bg-white border border-ink/5 shadow-sm">
                                         <CardHeader className="border-b border-ink/5 pb-4">
-                                            <CardTitle className="text-lg font-bold text-ink">The Voice Calibrator</CardTitle>
-                                            <p className="text-sm text-ink/50 mt-1">Fine-tune exactly how your persona sounds and communicates.</p>
+                                            <CardTitle className="text-lg font-bold text-ink">{t('voice.title')}</CardTitle>
+                                            <p className="text-sm text-ink/50 mt-1">{t('voice.subtitle')}</p>
                                         </CardHeader>
                                         <CardContent className="space-y-8 pt-6">
 
                                             {/* 1. Tone Descriptors */}
                                             <div>
                                                 <div className="flex items-center justify-between mb-3">
-                                                    <label className="text-sm font-semibold text-ink/80">Tone Descriptors</label>
-                                                    <span className="text-xs text-ink/40">Select all that apply</span>
+                                                    <label className="text-sm font-semibold text-ink/80">{t('voice.toneDescriptors')}</label>
+                                                    <span className="text-xs text-ink/40">{t('voice.selectAll')}</span>
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
                                                     {['Professional', 'Conversational', 'Authoritative', 'Friendly', 'Empathetic', 'Witty', 'Academic', 'Urgent', 'Optimistic'].map(tag => {
@@ -466,7 +468,7 @@ export const IdentityEditor = () => {
                                                                     : 'bg-white text-ink/70 border-ink/10 hover:border-azure/30 hover:text-azure hover:bg-azure/5'
                                                                     }`}
                                                             >
-                                                                {tag}
+                                                                {t(`voice.tones.${tag}` as any)}
                                                             </button>
                                                         );
                                                     })}
@@ -478,7 +480,7 @@ export const IdentityEditor = () => {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                 {/* 2. Formality Level */}
                                                 <div>
-                                                    <label className="text-sm font-semibold text-ink/80 mb-3 block">Formality Level</label>
+                                                    <label className="text-sm font-semibold text-ink/80 mb-3 block">{t('voice.formality.label')}</label>
                                                     <div className="bg-paleslate rounded-lg p-1 flex relative">
                                                         {['Casual', 'Neutral', 'Formal'].map((option) => (
                                                             <button
@@ -496,17 +498,17 @@ export const IdentityEditor = () => {
                                                     <div className="mt-3 min-h-[40px] p-3 bg-azure/5 rounded-md border border-azure/10">
                                                         <p className="text-xs text-azure/80 flex items-start gap-2">
                                                             <span className="mt-0.5"><Sparkles size={12} /></span>
-                                                            {editableData.formality === 'Casual' && "Relaxed syntax, uses contractions, friendly vibe."}
-                                                            {editableData.formality === 'Neutral' && "Clear, standard communication without strong stylistic bias."}
-                                                            {editableData.formality === 'Formal' && "Proper grammar, complete sentences, professional demeanor."}
-                                                            {!['Casual', 'Neutral', 'Formal'].includes(editableData.formality) && "Select a formality level to see details."}
+                                                            {editableData.formality === 'Casual' && t('voice.formality.descriptions.Casual')}
+                                                            {editableData.formality === 'Neutral' && t('voice.formality.descriptions.Neutral')}
+                                                            {editableData.formality === 'Formal' && t('voice.formality.descriptions.Formal')}
+                                                            {!['Casual', 'Neutral', 'Formal'].includes(editableData.formality) && t('voice.formality.descriptions.default')}
                                                         </p>
                                                     </div>
                                                 </div>
 
                                                 {/* 3. Directness Scale */}
                                                 <div>
-                                                    <label className="text-sm font-semibold text-ink/80 mb-3 block">Directness Scale</label>
+                                                    <label className="text-sm font-semibold text-ink/80 mb-3 block">{t('voice.directness.label')}</label>
                                                     <div className="bg-paleslate rounded-lg p-1 flex relative">
                                                         {['Concise', 'Balanced', 'Elaborate'].map((option) => (
                                                             <button
@@ -524,10 +526,10 @@ export const IdentityEditor = () => {
                                                     <div className="mt-3 min-h-[40px] p-3 bg-azure/5 rounded-md border border-azure/10">
                                                         <p className="text-xs text-azure/80 flex items-start gap-2">
                                                             <span className="mt-0.5"><Sparkles size={12} /></span>
-                                                            {editableData.directness === 'Concise' && "Bullet points, short sentences, zero fluff."}
-                                                            {editableData.directness === 'Balanced' && "Provides context but respects time."}
-                                                            {editableData.directness === 'Elaborate' && "Detailed storytelling and thorough context."}
-                                                            {!['Concise', 'Balanced', 'Elaborate'].includes(editableData.directness) && "Select a directness level to see details."}
+                                                            {editableData.directness === 'Concise' && t('voice.directness.descriptions.Concise')}
+                                                            {editableData.directness === 'Balanced' && t('voice.directness.descriptions.Balanced')}
+                                                            {editableData.directness === 'Elaborate' && t('voice.directness.descriptions.Elaborate')}
+                                                            {!['Concise', 'Balanced', 'Elaborate'].includes(editableData.directness) && t('voice.directness.descriptions.default')}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -538,15 +540,15 @@ export const IdentityEditor = () => {
                                             {/* 4. Nuance & Instructions */}
                                             <div>
                                                 <div className="flex items-center justify-between mb-3">
-                                                    <label className="text-sm font-semibold text-ink/80">Nuance & Instructions</label>
-                                                    <span className="text-xs px-2 py-0.5 bg-highlight/10 text-highlight rounded-full font-medium">Exception Handler</span>
+                                                    <label className="text-sm font-semibold text-ink/80">{t('voice.nuance.label')}</label>
+                                                    <span className="text-xs px-2 py-0.5 bg-highlight/10 text-highlight rounded-full font-medium">{t('voice.nuance.exceptionHandler')}</span>
                                                 </div>
                                                 <div className="relative group">
                                                     <TextArea
                                                         value={editableData.tone_description || ''}
                                                         onChange={(e) => updateField('tone_description', e.target.value)}
                                                         rows={4}
-                                                        placeholder="Add specific instructions that defy the settings above (e.g., 'I am usually formal, but I use emojis in internal Slack messages')."
+                                                        placeholder={t('voice.nuance.placeholder')}
                                                         className="font-sans text-sm leading-relaxed text-ink bg-white border border-ink/10 focus:border-azure focus:ring-1 focus:ring-azure transition-all p-4 resize-none rounded-lg shadow-sm group-hover:border-ink/20"
                                                     />
                                                 </div>
@@ -562,8 +564,8 @@ export const IdentityEditor = () => {
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                                     <Card className="bg-white">
                                         <CardHeader>
-                                            <CardTitle className="flex items-center gap-2"><Sparkles size={18} className="text-azure" /> Frequent Vocabulary</CardTitle>
-                                            <p className="text-sm text-ink/50 font-normal mt-1">Words and phrases this persona favors.</p>
+                                            <CardTitle className="flex items-center gap-2"><Sparkles size={18} className="text-azure" /> {t('vocabulary.frequent.title')}</CardTitle>
+                                            <p className="text-sm text-ink/50 font-normal mt-1">{t('vocabulary.frequent.subtitle')}</p>
                                         </CardHeader>
                                         <CardContent>
                                             <div className="flex flex-wrap gap-2 mb-4 min-h-[40px]">
@@ -581,7 +583,7 @@ export const IdentityEditor = () => {
                                                 <Input
                                                     value={newWordInputs.frequent}
                                                     onChange={(e) => setNewWordInputs({ ...newWordInputs, frequent: e.target.value })}
-                                                    placeholder="Type a word and hit Enter..."
+                                                    placeholder={t('vocabulary.frequent.placeholder')}
                                                     onKeyDown={(e) => e.key === 'Enter' && addWord('frequent')}
                                                     className="pl-10"
                                                 />
@@ -591,8 +593,8 @@ export const IdentityEditor = () => {
 
                                     <Card className="bg-white">
                                         <CardHeader>
-                                            <CardTitle className="flex items-center gap-2 text-highlight"><Shield size={18} /> Restricted Vocabulary</CardTitle>
-                                            <p className="text-sm text-ink/50 font-normal mt-1">Words this persona should never use.</p>
+                                            <CardTitle className="flex items-center gap-2 text-highlight"><Shield size={18} /> {t('vocabulary.restricted.title')}</CardTitle>
+                                            <p className="text-sm text-ink/50 font-normal mt-1">{t('vocabulary.restricted.subtitle')}</p>
                                         </CardHeader>
                                         <CardContent>
                                             <div className="flex flex-wrap gap-2 mb-4 min-h-[40px]">
@@ -610,7 +612,7 @@ export const IdentityEditor = () => {
                                                 <Input
                                                     value={newWordInputs.avoid}
                                                     onChange={(e) => setNewWordInputs({ ...newWordInputs, avoid: e.target.value })}
-                                                    placeholder="Type a banned word and hit Enter..."
+                                                    placeholder={t('vocabulary.restricted.placeholder')}
                                                     onKeyDown={(e) => e.key === 'Enter' && addWord('avoid')}
                                                     className="pl-10 focus:border-highlight focus:ring-highlight"
                                                 />
@@ -625,7 +627,7 @@ export const IdentityEditor = () => {
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <Card className="bg-white h-full">
-                                            <CardHeader><CardTitle>Core Values</CardTitle></CardHeader>
+                                            <CardHeader><CardTitle>{t('values.core.title')}</CardTitle></CardHeader>
                                             <CardContent>
                                                 <div className="space-y-3">
                                                     {editableData.values?.map((value, idx) => (
@@ -641,7 +643,7 @@ export const IdentityEditor = () => {
                                                     <Input
                                                         value={newValueInput}
                                                         onChange={(e) => setNewValueInput(e.target.value)}
-                                                        placeholder="Add Value..."
+                                                        placeholder={t('values.core.placeholder')}
                                                         onKeyDown={(e) => e.key === 'Enter' && addValue()}
                                                     />
                                                     <Button onClick={addValue} variant="secondary" size="sm"><Plus size={18} /></Button>
@@ -650,7 +652,7 @@ export const IdentityEditor = () => {
                                         </Card>
 
                                         <Card className="bg-white h-full">
-                                            <CardHeader><CardTitle>Ethics & Guidelines</CardTitle></CardHeader>
+                                            <CardHeader><CardTitle>{t('values.ethics.title')}</CardTitle></CardHeader>
                                             <CardContent>
                                                 <div className="space-y-3">
                                                     {editableData.ethics?.map((ethic, idx) => (
@@ -666,7 +668,7 @@ export const IdentityEditor = () => {
                                                     <Input
                                                         value={newEthicInput}
                                                         onChange={(e) => setNewEthicInput(e.target.value)}
-                                                        placeholder="Add Ethic..."
+                                                        placeholder={t('values.ethics.placeholder')}
                                                         onKeyDown={(e) => e.key === 'Enter' && addEthic()}
                                                     />
                                                     <Button onClick={addEthic} variant="secondary" size="sm"><Plus size={18} /></Button>
@@ -683,8 +685,8 @@ export const IdentityEditor = () => {
 
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="text-lg font-bold text-ink">Always Rules</h3>
-                                            <span className="text-xs font-semibold bg-azure/10 text-azure px-2 py-1 rounded-full uppercase tracking-wider">High Priority</span>
+                                            <h3 className="text-lg font-bold text-ink">{t('rules.always.title')}</h3>
+                                            <span className="text-xs font-semibold bg-azure/10 text-azure px-2 py-1 rounded-full uppercase tracking-wider">{t('rules.always.badge')}</span>
                                         </div>
 
                                         {/* Active Rules */}
@@ -727,11 +729,11 @@ export const IdentityEditor = () => {
                                             <Input
                                                 value={newRuleInputs.always}
                                                 onChange={(e) => setNewRuleInputs({ ...newRuleInputs, always: e.target.value })}
-                                                placeholder="Add a new 'Always' rule..."
+                                                placeholder={t('rules.always.placeholder')}
                                                 onKeyDown={(e) => e.key === 'Enter' && addRule('always')}
                                                 className="border-none bg-transparent shadow-none focus:ring-0 px-0 placeholder:text-ink/40"
                                             />
-                                            <Button size="sm" variant="ghost" onClick={() => addRule('always')} disabled={!newRuleInputs.always}>Add</Button>
+                                            <Button size="sm" variant="ghost" onClick={() => addRule('always')} disabled={!newRuleInputs.always}>{t('rules.add')}</Button>
                                         </div>
                                     </div>
 
@@ -739,8 +741,8 @@ export const IdentityEditor = () => {
 
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="text-lg font-bold text-ink">Never Rules</h3>
-                                            <span className="text-xs font-semibold bg-highlight/10 text-highlight px-2 py-1 rounded-full uppercase tracking-wider">Negative Constraints</span>
+                                            <h3 className="text-lg font-bold text-ink">{t('rules.never.title')}</h3>
+                                            <span className="text-xs font-semibold bg-highlight/10 text-highlight px-2 py-1 rounded-full uppercase tracking-wider">{t('rules.never.badge')}</span>
                                         </div>
 
                                         {/* Active Rules */}
@@ -783,11 +785,11 @@ export const IdentityEditor = () => {
                                             <Input
                                                 value={newRuleInputs.never}
                                                 onChange={(e) => setNewRuleInputs({ ...newRuleInputs, never: e.target.value })}
-                                                placeholder="Add a new 'Never' rule..."
+                                                placeholder={t('rules.never.placeholder')}
                                                 onKeyDown={(e) => e.key === 'Enter' && addRule('never')}
                                                 className="border-none bg-transparent shadow-none focus:ring-0 px-0 placeholder:text-ink/40"
                                             />
-                                            <Button size="sm" variant="ghost" onClick={() => addRule('never')} disabled={!newRuleInputs.never}>Add</Button>
+                                            <Button size="sm" variant="ghost" onClick={() => addRule('never')} disabled={!newRuleInputs.never}>{t('rules.add')}</Button>
                                         </div>
                                     </div>
                                 </div>
@@ -808,9 +810,9 @@ export const IdentityEditor = () => {
                 {showJsonSplit && (
                     <div className="w-1/2 bg-gunmetal border-t border-ink/10 flex flex-col h-full animate-in fade-in slide-in-from-right-10 duration-300">
                         <div className="bg-[#1E1E2E] px-4 py-3 flex justify-between items-center border-b border-white/5">
-                            <span className="text-xs font-mono text-white/50 uppercase tracking-widest">Live Preview</span>
+                            <span className="text-xs font-mono text-white/50 uppercase tracking-widest">{t('jsonView.title')}</span>
                             <Button variant="ghost" size="sm" onClick={() => setShowJsonSplit(false)} className="text-white/40 hover:text-white hover:bg-white/5">
-                                Close
+                                {t('jsonView.close')}
                             </Button>
                         </div>
                         <div className="flex-1 overflow-auto bg-[#1E1E2E] p-4">

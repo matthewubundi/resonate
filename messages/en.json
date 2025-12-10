@@ -1,4 +1,115 @@
 {
+    "Landing": {
+        "nav": {
+            "features": "Features",
+            "difference": "Difference",
+            "logIn": "Log In",
+            "getStarted": "Get Started",
+            "product": "Product",
+            "documentation": "Documentation"
+        },
+        "hero": {
+            "systemOnline": "System Online",
+            "titlePart1": "Your Voice,",
+            "titlePart2": "Preserved.",
+            "description": "The ultimate identity layer for generative AI. Preserve your linguistic fingerprint and protect your personal brand against generic model output.",
+            "startSetup": "Start Identity Setup",
+            "viewDocs": "View Documentation",
+            "freeToStart": "Free to start",
+            "localStorage": "Local storage",
+            "noTraining": "No training",
+            "visual": {
+                "raw": "RAW",
+                "processing": "PROCESSING",
+                "preserved": "PRESERVED",
+                "detectingStyle": "Detecting Style...",
+                "voiceMatch": "Voice Match: 99%"
+            }
+        },
+        "integrations": {
+            "seamlesslyIntegratesWith": "Seamlessly Integrates With"
+        },
+        "pipeline": {
+            "engineeringPipeline": "Engineering Pipeline",
+            "howItWorks": "How It Works",
+            "howItWorksDescription": "From raw input to structured identity in three transparent steps.",
+            "interviewTitle": "The Interview",
+            "interviewDescription": "A brief chat to capture your nuances. We ask about your preferences, formatting, and tone.",
+            "extractionTitle": "The Extraction",
+            "extractionDescription": "Your style is compiled into a portable JSON fingerprint. Structure, not magic.",
+            "filterTitle": "The Filter",
+            "filterDescription": "Run any text through the engine. It's rewritten to match your voice instantly.",
+            "miniUi": {
+                "userPreference": "\"I prefer direct, punchy sentences. No fluff.\"",
+                "alignment": "Alignment",
+                "identityMatches": "Identity Matches"
+            },
+            "initializePipeline": "Initialize Pipeline"
+        },
+        "differenceSection": {
+            "differenceTitle": "The Difference is You",
+            "differenceSubtitle": "See how Resonate transforms robotic output into your unique voice.",
+            "standardOutput": "Standard Output",
+            "standardOutputExample": "It is imperative that the team aligns on the strategic objectives for the third quarter. To ensure successful delivery by October, we must leverage cross-functional collaboration and optimize our workflows for efficiency.",
+            "yourVoice": "Your Voice",
+            "preservedIdentity": "Preserved Identity",
+            "yourVoiceExample": "Hey team, quick heads-up on the Q3 synergy goals. We really need to double down on the cross-functional stuff if we want to ship this by October. Let's not overcomplicate the process—keep it lean",
+            "match": "Match"
+        },
+        "architecture": {
+            "architectureTitle": "Architecture of Identity",
+            "architectureDescription": "Built for precision, privacy, and performance. Our engine deconstructs your linguistic style and reconstructs it on demand.",
+            "resonateEngine": "Resonate Engine",
+            "analysis": "Analysis",
+            "injection": "Injection",
+            "reranking": "Re-ranking",
+            "preserved": "Preserved",
+            "output": "Output"
+        },
+        "privacy": {
+            "localPrivacy": "Local Privacy",
+            "localPrivacyDescription": "Your identity.json lives on your device. It is never sent back to the LLM provider for training. You own the layer."
+        },
+        "developerApi": {
+            "developerApiTitle": "The Developer API",
+            "developerApiDescription": "Programmatic access to the Resonate Engine. Inject personality into your automated pipelines.",
+            "overhead": "overhead",
+            "zeroLatency": "Zero Latency Performance",
+            "zeroLatencyDescription": "The Resonate Engine is optimized for ultra-low latency. It analyzes and re-ranks tokens in real-time without slowing down your generation stream.",
+            "traditionalHook": "ResonateTraditional Hook"
+        },
+        "identityStructure": {
+            "developerFirst": "Developer First",
+            "identityStructured": "Your Identity, Structured.",
+            "identityStructuredDescription": "Your persona isn't magic—it's data. We give you a portable, version-controlled JSON file that defines exactly how you sound, independent of the model you use.",
+            "portable": "Portable",
+            "modelAgnostic": "Model Agnostic",
+            "versioned": "Versioned",
+            "gitCompatible": "Git Compatible",
+            "filename": "identity.json",
+            "example": {
+                "nameValue": "\"Tech Leader\"",
+                "toneValue": "\"Direct\"",
+                "styleValue": "\"Empathetic\"",
+                "keyword1": "\"scalability\"",
+                "keyword2": "\"impact\""
+            }
+        },
+        "audience": {
+            "whoIsResonateFor": "Who is Resonate for?",
+            "founders": "Founders",
+            "foundersDescription": "Scale your thought leadership on LinkedIn and X without sounding like a generic bot. Maintain your unique authority.",
+            "creators": "Creators",
+            "creatorsDescription": "Automate your newsletter and blog drafts while keeping 100% of your stylistic flair and wit.",
+            "supportTeams": "Support Teams",
+            "supportTeamsDescription": "Unify your brand voice across thousands of support tickets. Make every automated reply feel personal.",
+            "configuration": "Configuration"
+        },
+        "branding": {
+            "tagline": "The ultimate identity layer for generative AI. Preserve your linguistic fingerprint and protect your personal brand.",
+            "madeWithPrecision": "Made with precision for writers."
+        }
+    },
     "Settings": {
         "title": "Settings",
         "description": "Manage your command center.",

@@ -1,4 +1,115 @@
 {
+    "Landing": {
+        "nav": {
+            "features": "Fonctionnalités",
+            "difference": "La différence",
+            "logIn": "Connexion",
+            "getStarted": "Commencer",
+            "product": "Produit",
+            "documentation": "Documentation"
+        },
+        "hero": {
+            "systemOnline": "Système en ligne",
+            "titlePart1": "Votre voix,",
+            "titlePart2": "Préservée.",
+            "description": "La couche d’identité ultime pour l’IA générative. Préservez votre empreinte linguistique et protégez votre marque personnelle contre les sorties génériques des modèles.",
+            "startSetup": "Démarrer la configuration d’identité",
+            "viewDocs": "Voir la documentation",
+            "freeToStart": "Gratuit au démarrage",
+            "localStorage": "Stockage local",
+            "noTraining": "Aucun entraînement requis",
+            "visual": {
+                "raw": "BRUT",
+                "processing": "TRAITEMENT",
+                "preserved": "PRÉSERVÉ",
+                "detectingStyle": "Détection du style...",
+                "voiceMatch": "Correspondance vocale : 99%"
+            }
+        },
+        "integrations": {
+            "seamlesslyIntegratesWith": "S’intègre parfaitement avec"
+        },
+        "pipeline": {
+            "engineeringPipeline": "Pipeline d’ingénierie",
+            "howItWorks": "Comment ça fonctionne",
+            "howItWorksDescription": "De l’entrée brute à l’identité structurée en trois étapes transparentes.",
+            "interviewTitle": "L’entretien",
+            "interviewDescription": "Une brève discussion pour capturer vos nuances. Nous posons des questions sur vos préférences, votre formatage et votre ton.",
+            "extractionTitle": "L’extraction",
+            "extractionDescription": "Votre style est compilé dans une empreinte JSON portable. De la structure, pas de magie.",
+            "filterTitle": "Le filtre",
+            "filterDescription": "Faites passer n’importe quel texte par le moteur. Il est réécrit instantanément pour correspondre à votre voix.",
+            "miniUi": {
+                "userPreference": "\"Je préfère des phrases directes et percutantes. Pas de blabla.\"",
+                "alignment": "Alignement",
+                "identityMatches": "Correspondances d'identité"
+            },
+            "initializePipeline": "Initialiser le pipeline"
+        },
+        "differenceSection": {
+            "differenceTitle": "La différence, c’est vous",
+            "differenceSubtitle": "Découvrez comment Resonate transforme une sortie robotique en votre voix unique.",
+            "standardOutput": "Sortie standard",
+            "standardOutputExample": "Il est impératif que l’équipe s’aligne sur les objectifs stratégiques du troisième trimestre. Pour assurer une livraison réussie d’ici octobre, nous devons renforcer la collaboration interfonctionnelle et optimiser nos flux de travail pour plus d’efficacité.",
+            "yourVoice": "Votre voix",
+            "preservedIdentity": "Identité préservée",
+            "yourVoiceExample": "Salut l’équipe, petit point rapide sur les objectifs de synergie du T3. Nous devons vraiment redoubler d’efforts sur la collaboration interfonctionnelle si nous voulons livrer en octobre. Ne compliquons pas le processus — restons efficaces.",
+            "match": "Correspondance"
+        },
+        "architecture": {
+            "architectureTitle": "Architecture de l’identité",
+            "architectureDescription": "Conçue pour la précision, la confidentialité et la performance. Notre moteur déconstruit votre style linguistique et le reconstruit à la demande.",
+            "resonateEngine": "Moteur Resonate",
+            "analysis": "Analyse",
+            "injection": "Injection",
+            "reranking": "Reclassement",
+            "preserved": "Préservé",
+            "output": "Sortie"
+        },
+        "privacy": {
+            "localPrivacy": "Confidentialité locale",
+            "localPrivacyDescription": "Votre identity.json reste sur votre appareil. Elle n’est jamais envoyée au fournisseur LLM pour l’entraînement. Vous contrôlez entièrement cette couche."
+        },
+        "developerApi": {
+            "developerApiTitle": "L’API développeur",
+            "developerApiDescription": "Accès programmatique au moteur Resonate. Injectez de la personnalité dans vos pipelines automatisés.",
+            "overhead": "surcharge",
+            "zeroLatency": "Performance sans latence",
+            "zeroLatencyDescription": "Le moteur Resonate est optimisé pour une latence ultra-faible. Il analyse et reclasse les tokens en temps réel sans ralentir votre flux de génération.",
+            "traditionalHook": "ResonateTraditional Hook"
+        },
+        "identityStructure": {
+            "developerFirst": "Priorité aux développeurs",
+            "identityStructured": "Votre identité, structurée.",
+            "identityStructuredDescription": "Votre persona n’est pas de la magie — c’est de la donnée. Nous vous fournissons un fichier JSON portable et versionné qui définit exactement votre façon de vous exprimer, indépendamment du modèle utilisé.",
+            "portable": "Portable",
+            "modelAgnostic": "Agnostique du modèle",
+            "versioned": "Versionné",
+            "gitCompatible": "Compatible Git",
+            "filename": "identity.json",
+            "example": {
+                "nameValue": "\"Leader Technique\"",
+                "toneValue": "\"Direct\"",
+                "styleValue": "\"Empathique\"",
+                "keyword1": "\"scalabilité\"",
+                "keyword2": "\"impact\""
+            }
+        },
+        "audience": {
+            "whoIsResonateFor": "Pour qui est Resonate ?",
+            "founders": "Fondateurs",
+            "foundersDescription": "Développez votre leadership d’opinion sur LinkedIn et X sans ressembler à un bot générique. Préservez votre autorité unique.",
+            "creators": "Créateurs",
+            "creatorsDescription": "Automatisez vos brouillons de newsletters et de blogs tout en conservant 100 % de votre style et de votre esprit.",
+            "supportTeams": "Équipes de support",
+            "supportTeamsDescription": "Unifiez la voix de votre marque sur des milliers de tickets de support. Chaque réponse automatisée paraît personnelle.",
+            "configuration": "Configuration"
+        },
+        "branding": {
+            "tagline": "La couche d’identité ultime pour l’IA générative. Préservez votre empreinte linguistique et protégez votre marque personnelle.",
+            "madeWithPrecision": "Conçu avec précision pour les auteurs."
+        }
+    },
     "Settings": {
         "title": "Paramètres",
         "description": "Gérez votre centre de commande.",

@@ -18,8 +18,11 @@ import {
   Server,
   Copy,
   GitBranch,
-  Briefcase
+  Briefcase,
+  ChevronDown
 } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
+import { useRouter, usePathname } from '@/src/i18n/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
@@ -46,7 +49,14 @@ const springHover = {
 
 // --- Sub-Component: Transformation Visual ---
 const TransformationVisual = () => {
+  const t = useTranslations('Landing');
   const [stage, setStage] = useState<'input' | 'processing' | 'output'>('input');
+
+  // Note: Specific strings in this visual component are not yet fully keyed in the message files provided (like "RAW", "PROCESSING"). 
+  // We can leave them as is or try to use generic keys if available.
+  // For "Detecting Style..." and "Voice Match", we will leave them hardcoded for now or use placeholders if desired, 
+  // but better to keep the visual integrity until keys are explicitly added. 
+  // However, the user asked to tranlsate "more", so we will focus on the main content sections first.
 
   useEffect(() => {
     const cycle = () => {
@@ -75,7 +85,7 @@ const TransformationVisual = () => {
           <div className="ml-auto flex items-center gap-2">
             <span className={`w-1.5 h-1.5 rounded-full transition-colors ${stage === 'processing' ? 'bg-yellow-400' : 'bg-slate-200'}`}></span>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              {stage === 'input' ? 'RAW' : stage === 'processing' ? 'PROCESSING' : 'PRESERVED'}
+              {stage === 'input' ? t('hero.visual.raw') : stage === 'processing' ? t('hero.visual.processing') : t('hero.visual.preserved')}
             </span>
           </div>
         </div>
@@ -105,7 +115,7 @@ const TransformationVisual = () => {
               >
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
-                  <span className="text-xs font-bold text-blue-600 tracking-widest uppercase animate-pulse">Detecting Style...</span>
+                  <span className="text-xs font-bold text-blue-600 tracking-widest uppercase animate-pulse">{t('hero.visual.detectingStyle')}</span>
                 </div>
               </motion.div>
             )}
@@ -131,7 +141,7 @@ const TransformationVisual = () => {
             className="absolute bottom-6 right-6 bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2"
           >
             <Sparkles size={12} className="text-blue-200" />
-            Voice Match: 99%
+            {t('hero.visual.voiceMatch')}
           </motion.div>
         )}
       </motion.div>
@@ -144,6 +154,8 @@ const TransformationVisual = () => {
 
 // --- Sub-Component: Schematic Diagram (The Glass Blueprint) ---
 const SchematicDiagram = () => {
+  const t = useTranslations('Landing');
+
   return (
     <div className="w-full bg-white rounded-3xl border border-slate-200 p-6 md:p-12 mb-12 relative overflow-hidden">
       {/* Background Grid Pattern */}
@@ -154,7 +166,7 @@ const SchematicDiagram = () => {
         {/* Node 1: The Source */}
         <div className="flex flex-col items-center gap-4 z-10 w-full md:w-auto">
           <div className="w-full max-w-[160px] h-20 md:h-24 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center">
-            <span className="font-mono text-xs font-bold text-slate-400 uppercase tracking-widest">LLM Output</span>
+            <span className="font-mono text-xs font-bold text-slate-400 uppercase tracking-widest">LLM {t('architecture.output')}</span>
           </div>
         </div>
 
@@ -172,7 +184,7 @@ const SchematicDiagram = () => {
         <div className="relative z-10 my-4 md:my-0">
           {/* Top Label */}
           <div className="absolute -top-8 md:-top-10 left-1/2 -translate-x-1/2 whitespace-nowrap z-20">
-            <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 backdrop-blur px-2 rounded-full">Resonate Engine</span>
+            <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/80 backdrop-blur px-2 rounded-full">{t('architecture.resonateEngine')}</span>
           </div>
 
           <div className="w-56 h-56 md:w-64 md:h-64 rounded-full border border-slate-200 bg-paleslate/30 backdrop-blur-sm flex flex-col items-center justify-center gap-2 md:gap-3 relative shadow-inner">
@@ -193,15 +205,15 @@ const SchematicDiagram = () => {
             {/* Internal Chips */}
             <div className="w-32 md:w-40 py-1.5 md:py-2 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2">
               <Activity size={12} className="text-slate-400" />
-              <span className="text-[10px] md:text-xs font-bold text-slate-600">Analysis</span>
+              <span className="text-[10px] md:text-xs font-bold text-slate-600">{t('architecture.analysis')}</span>
             </div>
             <div className="w-32 md:w-40 py-1.5 md:py-2 rounded-lg bg-white border border-blue-200 shadow-sm flex items-center justify-center gap-2 ring-2 ring-blue-50">
               <FileJson size={12} className="text-blue-500" />
-              <span className="text-[10px] md:text-xs font-bold text-slate-900">Injection</span>
+              <span className="text-[10px] md:text-xs font-bold text-slate-900">{t('architecture.injection')}</span>
             </div>
             <div className="w-32 md:w-40 py-1.5 md:py-2 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2">
               <CheckCircle2 size={12} className="text-slate-400" />
-              <span className="text-[10px] md:text-xs font-bold text-slate-600">Re-ranking</span>
+              <span className="text-[10px] md:text-xs font-bold text-slate-600">{t('architecture.reranking')}</span>
             </div>
           </div>
         </div>
@@ -231,7 +243,7 @@ const SchematicDiagram = () => {
             className="w-full max-w-[160px] h-20 md:h-24 rounded-xl bg-white border border-blue-100 shadow-[0_10px_30px_-5px_rgba(37,99,235,0.15)] flex items-center justify-center"
           >
             <span className="font-bold text-sm text-blue-600 flex items-center gap-2">
-              <Sparkles size={14} /> Preserved
+              <Sparkles size={14} /> {t('architecture.preserved')}
             </span>
           </motion.div>
         </div>
@@ -241,8 +253,10 @@ const SchematicDiagram = () => {
   )
 }
 
-// --- Sub-Component: Bento Grid Features ---
+// --- Sub-Component: BentoGridFeatures ---
 const BentoGridFeatures = () => {
+  const t = useTranslations('Landing');
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Box 1: Local Privacy (Large - Top Left) */}
@@ -253,9 +267,9 @@ const BentoGridFeatures = () => {
         <div className="h-12 w-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-700 mb-6 group-hover:scale-110 transition-transform">
           <Shield size={24} strokeWidth={1.5} />
         </div>
-        <h3 className="text-xl font-bold text-slate-900 mb-3">Local Privacy</h3>
+        <h3 className="text-xl font-bold text-slate-900 mb-3">{t('privacy.localPrivacy')}</h3>
         <p className="text-slate-600 text-sm leading-relaxed">
-          Your identity.json lives on your device. It is never sent back to the LLM provider for training. You own the layer.
+          {t('privacy.localPrivacyDescription')}
         </p>
       </div>
 
@@ -266,9 +280,9 @@ const BentoGridFeatures = () => {
             <div className="h-12 w-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 mb-6">
               <Server size={24} strokeWidth={1.5} />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">The Developer API</h3>
+            <h3 className="text-xl font-bold text-white mb-2">{t('developerApi.developerApiTitle')}</h3>
             <p className="text-slate-400 text-sm mb-6">
-              Programmatic access to the Resonate Engine. Inject personality into your automated pipelines.
+              {t('developerApi.developerApiDescription')}
             </p>
           </div>
 
@@ -293,11 +307,11 @@ const BentoGridFeatures = () => {
         <div className="flex-1">
           <div className="flex items-baseline gap-2 mb-2">
             <span className="text-5xl font-extrabold text-[#111111] tracking-tighter">&lt; 15ms</span>
-            <span className="text-slate-500 font-medium">overhead</span>
+            <span className="text-slate-500 font-medium">{t('developerApi.overhead')}</span>
           </div>
-          <h3 className="text-xl font-bold text-slate-900 mb-3">Zero Latency Performance</h3>
+          <h3 className="text-xl font-bold text-slate-900 mb-3">{t('developerApi.zeroLatency')}</h3>
           <p className="text-slate-600 text-sm leading-relaxed max-w-lg">
-            The Resonate Engine is optimized for ultra-low latency. It analyzes and re-ranks tokens in real-time without slowing down your generation stream.
+            {t('developerApi.zeroLatencyDescription')}
           </p>
         </div>
 
@@ -316,7 +330,7 @@ const BentoGridFeatures = () => {
           <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
             <path d="M0,150 L100,150 L150,50 L200,100 L300,150 L400,150" fill="none" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="4 4" />
           </svg>
-          <div className="absolute left-[40%] top-[20%] text-xs font-bold text-slate-400">Traditional Hook</div>
+          <div className="absolute left-[40%] top-[20%] text-xs font-bold text-slate-400">{t('developerApi.traditionalHook')}</div>
         </div>
       </div>
 
@@ -325,319 +339,19 @@ const BentoGridFeatures = () => {
 }
 
 
-export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void; onNavigate?: (page: PageView) => void }> = ({ onLogin, onSignup, onNavigate }) => {
-  const [isScrolled, setIsScrolled] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-700 overflow-x-hidden">
-
-      {/* --- Sticky Navbar --- */}
-      <motion.nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md border-b border-slate-200 py-4' : 'bg-transparent py-6'
-          }`}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={36} height={36} className="w-9 h-9 object-contain" />
-            <span className="font-bold text-xl tracking-tight text-blue-600">Resonate</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
-              <a href="#features" className="hover:text-blue-600 transition-colors">Features</a>
-              <a href="#comparison" className="hover:text-blue-600 transition-colors">Difference</a>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={onLogin} className="hidden sm:block text-sm font-semibold text-slate-600 hover:text-slate-900 px-4 py-2">Log In</button>
-              <button
-                onClick={onSignup}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-all shadow-none active:scale-95"
-              >
-                Get Started
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.nav>
-
-      {/* --- Hero Section --- */}
-      <section className="relative pt-40 pb-20 lg:pt-48 lg:pb-32 px-6 overflow-hidden bg-white">
-        {/* Subtle Gradient Orb */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#F1F5F9] rounded-full blur-[100px] -z-10" />
-
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
-
-          {/* Hero Content */}
-          <div className="max-w-2xl flex flex-col justify-center h-full">
-            <motion.div
-              custom={0}
-              initial="hidden"
-              animate="visible"
-              variants={fadeInUp}
-              className="w-fit mb-8"
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F1F5F9] text-blue-600 text-xs font-bold uppercase tracking-wider">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-                </span>
-                System Online
-              </div>
-            </motion.div>
-
-            <motion.h1
-              custom={1}
-              initial="hidden"
-              animate="visible"
-              variants={fadeInUp}
-              className="text-5xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-[1.05] mb-6"
-            >
-              Your Voice, <br />
-              <span className="text-blue-600">Preserved.</span>
-            </motion.h1>
-
-            <motion.p
-              custom={2}
-              initial="hidden"
-              animate="visible"
-              variants={fadeInUp}
-              className="text-lg text-slate-600 mb-8 leading-relaxed max-w-lg"
-            >
-              The ultimate identity layer for generative AI. Preserve your linguistic fingerprint and protect your personal brand against generic model output.
-            </motion.p>
-
-            <motion.div
-              custom={3}
-              initial="hidden"
-              animate="visible"
-              variants={fadeInUp}
-              className="flex flex-col sm:flex-row gap-4"
-            >
-              <button
-                onClick={onSignup}
-                className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-lg bg-blue-600 px-8 font-semibold text-white transition-all hover:bg-blue-700 active:scale-95"
-              >
-                <span className="mr-2">Start Identity Setup</span>
-                <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
-              </button>
-              <button
-                onClick={() => onNavigate?.('documentation')}
-                className="inline-flex h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-8 font-semibold text-slate-900 hover:bg-slate-50 transition-all active:scale-95"
-              >
-                View Documentation
-              </button>
-            </motion.div>
-
-            <motion.div
-              custom={4}
-              initial="hidden"
-              animate="visible"
-              variants={fadeInUp}
-              className="mt-10 flex items-center gap-6 text-sm text-slate-500 font-medium"
-            >
-              <span className="flex items-center gap-2"><CheckCircle2 size={18} className="text-blue-600" /> Free to start</span>
-              <span className="flex items-center gap-2"><CheckCircle2 size={18} className="text-blue-600" /> Local storage</span>
-              <span className="flex items-center gap-2"><CheckCircle2 size={18} className="text-blue-600" /> No training</span>
-            </motion.div>
-          </div>
-
-          {/* Hero Visual - Transformation Card */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative hidden lg:flex items-center justify-center"
-          >
-            <TransformationVisual />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* --- Logos Section --- */}
-      <section className="py-10 border-y border-slate-100 bg-slate-50/50">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-sm font-semibold text-slate-400 mb-8 uppercase tracking-widest">Seamlessly Integrates With</p>
-          <div className="flex flex-wrap justify-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-            {['OpenAI', 'Anthropic', 'Mistral AI', 'Meta Llama', 'Cohere'].map((brand) => (
-              <span key={brand} className="text-xl font-bold text-slate-800 hover:text-blue-600 cursor-default transition-colors">{brand}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- 3-Step Onboarding Section --- */}
-      <ThreeStepOnboarding onSignup={onSignup} />
-
-      {/* --- Interactive Comparison Section --- */}
-      <InteractiveComparison />
-
-      {/* --- Bento Grid Features (Architecture of Identity) --- */}
-      <section id="features" className="py-24 px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Architecture of Identity</h2>
-            <p className="text-lg text-slate-600 mb-12">Built for precision, privacy, and performance. Our engine deconstructs your linguistic style and reconstructs it on demand.</p>
-
-            {/* The Glass Blueprint Schematic */}
-            <SchematicDiagram />
-          </div>
-
-          {/* The Feature Grid */}
-          <BentoGridFeatures />
-
-        </div>
-      </section>
-
-      {/* --- JSON Preview Section ("Under the Hood") --- */}
-      <JSONPreviewSection />
-
-      {/* --- Use Cases Section --- */}
-      <section className="py-24 px-6 bg-[#F1F5F9] border-t border-slate-200">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-extrabold text-slate-900">Who is Resonate for?</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Card 1: Founders */}
-            <div className="group bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:border-blue-600 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 flex flex-col h-full">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-12 w-12 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
-                  <Briefcase size={24} strokeWidth={2} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">Founders</h3>
-              </div>
-
-              <p className="text-slate-500 text-sm leading-relaxed mb-auto">
-                Scale your thought leadership on LinkedIn and X without sounding like a generic bot. Maintain your unique authority.
-              </p>
-
-              <div className="mt-8 pt-6 border-t border-slate-100">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Configuration</span>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 font-mono text-xs text-slate-600 w-full">
-                  <span className="text-blue-600">{"{"}</span>
-                  <span className="text-purple-600">"tone"</span>:
-                  <span className="text-slate-800">"Authoritative"</span>
-                  <span className="text-blue-600">{"}"}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2: Creators */}
-            <div className="group bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:border-blue-600 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 flex flex-col h-full">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-12 w-12 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
-                  <PenTool size={24} strokeWidth={2} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">Creators</h3>
-              </div>
-
-              <p className="text-slate-500 text-sm leading-relaxed mb-auto">
-                Automate your newsletter and blog drafts while keeping 100% of your stylistic flair and wit.
-              </p>
-
-              <div className="mt-8 pt-6 border-t border-slate-100">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Configuration</span>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 font-mono text-xs text-slate-600 w-full">
-                  <span className="text-blue-600">{"{"}</span>
-                  <span className="text-purple-600">"style"</span>:
-                  <span className="text-slate-800">"Witty"</span>
-                  <span className="text-blue-600">{"}"}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 3: Support */}
-            <div className="group bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:border-blue-600 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 flex flex-col h-full">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-12 w-12 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
-                  <Building2 size={24} strokeWidth={2} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">Support Teams</h3>
-              </div>
-
-              <p className="text-slate-500 text-sm leading-relaxed mb-auto">
-                Unify your brand voice across thousands of support tickets. Make every automated reply feel personal.
-              </p>
-
-              <div className="mt-8 pt-6 border-t border-slate-100">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Configuration</span>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 font-mono text-xs text-slate-600 w-full">
-                  <span className="text-blue-600">{"{"}</span>
-                  <span className="text-purple-600">"consistency"</span>:
-                  <span className="text-slate-800">"100%"</span>
-                  <span className="text-blue-600">{"}"}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer className="bg-white border-t border-slate-200 pt-16 pb-12 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12 mb-16">
-          {/* Left Side: Brand */}
-          <div className="max-w-xl">
-            <div className="flex items-center gap-3 mb-6">
-              <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={48} height={48} className="w-12 h-12 object-contain" />
-              <span className="font-bold text-2xl tracking-tight text-blue-600">Resonate</span>
-            </div>
-            <p className="text-slate-500 text-lg leading-relaxed mb-8">
-              The ultimate identity layer for generative AI. Preserve your linguistic fingerprint and protect your personal brand.
-            </p>
-            <div className="flex items-center gap-2 px-3 py-1.5 w-fit rounded-full bg-emerald-50 border border-emerald-100">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <span className="text-xs font-bold text-emerald-700">System Online</span>
-            </div>
-          </div>
-
-          {/* Right Side: Product Links */}
-          <div className="flex flex-col md:items-end">
-            <h3 className="font-bold text-slate-900 text-lg mb-6">Product</h3>
-            <ul className="space-y-4 text-base text-slate-600 flex flex-col md:items-end">
-              <li><a href="#features" className="hover:text-blue-600 transition-colors">Features</a></li>
-              <li><a href="#comparison" className="hover:text-blue-600 transition-colors">The Difference</a></li>
-              <li><button onClick={() => onNavigate?.('documentation')} className="hover:text-blue-600 transition-colors">Documentation</button></li>
-              <li><button onClick={onSignup} className="hover:text-blue-600 transition-colors">Get Started</button></li>
-              <li><button onClick={onLogin} className="hover:text-blue-600 transition-colors">Log In</button></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <p>© 2024 Resonate Inc. All rights reserved.</p>
-            <div className="flex gap-4">
-              <button onClick={() => onNavigate?.('terms')} className="hover:text-blue-500 transition-colors">Terms of Service</button>
-              <button onClick={() => onNavigate?.('privacy')} className="hover:text-blue-500 transition-colors">Privacy Policy</button>
-            </div>
-          </div>
-          <div className="flex gap-6">
-            <span>Made with precision for writers.</span>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-};
 
 // --- Sub-Component: Interactive Comparison ---
 const InteractiveComparison = () => {
+  const t = useTranslations('Landing');
+
   return (
     <section id="comparison" className="py-24 px-6 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-extrabold text-slate-900 mb-4">The Difference is You</h2>
+          <h2 className="text-3xl font-extrabold text-slate-900 mb-4">{t('differenceSection.differenceTitle')}</h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            See how Resonate transforms robotic output into your unique voice.
+            {t('differenceSection.differenceSubtitle')}
           </p>
         </div>
 
@@ -656,10 +370,10 @@ const InteractiveComparison = () => {
               <div className="h-10 w-10 rounded-xl bg-slate-200 flex items-center justify-center">
                 <Cpu size={20} className="text-slate-600" />
               </div>
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Standard Output</span>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('differenceSection.standardOutput')}</span>
             </div>
             <p className="font-mono text-slate-500 text-lg leading-loose flex-grow">
-              "It is imperative that the team aligns on the strategic objectives for the third quarter. To ensure successful delivery by October, we must leverage cross-functional collaboration and optimize our workflows for efficiency."
+              "{t('differenceSection.standardOutputExample')}"
             </p>
           </div>
 
@@ -672,19 +386,19 @@ const InteractiveComparison = () => {
                   <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="You" className="h-7 w-7" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-azure uppercase tracking-widest mb-0.5">Your Voice</div>
-                  <div className="text-[10px] font-semibold text-slate-400">Preserved Identity</div>
+                  <div className="text-xs font-bold text-azure uppercase tracking-widest mb-0.5">{t('differenceSection.yourVoice')}</div>
+                  <div className="text-[10px] font-semibold text-slate-400">{t('differenceSection.preservedIdentity')}</div>
                 </div>
               </div>
               <div className="px-3 py-1 bg-azure-faint rounded-full border border-blue-100">
                 <span className="text-xs font-bold text-azure flex items-center gap-1.5">
-                  <Sparkles size={12} fill="currentColor" /> Match
+                  <Sparkles size={12} fill="currentColor" /> {t('differenceSection.match')}
                 </span>
               </div>
             </div>
 
             <p className="font-sans text-slate-900 text-lg leading-loose font-medium">
-              "<span className="bg-highlight-light text-slate-900 px-1 rounded box-decoration-clone">Hey team</span>, <span className="bg-highlight-light text-slate-900 px-1 rounded box-decoration-clone">quick heads-up</span> on the Q3 <span className="bg-highlight-light text-slate-900 px-1 rounded box-decoration-clone">synergy goals</span>. We really need to <span className="bg-highlight-light text-slate-900 px-1 rounded box-decoration-clone">double down</span> on the cross-functional stuff if we want to <span className="bg-highlight-light text-slate-900 px-1 rounded box-decoration-clone">ship this</span> by October. Let's not overcomplicate the process—<span className="bg-highlight-light text-slate-900 px-1 rounded box-decoration-clone">keep it lean</span>."
+              "{t('differenceSection.yourVoiceExample')}"
             </p>
           </div>
 
@@ -694,21 +408,24 @@ const InteractiveComparison = () => {
   );
 };
 
+
 // --- Sub-Component: Three-Step Onboarding ---
 const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) => {
+  const t = useTranslations('Landing');
+
   return (
     <section className="py-24 bg-slate-100 border-y border-slate-200">
       <div className="max-w-7xl mx-auto px-6">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center justify-center p-2 mb-6 rounded-full bg-white border border-slate-200 shadow-sm">
-            <span className="px-3 py-1 text-xs font-bold text-slate-600 uppercase tracking-wider">Engineering Pipeline</span>
+            <span className="px-3 py-1 text-xs font-bold text-slate-600 uppercase tracking-wider">{t('pipeline.engineeringPipeline')}</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-            How It Works
+            {t('pipeline.howItWorks')}
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            From raw input to structured identity in three transparent steps.
+            {t('pipeline.howItWorksDescription')}
           </p>
         </div>
 
@@ -726,9 +443,9 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full group">
               <div className="p-8 pb-0">
                 <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-lg mb-6 shadow-blue-200 shadow-lg">1</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">The Interview</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">{t('pipeline.interviewTitle')}</h3>
                 <p className="text-slate-600 text-sm leading-relaxed mb-8">
-                  A brief chat to capture your nuances. We ask about your preferences, formatting, and tone.
+                  {t('pipeline.interviewDescription')}
                 </p>
               </div>
 
@@ -771,9 +488,9 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full group">
               <div className="p-8 pb-0">
                 <div className="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-lg mb-6 shadow-slate-200 shadow-lg">2</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">The Extraction</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">{t('pipeline.extractionTitle')}</h3>
                 <p className="text-slate-600 text-sm leading-relaxed mb-8">
-                  Your style is compiled into a portable JSON fingerprint. Structure, not magic.
+                  {t('pipeline.extractionDescription')}
                 </p>
               </div>
 
@@ -813,9 +530,9 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full group">
               <div className="p-8 pb-0">
                 <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-lg mb-6 shadow-blue-200 shadow-lg">3</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">The Filter</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">{t('pipeline.filterTitle')}</h3>
                 <p className="text-slate-600 text-sm leading-relaxed mb-8">
-                  Run any text through the engine. It's rewritten to match your voice instantly.
+                  {t('pipeline.filterDescription')}
                 </p>
               </div>
 
@@ -823,7 +540,7 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
               <div className="mt-auto bg-slate-50 border-t border-slate-100 p-6 min-h-[160px] flex items-center justify-center relative overflow-hidden">
                 <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm w-full max-w-[200px]">
                   <div className="flex justify-between items-end mb-2">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alignment</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('pipeline.miniUi.alignment')}</span>
                     <span className="text-lg font-bold text-green-600">9.8</span>
                   </div>
                   <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
@@ -836,7 +553,7 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
                   </div>
                   <div className="mt-3 flex items-center gap-2">
                     <CheckCircle2 size={12} className="text-green-600" />
-                    <span className="text-[10px] font-medium text-slate-500">Identity Matches</span>
+                    <span className="text-[10px] font-medium text-slate-500">{t('pipeline.miniUi.identityMatches')}</span>
                   </div>
                 </div>
               </div>
@@ -850,7 +567,7 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
             onClick={onSignup}
             className="group inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all shadow-sm"
           >
-            <span>Initialize Pipeline</span>
+            <span>{t('pipeline.initializePipeline')}</span>
             <ChevronRight className="group-hover:translate-x-1 transition-transform" size={16} />
           </button>
         </div>
@@ -862,6 +579,7 @@ const ThreeStepOnboarding: React.FC<{ onSignup: () => void }> = ({ onSignup }) =
 // --- Sub-Component: JSON Preview Section ---
 // --- Sub-Component: JSON Preview Section ("The Portable IDE") ---
 const JSONPreviewSection = () => {
+  const t = useTranslations('Landing');
   return (
     <section className="py-24 px-6 bg-white overflow-hidden relative">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
@@ -870,15 +588,15 @@ const JSONPreviewSection = () => {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-wider mb-6">
             <Code2 size={14} />
-            Developer First
+            {t('identityStructure.developerFirst')}
           </div>
 
           <h2 className="text-4xl md:text-5xl font-extrabold text-[#111111] tracking-tight mb-6">
-            Your Identity, <span className="text-azure">Structured.</span>
+            {t('identityStructure.identityStructured')}
           </h2>
 
           <p className="text-lg text-slate-600 mb-10 leading-relaxed max-w-lg">
-            Your persona isn't magic—it's data. We give you a portable, version-controlled JSON file that defines exactly how you sound, independent of the model you use.
+            {t('identityStructure.identityStructuredDescription')}
           </p>
 
           {/* Horizontal Icon Cards */}
@@ -889,8 +607,8 @@ const JSONPreviewSection = () => {
                 <FileJson size={20} />
               </div>
               <div>
-                <div className="text-sm font-bold text-slate-900">Portable</div>
-                <div className="text-xs text-slate-500">Model Agnostic</div>
+                <div className="text-sm font-bold text-slate-900">{t('identityStructure.portable')}</div>
+                <div className="text-xs text-slate-500">{t('identityStructure.modelAgnostic')}</div>
               </div>
             </div>
 
@@ -900,8 +618,8 @@ const JSONPreviewSection = () => {
                 <GitBranch size={20} />
               </div>
               <div>
-                <div className="text-sm font-bold text-slate-900">Versioned</div>
-                <div className="text-xs text-slate-500">Git Compatible</div>
+                <div className="text-sm font-bold text-slate-900">{t('identityStructure.versioned')}</div>
+                <div className="text-xs text-slate-500">{t('identityStructure.gitCompatible')}</div>
               </div>
             </div>
           </div>
@@ -927,7 +645,7 @@ const JSONPreviewSection = () => {
               </div>
               {/* Filename Tab */}
               <div className="px-4 py-1 bg-[#1E1E2E] rounded-t-lg text-xs font-mono text-slate-400 border-t border-x border-white/5 -mb-3 translate-y-1">
-                identity.json
+                {t('identityStructure.filename')}
               </div>
               <div className="w-10"></div> {/* Spacer for balance */}
             </div>
@@ -960,16 +678,16 @@ const JSONPreviewSection = () => {
                 <div className="text-slate-300">
                   <div><span className="text-[#EAB308]">{`{`}</span></div>
                   <div className="pl-4">
-                    <span className="text-[#2563EB]">"name"</span>: <span className="text-[#4ADE80]">"Tech Leader"</span>,
+                    <span className="text-[#2563EB]">"name"</span>: <span className="text-[#4ADE80]">{t('identityStructure.example.nameValue')}</span>,
                   </div>
                   <div className="pl-4">
                     <span className="text-[#2563EB]">"voice"</span>: <span className="text-[#EAB308]">{`{`}</span>
                   </div>
                   <div className="pl-8">
-                    <span className="text-[#2563EB]">"tone"</span>: <span className="text-[#4ADE80]">"Direct"</span>,
+                    <span className="text-[#2563EB]">"tone"</span>: <span className="text-[#4ADE80]">{t('identityStructure.example.toneValue')}</span>,
                   </div>
                   <div className="pl-8">
-                    <span className="text-[#2563EB]">"style"</span>: <span className="text-[#4ADE80]">"Empathetic"</span>
+                    <span className="text-[#2563EB]">"style"</span>: <span className="text-[#4ADE80]">{t('identityStructure.example.styleValue')}</span>
                   </div>
                   <div className="pl-4">
                     <span className="text-[#EAB308]">{`}`}</span>,
@@ -978,7 +696,7 @@ const JSONPreviewSection = () => {
                     <span className="text-[#2563EB]">"keywords"</span>: <span className="text-[#EAB308]">[</span>
                   </div>
                   <div className="pl-8">
-                    <span className="text-[#4ADE80]">"scalability"</span>, <span className="text-[#4ADE80]">"impact"</span>
+                    <span className="text-[#4ADE80]">{t('identityStructure.example.keyword1')}</span>, <span className="text-[#4ADE80]">{t('identityStructure.example.keyword2')}</span>
                   </div>
                   <div className="pl-4">
                     <span className="text-[#EAB308]">]</span>
@@ -991,5 +709,352 @@ const JSONPreviewSection = () => {
         </div>
       </div>
     </section>
+  );
+};
+
+export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void; onNavigate?: (page: PageView) => void }> = ({ onLogin, onSignup, onNavigate }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+
+  const t = useTranslations('Landing');
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const changeLanguage = (newLocale: string) => {
+    router.replace(pathname, { locale: newLocale });
+    setIsLangMenuOpen(false);
+  };
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-700 overflow-x-hidden">
+
+      {/* --- Sticky Navbar --- */}
+      <motion.nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md border-b border-slate-200 py-4' : 'bg-transparent py-6'
+          }`}
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={36} height={36} className="w-9 h-9 object-contain" />
+            <span className="font-bold text-xl tracking-tight text-blue-600">Resonate</span>
+          </div>
+          <div className="flex items-center gap-6">
+            {/* Language Switcher */}
+            <div className="relative">
+              <button
+                onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors uppercase"
+              >
+                {locale}
+                <ChevronDown size={14} />
+              </button>
+
+              <AnimatePresence>
+                {isLangMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[80px] overflow-hidden"
+                  >
+                    {['en', 'fr', 'de'].map((l) => (
+                      <button
+                        key={l}
+                        onClick={() => changeLanguage(l)}
+                        className={`w-full text-left px-4 py-2 text-sm uppercase hover:bg-slate-50 transition-colors ${locale === l ? 'text-blue-600 font-bold' : 'text-slate-600'}`}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
+              <a href="#features" className="hover:text-blue-600 transition-colors">{t('nav.features')}</a>
+              <a href="#comparison" className="hover:text-blue-600 transition-colors">{t('nav.difference')}</a>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={onLogin} className="hidden sm:block text-sm font-semibold text-slate-600 hover:text-slate-900 px-4 py-2">{t('nav.logIn')}</button>
+              <button
+                onClick={onSignup}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-all shadow-none active:scale-95"
+              >
+                {t('nav.getStarted')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.nav>
+
+      {/* --- Hero Section --- */}
+      <section className="relative pt-40 pb-20 lg:pt-48 lg:pb-32 px-6 overflow-hidden bg-white" >
+        {/* Subtle Gradient Orb */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#F1F5F9] rounded-full blur-[100px] -z-10" />
+
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
+
+          {/* Hero Content */}
+          <div className="max-w-2xl flex flex-col justify-center h-full">
+            <motion.div
+              custom={0}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+              className="w-fit mb-8"
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F1F5F9] text-blue-600 text-xs font-bold uppercase tracking-wider">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                </span>
+                {t('hero.systemOnline')}
+              </div>
+            </motion.div>
+
+            <motion.h1
+              custom={1}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+              className="text-5xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-[1.05] mb-6"
+            >
+              {t('hero.titlePart1')} <br />
+              <span className="text-blue-600">{t('hero.titlePart2')}</span>
+            </motion.h1>
+
+            <motion.p
+              custom={2}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+              className="text-lg text-slate-600 mb-8 leading-relaxed max-w-lg"
+            >
+              {t('hero.description')}
+            </motion.p>
+
+            <motion.div
+              custom={3}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+              className="flex flex-col sm:flex-row gap-4"
+            >
+              <button
+                onClick={onSignup}
+                className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-lg bg-blue-600 px-8 font-semibold text-white transition-all hover:bg-blue-700 active:scale-95"
+              >
+                <span className="mr-2">{t('hero.startSetup')}</span>
+                <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
+              </button>
+              <button
+                onClick={() => onNavigate?.('documentation')}
+                className="inline-flex h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-8 font-semibold text-slate-900 hover:bg-slate-50 transition-all active:scale-95"
+              >
+                {t('hero.viewDocs')}
+              </button>
+            </motion.div>
+
+            <motion.div
+              custom={4}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+              className="mt-10 flex items-center gap-6 text-sm text-slate-500 font-medium"
+            >
+              <span className="flex items-center gap-2"><CheckCircle2 size={18} className="text-blue-600" /> {t('hero.freeToStart')}</span>
+              <span className="flex items-center gap-2"><CheckCircle2 size={18} className="text-blue-600" /> {t('hero.localStorage')}</span>
+              <span className="flex items-center gap-2"><CheckCircle2 size={18} className="text-blue-600" /> {t('hero.noTraining')}</span>
+            </motion.div>
+          </div>
+
+          {/* Hero Visual - Transformation Card */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="relative hidden lg:flex items-center justify-center"
+          >
+            <TransformationVisual />
+          </motion.div>
+        </div>
+      </section >
+
+      {/* --- Logos Section --- */}
+      <section className="py-10 border-y border-slate-100 bg-slate-50/50" >
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p className="text-sm font-semibold text-slate-400 mb-8 uppercase tracking-widest">{t('integrations.seamlesslyIntegratesWith')}</p>
+          <div className="flex flex-wrap justify-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+            {['OpenAI', 'Anthropic', 'Mistral AI', 'Meta Llama', 'Cohere'].map((brand) => (
+              <span key={brand} className="text-xl font-bold text-slate-800 hover:text-blue-600 cursor-default transition-colors">{brand}</span>
+            ))}
+          </div>
+        </div>
+      </section >
+
+      {/* --- 3-Step Onboarding Section --- */}
+      <ThreeStepOnboarding onSignup={onSignup} />
+
+      {/* --- Interactive Comparison Section --- */}
+      <InteractiveComparison />
+
+      {/* --- Bento Grid Features (Architecture of Identity) --- */}
+      <section id="features" className="py-24 px-6 bg-white" >
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">{t('architecture.architectureTitle')}</h2>
+            <p className="text-lg text-slate-600 mb-12">{t('architecture.architectureDescription')}</p>
+
+            {/* The Glass Blueprint Schematic */}
+            <SchematicDiagram />
+          </div>
+
+          {/* The Feature Grid */}
+          <BentoGridFeatures />
+
+        </div>
+      </section >
+
+      {/* --- JSON Preview Section ("Under the Hood") --- */}
+      <JSONPreviewSection />
+
+      {/* --- Use Cases Section --- */}
+      <section className="py-24 px-6 bg-[#F1F5F9] border-t border-slate-200">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-extrabold text-slate-900">{t('audience.whoIsResonateFor')}</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Card 1: Founders */}
+            <div className="group bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:border-blue-600 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 flex flex-col h-full">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-12 w-12 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+                  <Briefcase size={24} strokeWidth={2} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">{t('audience.founders')}</h3>
+              </div>
+
+              <p className="text-slate-500 text-sm leading-relaxed mb-auto">
+                {t('audience.foundersDescription')}
+              </p>
+
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">{t('audience.configuration')}</span>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 font-mono text-xs text-slate-600 w-full">
+                  <span className="text-blue-600">{"{"}</span>
+                  <span className="text-purple-600">"tone"</span>:
+                  <span className="text-slate-800">"Authoritative"</span>
+                  <span className="text-blue-600">{"}"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Creators */}
+            <div className="group bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:border-blue-600 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 flex flex-col h-full">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-12 w-12 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+                  <PenTool size={24} strokeWidth={2} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">{t('audience.creators')}</h3>
+              </div>
+
+              <p className="text-slate-500 text-sm leading-relaxed mb-auto">
+                {t('audience.creatorsDescription')}
+              </p>
+
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">{t('audience.configuration')}</span>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 font-mono text-xs text-slate-600 w-full">
+                  <span className="text-blue-600">{"{"}</span>
+                  <span className="text-purple-600">"style"</span>:
+                  <span className="text-slate-800">"Witty"</span>
+                  <span className="text-blue-600">{"}"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Support */}
+            <div className="group bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:border-blue-600 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 flex flex-col h-full">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-12 w-12 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+                  <Building2 size={24} strokeWidth={2} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">{t('audience.supportTeams')}</h3>
+              </div>
+
+              <p className="text-slate-500 text-sm leading-relaxed mb-auto">
+                {t('audience.supportTeamsDescription')}
+              </p>
+
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">{t('audience.configuration')}</span>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 font-mono text-xs text-slate-600 w-full">
+                  <span className="text-blue-600">{"{"}</span>
+                  <span className="text-purple-600">"consistency"</span>:
+                  <span className="text-slate-800">"100%"</span>
+                  <span className="text-blue-600">{"}"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section >
+
+      <footer className="bg-white border-t border-slate-200 pt-16 pb-12 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-12 mb-16">
+          {/* Left Side: Brand */}
+          <div className="max-w-xl">
+            <div className="flex items-center gap-3 mb-6">
+              <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={48} height={48} className="w-12 h-12 object-contain" />
+              <span className="font-bold text-2xl tracking-tight text-blue-600">Resonate</span>
+            </div>
+            <p className="text-slate-500 text-lg leading-relaxed mb-8">
+              {t('branding.tagline')}
+            </p>
+            <div className="flex items-center gap-2 px-3 py-1.5 w-fit rounded-full bg-emerald-50 border border-emerald-100">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-xs font-bold text-emerald-700">{t('hero.systemOnline')}</span>
+            </div>
+          </div>
+
+          {/* Right Side: Product Links */}
+          <div className="flex flex-col md:items-end">
+            <h3 className="font-bold text-slate-900 text-lg mb-6">{t('nav.product')}</h3>
+            <ul className="space-y-4 text-base text-slate-600 flex flex-col md:items-end">
+              <li><a href="#features" className="hover:text-blue-600 transition-colors">{t('nav.features')}</a></li>
+              <li><a href="#comparison" className="hover:text-blue-600 transition-colors">{t('nav.difference')}</a></li>
+              <li><button onClick={() => onNavigate?.('documentation')} className="hover:text-blue-600 transition-colors">{t('nav.documentation')}</button></li>
+              <li><button onClick={onSignup} className="hover:text-blue-600 transition-colors">{t('nav.getStarted')}</button></li>
+              <li><button onClick={onLogin} className="hover:text-blue-600 transition-colors">{t('nav.logIn')}</button></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
+            <p>2024 Resonate Inc. All rights reserved.</p>
+            <div className="flex gap-4">
+              <button onClick={() => onNavigate?.('terms')} className="hover:text-blue-500 transition-colors">Terms of Service</button>
+              <button onClick={() => onNavigate?.('privacy')} className="hover:text-blue-500 transition-colors">Privacy Policy</button>
+            </div>
+          </div>
+          <div className="flex gap-6">
+            <span>{t('branding.madeWithPrecision')}</span>
+          </div>
+        </div>
+      </footer>
+    </div >
   );
 };

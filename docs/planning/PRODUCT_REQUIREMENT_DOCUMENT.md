@@ -3,7 +3,7 @@
 **Version:** 1.2
 **Owner:** Matt Schramm
 **Status:** In Development
-**Last Updated:** 2025-12-08
+**Last Updated:** 2025-12-10
 
 ---
 
@@ -139,6 +139,42 @@ These may be added in Phase 2 or 3.
 ---
 
 # **5. DETAILED FEATURE REQUIREMENTS**
+
+---
+
+# **5.0 Internationalization (New)**
+
+### **Supported Locales**
+* English (en) - Default
+* French (fr)
+* German (de)
+
+### **Implementation**
+* **Routing:** Sub-path routing (e.g., `/en/dashboard`, `/fr/dashboard`) via `next-intl`.
+* **Detection:** Automatic locale detection based on browser headers with middleware redirection.
+* **Content:** All user-facing text extracted to JSON message dictionaries (`messages/en.json`, etc.).
+
+---
+
+# **5.0.1 Billing & Subscriptions (New)**
+
+### **Tiers**
+1.  **Free Tier**
+    *   Model: `gpt-4o-mini`
+    *   Basic identity transformations.
+    *   Limited analytics.
+2.  **Pro Tier**
+    *   Model: `Gemini 2.5 Flash`
+    *   Advanced Memory/Context Studio.
+    *   Full Analytics & Drift Detection.
+    *   Priority support.
+3.  **Power Tier** (Enterprise/High Volume)
+    *   Higher rate limits.
+
+### **Tech Stack**
+*   **Stripe Elements** for secure payment processing.
+*   **Stripe Webhooks** for subscription status management.
+*   **Upgrade Gates** in UI to prompt upgrades for premium features (e.g., Memory, Advanced Models).
 
 ---
 
@@ -353,9 +389,10 @@ If score < threshold → run correction loop
 
 ### **Tech Stack**
 
-* **Vite + React**
+* **Vite + React** (Migrated to **Next.js 15**)
 * TypeScript
-* TypeScript
+* **Internationalization:** `next-intl`
+* **Payments:** `@stripe/stripe-js`
 * TailwindCSS for UI
 * React Query for data fetching
 
@@ -365,8 +402,9 @@ If score < threshold → run correction loop
 
 ### **Tech Stack**
 
-* Node.js (Express / Next.js API routes)
-* Python FastAPI (optional)
+* Node.js (Next.js API routes)
+* **Billing:** Stripe API (`stripe` SDK)
+* Python FastAPI (optional - currently unused)
 
 ### **Core Backend Responsibilities**
 
@@ -398,8 +436,8 @@ If score < threshold → run correction loop
 
 # **6.4 LLM Providers**
 
-* OpenAI GPT-4o-mini / GPT-4o
-* Google Gemini (gemini-1.5-flash)
+* Free Tier: OpenAI GPT-4o-mini
+* Pro/Power Tier: Google Gemini (Gemini 2.5 Flash)
 * Optional: Anthropic Claude 3.5
 
 ### **Cost Target**
@@ -497,7 +535,7 @@ Each transformation must log:
 * evaluation loop [Done]
 * dashboard [Done]
 * identity editor [Done] (includes Data Export)
-* basic analytics [In Progress]
+* basic analytics [Done]
 
 ---
 
@@ -505,11 +543,14 @@ Each transformation must log:
 
 ### Deliverables:
 
-* Memory layer
-* persona system [Partially Implemented - Duplication added]
-* drift detection
-* enhanced analytics
-* versioning UI
+* Memory layer [Done] (Context Studio)
+* persona system [Done] (Duplication & Context)
+* billing integration [Done] (Stripe, Upgrade Gates)
+* internationalization [Done] (EN, FR, DE)
+* drift detection [Done]
+* enhanced analytics [Done]
+* versioning UI [Done]
+* Chrome Extension (Lite) [Todo]
 
 ---
 
@@ -518,7 +559,7 @@ Each transformation must log:
 ### Deliverables:
 
 * Real-time agents using identity layer
-* Browser extensions
+* Advanced Browser Extensions (Ghostwriter)
 * Email integrations
 * Team personas
 

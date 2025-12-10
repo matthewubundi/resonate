@@ -1,4 +1,115 @@
 {
+    "Landing": {
+        "nav": {
+            "features": "Funktionen",
+            "difference": "Der Unterschied",
+            "logIn": "Anmelden",
+            "getStarted": "Loslegen",
+            "product": "Produkt",
+            "documentation": "Dokumentation"
+        },
+        "hero": {
+            "systemOnline": "System online",
+            "titlePart1": "Ihre Stimme,",
+            "titlePart2": "Bewahrt.",
+            "description": "Die ultimative Identitätsschicht für generative KI. Bewahren Sie Ihren sprachlichen Fingerabdruck und schützen Sie Ihre persönliche Marke vor generischen Modellausgaben.",
+            "startSetup": "Identitäts-Setup starten",
+            "viewDocs": "Dokumentation anzeigen",
+            "freeToStart": "Kostenloser Einstieg",
+            "localStorage": "Lokale Speicherung",
+            "noTraining": "Kein Training erforderlich",
+            "visual": {
+                "raw": "ROH",
+                "processing": "VERARBEITUNG",
+                "preserved": "BEWAHRT",
+                "detectingStyle": "Stil wird erkannt...",
+                "voiceMatch": "Stimmabgleich: 99%"
+            }
+        },
+        "integrations": {
+            "seamlesslyIntegratesWith": "Nahtlose Integration mit"
+        },
+        "pipeline": {
+            "engineeringPipeline": "Engineering-Pipeline",
+            "howItWorks": "So funktioniert es",
+            "howItWorksDescription": "Vom Rohinput zur strukturierten Identität in drei transparenten Schritten.",
+            "interviewTitle": "Das Interview",
+            "interviewDescription": "Ein kurzes Gespräch, um Ihre Nuancen zu erfassen. Wir fragen nach Ihren Präferenzen, Ihrem Format und Ihrem Ton.",
+            "extractionTitle": "Die Extraktion",
+            "extractionDescription": "Ihr Stil wird in einen portablen JSON-Fingerabdruck kompiliert. Struktur statt Magie.",
+            "filterTitle": "Der Filter",
+            "filterDescription": "Verarbeiten Sie beliebigen Text durch die Engine. Er wird sofort umgeschrieben, um Ihrer Stimme zu entsprechen.",
+            "miniUi": {
+                "userPreference": "\"Ich bevorzuge direkte, prägnante Sätze. Kein Geschwafel.\"",
+                "alignment": "Ausrichtung",
+                "identityMatches": "Identitätsübereinstimmungen"
+            },
+            "initializePipeline": "Pipeline initialisieren"
+        },
+        "differenceSection": {
+            "differenceTitle": "Der Unterschied sind Sie",
+            "differenceSubtitle": "Sehen Sie, wie Resonate robotische Ausgaben in Ihre einzigartige Stimme verwandelt.",
+            "standardOutput": "Standardausgabe",
+            "standardOutputExample": "Es ist entscheidend, dass das Team sich auf die strategischen Ziele für das dritte Quartal einigt. Um eine erfolgreiche Lieferung bis Oktober sicherzustellen, müssen wir funktionsübergreifende Zusammenarbeit nutzen und unsere Workflows für Effizienz optimieren.",
+            "yourVoice": "Ihre Stimme",
+            "preservedIdentity": "Bewahrte Identität",
+            "yourVoiceExample": "Hey Team, kurzer Hinweis zu den Q3-Synergiezielen. Wir müssen wirklich beim funktionsübergreifenden Austausch nachlegen, wenn wir bis Oktober liefern wollen. Lasst uns den Prozess nicht überkomplizieren — bleibt schlank.",
+            "match": "Übereinstimmung"
+        },
+        "architecture": {
+            "architectureTitle": "Architektur der Identität",
+            "architectureDescription": "Entwickelt für Präzision, Datenschutz und Leistung. Unsere Engine zerlegt Ihren sprachlichen Stil und setzt ihn auf Abruf wieder zusammen.",
+            "resonateEngine": "Resonate Engine",
+            "analysis": "Analyse",
+            "injection": "Injection",
+            "reranking": "Re-Ranking",
+            "preserved": "Bewahrt",
+            "output": "Ausgabe"
+        },
+        "privacy": {
+            "localPrivacy": "Lokaler Datenschutz",
+            "localPrivacyDescription": "Ihre identity.json bleibt auf Ihrem Gerät. Sie wird niemals an den LLM-Anbieter zur Schulung gesendet. Sie besitzen diese Ebene."
+        },
+        "developerApi": {
+            "developerApiTitle": "Die Entwickler-API",
+            "developerApiDescription": "Programmgesteuerter Zugriff auf die Resonate Engine. Injizieren Sie Persönlichkeit in Ihre automatisierten Pipelines.",
+            "overhead": "Overhead",
+            "zeroLatency": "Null-Latenz-Performance",
+            "zeroLatencyDescription": "Die Resonate Engine ist für extrem niedrige Latenz optimiert. Sie analysiert und sortiert Tokens in Echtzeit, ohne Ihren Generierungsstrom zu verlangsamen.",
+            "traditionalHook": "ResonateTraditional Hook"
+        },
+        "identityStructure": {
+            "developerFirst": "Entwicklerorientiert",
+            "identityStructured": "Ihre Identität, strukturiert.",
+            "identityStructuredDescription": "Ihre Persona ist keine Magie — sie ist Daten. Wir geben Ihnen eine portable, versionierte JSON-Datei, die genau definiert, wie Sie klingen, unabhängig vom verwendeten Modell.",
+            "portable": "Portabel",
+            "modelAgnostic": "Modellunabhängig",
+            "versioned": "Versioniert",
+            "gitCompatible": "Git-kompatibel",
+            "filename": "identity.json",
+            "example": {
+                "nameValue": "\"Tech-Leiter\"",
+                "toneValue": "\"Direkt\"",
+                "styleValue": "\"Empathisch\"",
+                "keyword1": "\"Skalierbarkeit\"",
+                "keyword2": "\"Einfluss\""
+            }
+        },
+        "audience": {
+            "whoIsResonateFor": "Für wen ist Resonate?",
+            "founders": "Gründer",
+            "foundersDescription": "Erweitern Sie Ihr Thought Leadership auf LinkedIn und X, ohne wie ein generischer Bot zu klingen. Bewahren Sie Ihre einzigartige Autorität.",
+            "creators": "Creator",
+            "creatorsDescription": "Automatisieren Sie Newsletter- und Blog-Entwürfe und behalten Sie gleichzeitig 100% Ihres stilistischen Flairs und Witzes.",
+            "supportTeams": "Support-Teams",
+            "supportTeamsDescription": "Vereinheitlichen Sie die Markenstimme über Tausende von Support-Tickets hinweg. Jede automatisierte Antwort wirkt persönlich.",
+            "configuration": "Konfiguration"
+        },
+        "branding": {
+            "tagline": "Die ultimative Identitätsschicht für generative KI. Bewahren Sie Ihren sprachlichen Fingerabdruck und schützen Sie Ihre persönliche Marke.",
+            "madeWithPrecision": "Mit Präzision geschaffen für Schreibende."
+        }
+    },
     "Settings": {
         "title": "Einstellungen",
         "description": "Verwalten Sie Ihr Kommandozentrum.",

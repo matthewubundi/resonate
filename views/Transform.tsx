@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useSettings } from '../hooks/useSettings';
+import { useTranslations } from 'next-intl';
 import { Copy, RefreshCw, Sliders, Zap, Sidebar, ArrowRight, X, Check, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/Components';
 import { ModelSelector } from '../components/ModelSelector';
@@ -9,7 +11,9 @@ import { useSubscription } from '../hooks/useSubscription';
 import { AlertCircle } from 'lucide-react';
 
 export const Transform: React.FC = () => {
+  const t = useTranslations('Transform');
   const { user } = useAuth();
+  const { settings } = useSettings();
   const [showDiff, setShowDiff] = useState(false);
   const [showParams, setShowParams] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
@@ -97,7 +101,7 @@ export const Transform: React.FC = () => {
 
   const handleModelChange = (model: ModelId) => {
     if (model === 'gemini-flash-latest' && tier === 'free') {
-      setToastMessage("Upgrade to Pro to use Gemini Flash 2.5");
+      setToastMessage(t('upgradeToast'));
       setTimeout(() => setToastMessage(null), 3000);
       return;
     }
@@ -153,7 +157,7 @@ export const Transform: React.FC = () => {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      if (!session) throw new Error(t('authError'));
 
       const res = await fetch('/api/transform', {
         method: 'POST',
@@ -183,8 +187,17 @@ export const Transform: React.FC = () => {
       // Auto-show diffs if it's a rewrite
       setShowDiff(true);
 
+      if (settings?.autoCopy) {
+        navigator.clipboard.writeText(data.output).catch(console.error);
+        setToastMessage(t('copiedToClipboard') || 'Copied to clipboard!');
+      }
+
+      if (settings?.clearInput) {
+        setInputText('');
+      }
+
     } catch (err: any) {
-      alert('Transformation failed: ' + (err?.message || 'Unknown error'));
+      alert(t('transformationFailed', { error: err?.message || t('unknownError') }));
       console.error(err);
     } finally {
       setIsProcessing(false);
@@ -209,7 +222,7 @@ export const Transform: React.FC = () => {
       {/* Top Toolbar */}
       <div className="flex items-center justify-between px-2 py-1">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-extrabold tracking-tight">Command Center</h1>
+          <h1 className="text-xl font-extrabold tracking-tight">{t('title')}</h1>
 
           <div className="h-6 w-px bg-slate-200 mx-2"></div>
 
@@ -219,13 +232,13 @@ export const Transform: React.FC = () => {
               onClick={() => setShowDiff(false)}
               className={`px-3 py-1 text-xs font-semibold rounded-full transition-all ${!showDiff ? 'bg-slate-100 text-ink' : 'text-ink/50 hover:text-ink'}`}
             >
-              Clean
+              {t('clean')}
             </button>
             <button
               onClick={() => setShowDiff(true)}
               className={`px-3 py-1 text-xs font-semibold rounded-full transition-all ${showDiff ? 'bg-indigo-50 text-indigo-600' : 'text-ink/50 hover:text-ink'}`}
             >
-              Diff View
+              {t('diffView')}
             </button>
           </div>
         </div>
@@ -241,7 +254,7 @@ export const Transform: React.FC = () => {
             onClick={() => setShowRefine(!showRefine)}
             className={showRefine ? 'bg-slate-100 text-ink' : 'text-ink/60'}
           >
-            <Zap size={16} className="mr-2" /> Refine
+            <Zap size={16} className="mr-2" /> {t('refine')}
           </Button>
           <Button
             variant="ghost"
@@ -249,7 +262,7 @@ export const Transform: React.FC = () => {
             onClick={() => setShowParams(!showParams)}
             className={showParams ? 'bg-slate-100 text-ink' : 'text-ink/60'}
           >
-            <Sliders size={16} className="mr-2" /> Parameters
+            <Sliders size={16} className="mr-2" /> {t('parameters')}
           </Button>
           <Button
             variant="ghost"
@@ -257,7 +270,7 @@ export const Transform: React.FC = () => {
             onClick={() => setShowInsights(!showInsights)}
             className={showInsights ? 'bg-slate-100 text-ink' : 'text-ink/60'}
           >
-            <Sidebar size={16} className="mr-2" /> Insights
+            <Sidebar size={16} className="mr-2" /> {t('insights')}
           </Button>
         </div>
       </div >
@@ -269,16 +282,16 @@ export const Transform: React.FC = () => {
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-4">
                 <div className="flex-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Contextual Refinements</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">{t('refinePanel.contextualRefinements')}</label>
                   <textarea
                     className="w-full text-sm p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-azure focus:border-azure outline-none resize-none h-20"
-                    placeholder="e.g. 'Make it punchy for Slack', 'This is a formal email', 'Focus on empathy'..."
+                    placeholder={t('refinePanel.placeholder')}
                     value={instructions}
                     onChange={(e) => setInstructions(e.target.value)}
                   />
                 </div>
                 <div className="w-1/3">
-                  <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Quick Chips</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">{t('refinePanel.quickChips')}</label>
                   <div className="flex flex-wrap gap-2">
                     {['Brief', 'Professional', 'Empathetic', 'Slack', 'Email', 'Linkedin'].map(chip => (
                       <button
@@ -286,7 +299,7 @@ export const Transform: React.FC = () => {
                         onClick={() => setInstructions(prev => prev ? `${prev}, ${chip}` : chip)}
                         className="text-xs px-2 py-1 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-full transition-colors text-slate-600"
                       >
-                        + {chip}
+                        + {t(`refinePanel.chips.${chip}`)}
                       </button>
                     ))}
                   </div>
@@ -302,7 +315,7 @@ export const Transform: React.FC = () => {
         showParams && (
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mx-2 animate-in slide-in-from-top-2 duration-200">
             <div className="flex items-center gap-4">
-              <span className="text-sm font-semibold w-24">Temperature</span>
+              <span className="text-sm font-semibold w-24">{t('parametersPanel.temperature')}</span>
               <input type="range" min="0" max="1.5" step="0.1" value={temperature} onChange={(e) => setTemperature(parseFloat(e.target.value))} className="flex-1 accent-azure h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer" />
               <span className="text-xs font-mono font-bold bg-slate-100 px-2 py-1 rounded">{temperature.toFixed(1)}</span>
             </div>
@@ -317,12 +330,12 @@ export const Transform: React.FC = () => {
         <div className="flex-1 flex flex-col relative group">
           <textarea
             className="flex-1 w-full resize-none border-none p-8 font-serif leading-8 text-lg text-ink placeholder:text-slate-300 focus:ring-0 outline-none"
-            placeholder="Paste your raw draft here..."
+            placeholder={t('editor.inputPlaceholder')}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
           />
           <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="sm" onClick={handleClear} className="text-xs h-8 text-red-500 hover:text-red-600 hover:bg-red-50">Clear</Button>
+            <Button variant="ghost" size="sm" onClick={handleClear} className="text-xs h-8 text-red-500 hover:text-red-600 hover:bg-red-50">{t('editor.clear')}</Button>
           </div>
         </div>
 
@@ -358,10 +371,10 @@ export const Transform: React.FC = () => {
                     {(alignmentScore || 0).toFixed(1)} / 10
                     <ArrowRight size={12} />
                   </div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Alignment Score</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('output.alignmentScore')}</span>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(outputText)}>
-                  <Copy size={14} className="mr-2" /> Copy
+                  <Copy size={14} className="mr-2" /> {t('output.copy')}
                 </Button>
               </div>
 
@@ -387,7 +400,7 @@ export const Transform: React.FC = () => {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-slate-300 select-none">
               <ArrowRight size={48} className="opacity-20 mb-4" />
-              <p className="font-medium">Ready to Resonate</p>
+              <p className="font-medium">{t('editor.readyToResonate')}</p>
             </div>
           )}
         </div>
@@ -396,7 +409,7 @@ export const Transform: React.FC = () => {
         <div className={`absolute right-0 top-0 h-full bg-slate-50 border-l border-slate-200 w-80 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] transition-transform duration-300 transform z-30 ${showInsights ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="h-full flex flex-col">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white">
-              <h3 className="font-bold text-ink text-sm uppercase tracking-wide">Analysis</h3>
+              <h3 className="font-bold text-ink text-sm uppercase tracking-wide">{t('insightsPanel.analysis')}</h3>
               <button onClick={() => setShowInsights(false)} className="p-1 hover:bg-slate-100 rounded-md text-slate-500"><X size={16} /></button>
             </div>
 
@@ -405,7 +418,7 @@ export const Transform: React.FC = () => {
                 <>
                   {/* Score Breakdown */}
                   <div>
-                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Tone Match</h4>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">{t('insightsPanel.toneMatch')}</h4>
                     <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${evaluation.score >= 8 ? 'bg-mint' : evaluation.score >= 6 ? 'bg-yellow-400' : 'bg-red-400'
@@ -422,7 +435,7 @@ export const Transform: React.FC = () => {
 
                   {/* Reasoning */}
                   <div>
-                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Why this grade?</h4>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">{t('insightsPanel.whyThisGrade')}</h4>
                     <p className="text-sm text-slate-600 leading-relaxed bg-white p-3 rounded-lg border border-slate-100">
                       {evaluation.reasoning}
                     </p>
@@ -431,7 +444,7 @@ export const Transform: React.FC = () => {
                   {/* Suggestions */}
                   {evaluation.suggestions && (
                     <div>
-                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Improvement</h4>
+                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">{t('insightsPanel.improvement')}</h4>
                       <div className="text-sm text-slate-600 leading-relaxed bg-blue-50/50 p-3 rounded-lg border border-blue-100/50">
                         {evaluation.suggestions}
                       </div>
@@ -440,13 +453,13 @@ export const Transform: React.FC = () => {
                 </>
               ) : (
                 <div className="text-center text-slate-400 text-sm mt-10">
-                  Generate a transformation to see detailed analysis.
+                  {t('insightsPanel.generateToSee')}
                 </div>
               )}
 
               {reasoning.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Transform Logic</h4>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">{t('insightsPanel.transformLogic')}</h4>
                   <ul className="space-y-2">
                     {reasoning.map((r, i) => (
                       <li key={i} className="text-xs text-slate-600 flex items-start gap-2">

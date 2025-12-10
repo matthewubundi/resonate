@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '../components/Components';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
@@ -105,14 +106,14 @@ const Gauge = ({ value, metrics }: { value: number; metrics: AnalyticsMetrics | 
           <span className="text-6xl font-black text-ink tracking-tighter block leading-none">
             {value.toFixed(1)}
           </span>
-          <span className="text-xs font-bold text-ink/40 uppercase tracking-widest mt-2">Alignment</span>
+          <span className="text-xs font-bold text-ink/40 uppercase tracking-widest mt-2">{((metrics as any)?.t) ? (metrics as any).t('alignment') : 'Alignment'}</span>
         </div>
       </div>
     </div>
   );
 };
 
-const DriftBadge = ({ status }: { status: 'stable' | 'drifting' }) => {
+const DriftBadge = ({ status, t }: { status: 'stable' | 'drifting', t: any }) => {
   return (
     <div className={`
          flex items-center gap-3 px-5 py-3 rounded-xl border transition-all w-full
@@ -124,15 +125,16 @@ const DriftBadge = ({ status }: { status: 'stable' | 'drifting' }) => {
         {status === 'stable' ? <Activity size={24} /> : <AlertTriangle size={24} />}
       </div>
       <div>
-        <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">Drift Monitor</div>
-        <div className="text-lg font-bold leading-tight">{status === 'stable' ? 'Stable' : 'Drift Detected'}</div>
+        <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">{t('drift.title')}</div>
+        <div className="text-lg font-bold leading-tight">{status === 'stable' ? t('drift.stable') : t('drift.detected')}</div>
       </div>
     </div>
   );
 };
 
 export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> = ({ onNavigate }) => {
-  const { user } = useAuth();
+  const t = useTranslations('Analytics');
+  const { user, loading: authLoading } = useAuth();
   const { tier, loading: tierLoading } = useSubscription();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -320,13 +322,10 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
       scoreDistribution,
       averageProcessingTime,
       identityAttributes,
-      categoryBreakdown
-    };
+      categoryBreakdown,
+      t: t // Passing t to calculateMetrics return to use in child components if needed, or better, pass t prop down
+    } as any;
   };
-
-
-
-  // ... calculateMetrics function ...
 
   const fetchAnalytics = async () => {
     if (!user) {
@@ -334,8 +333,9 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
       return;
     }
 
-    // Don't fetch if not eligible (though UI will block it mostly)
+    // Don't fetch if not eligible
     if (tier === 'free' || tier === 'pro') {
+      setLoading(false);
       return;
     }
 
@@ -362,10 +362,14 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
   };
 
   useEffect(() => {
+    if (authLoading || tierLoading) return;
+
     if (user && tier && tier !== 'free' && tier !== 'pro') {
       fetchAnalytics();
+    } else {
+      setLoading(false);
     }
-  }, [user, tier]);
+  }, [user, tier, authLoading, tierLoading]);
 
 
 
@@ -420,11 +424,11 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
     <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-6 bg-paleslate">
       <div className="bg-white p-8 rounded-full shadow-sm"><Activity size={64} className="text-azure/20" /></div>
       <div className="max-w-md space-y-2">
-        <h2 className="text-3xl font-bold text-ink">No Identity Data Yet</h2>
-        <p className="text-ink/60">Start transforming text to generate your Identity Health Report.</p>
+        <h2 className="text-3xl font-bold text-ink">{t('empty.title')}</h2>
+        <p className="text-ink/60">{t('empty.description')}</p>
       </div>
       <Button size="lg" className="bg-azure hover:bg-azure-hover text-white px-8" onClick={() => onNavigate('transform')}>
-        <Zap className="mr-2 h-4 w-4" /> Go to Transformer
+        <Zap className="mr-2 h-4 w-4" /> {t('empty.button')}
       </Button>
     </div>
   );
@@ -452,12 +456,12 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-black text-ink tracking-tight mb-2">Identity Health Report</h1>
-            <p className="text-ink/60 text-lg">Real-time monitoring of your AI voice integrity.</p>
+            <h1 className="text-4xl font-black text-ink tracking-tight mb-2">{t('title')}</h1>
+            <p className="text-ink/60 text-lg">{t('subtitle')}</p>
           </div>
           <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-ink/5 shadow-sm">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-xs font-bold text-ink/40 uppercase tracking-wider">System Online</span>
+            <span className="text-xs font-bold text-ink/40 uppercase tracking-wider">{t('systemOnline')}</span>
           </div>
         </div>
 
@@ -468,24 +472,24 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
             <CardHeader className="pb-0 border-b border-gray-50 bg-gray-50/50 py-4 px-6">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-                  <Fingerprint size={14} /> Identity Alignment Score
+                  <Fingerprint size={14} /> {t('metrics.identityAlignmentScore')}
                 </CardTitle>
               </div>
             </CardHeader>
             <CardContent className="pt-8 pb-8 px-8">
               <div className="flex flex-col md:flex-row items-center justify-around gap-8">
-                <Gauge value={finalMetrics.recentAverageScore} metrics={metrics} />
+                <Gauge value={finalMetrics.recentAverageScore} metrics={{ ...metrics, t } as any} />
 
                 <div className="flex flex-col gap-4 w-full md:w-auto md:min-w-[260px]">
-                  <DriftBadge status={finalMetrics.driftDetected ? 'drifting' : 'stable'} />
+                  <DriftBadge status={finalMetrics.driftDetected ? 'drifting' : 'stable'} t={t} />
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-paleslate p-4 rounded-xl border border-ink/5">
-                      <div className="text-[10px] font-bold text-ink/40 uppercase mb-1">Total Ops</div>
+                      <div className="text-[10px] font-bold text-ink/40 uppercase mb-1">{t('metrics.totalOps')}</div>
                       <div className="text-2xl font-bold text-ink">{finalMetrics.totalTransformations}</div>
                     </div>
                     <div className="bg-paleslate p-4 rounded-xl border border-ink/5">
-                      <div className="text-[10px] font-bold text-ink/40 uppercase mb-1">Latency</div>
+                      <div className="text-[10px] font-bold text-ink/40 uppercase mb-1">{t('metrics.latency')}</div>
                       <div className="text-2xl font-bold text-ink">{(finalMetrics.averageProcessingTime / 1000).toFixed(2)}s</div>
                     </div>
                   </div>
@@ -498,12 +502,12 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
           <Card className="bg-white shadow-sm border-ink/5 flex flex-col ring-1 ring-ink/5">
             <CardHeader className="pb-2 border-b border-gray-50 bg-gray-50/50 py-4 px-6">
               <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-                <Activity size={14} /> Drift Radar
+                <Activity size={14} /> {t('drift.radarTitle')}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-center items-center pt-6 pb-6 px-2 min-h-[320px]">
               <ResponsiveContainer width="100%" height={280}>
-                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={finalMetrics.identityAttributes}>
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={finalMetrics.identityAttributes.map(attr => ({ ...attr, subject: t(`attributes.${attr.subject}`) }))}>
                   <PolarGrid stroke="#E2E8F0" />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748B', fontSize: 10, fontWeight: 700 }} />
                   <PolarRadiusAxis angle={30} domain={[0, 10]} tick={false} axisLine={false} />
@@ -535,7 +539,10 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                 </RadarChart>
               </ResponsiveContainer>
               <p className="text-xs text-center text-ink/40 mt-2 px-6">
-                Gap between <span className="text-azure font-bold">Blue</span> and <span className="text-slate-400 font-bold">Grey</span> represents identity drift.
+                {t.rich('drift.radarDescription', {
+                  azure: (chunks) => <span className="text-azure font-bold">{chunks}</span>,
+                  slate: (chunks) => <span className="text-slate-400 font-bold">{chunks}</span>
+                })}
               </p>
             </CardContent>
           </Card>
@@ -547,7 +554,7 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
           <Card className="lg:col-span-2 bg-white shadow-sm border-ink/5 ring-1 ring-ink/5">
             <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
               <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-                <TrendingUp size={14} /> Identity Velocity
+                <TrendingUp size={14} /> {t('velocity.title')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -595,7 +602,7 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-full flex items-center justify-center text-ink/40 text-sm">
-                    Not enough data to calculate velocity
+                    {t('velocity.notEnoughData')}
                   </div>
                 )}
               </div>
@@ -606,7 +613,7 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
           <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5">
             <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
               <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-                <Activity size={14} className="rotate-90" /> Score Spread
+                <Activity size={14} className="rotate-90" /> {t('spread.title')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -656,16 +663,16 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
           <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5 h-full">
             <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6 flex flex-row items-center justify-between">
               <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-                <Search size={14} /> Signature Cloud
+                <Search size={14} /> {t('signature.title')}
               </CardTitle>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-azure"></div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Signature</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">{t('signature.signature')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-highlight"></div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Intrusion</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">{t('signature.intrusion')}</span>
                 </div>
               </div>
             </CardHeader>
@@ -709,7 +716,7 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
           <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5 h-full">
             <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6">
               <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
-                <AlertTriangle size={14} /> Misalignment Insights
+                <AlertTriangle size={14} /> {t('insights.title')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
@@ -725,8 +732,8 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                       {finalMetrics.categoryBreakdown.toneViolations}
                     </div>
                     <div>
-                      <div className="font-bold text-ink text-lg">Tone Violations</div>
-                      <div className="text-sm text-ink/50">Detected passive voice & generic phrasing</div>
+                      <div className="font-bold text-ink text-lg">{t('insights.toneViolations')}</div>
+                      <div className="text-sm text-ink/50">{t('insights.toneViolationsDesc')}</div>
                     </div>
                   </div>
                   {expandedInsight === 'tone' ? <ChevronUp size={20} className="text-ink/30" /> : <ChevronDown size={20} className="text-ink/30" />}
@@ -743,7 +750,8 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                         <p className="text-ink/80 italic font-serif">"...{m.preview}..."</p>
                       </div>
                     ))}
-                    {finalMetrics.commonMisalignments.length === 0 && <p className="text-sm text-center text-ink/40 py-4">No significant tone violations detected.</p>}
+
+                    {finalMetrics.commonMisalignments.length === 0 && <p className="text-sm text-center text-ink/40 py-4">{t('insights.noToneViolations')}</p>}
                   </div>
                 )}
               </div>
@@ -759,8 +767,8 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                       {finalMetrics.categoryBreakdown.vocabBreaches + 2} {/* +2 for the mocked ones */}
                     </div>
                     <div>
-                      <div className="font-bold text-ink text-lg">Vocabulary Breaches</div>
-                      <div className="text-sm text-ink/50">Use of banned words 'delve', 'synergy'</div>
+                      <div className="font-bold text-ink text-lg">{t('insights.vocabBreaches')}</div>
+                      <div className="text-sm text-ink/50">{t('insights.vocabBreachesDesc', { word1: 'delve', word2: 'synergy' })}</div>
                     </div>
                   </div>
                   {expandedInsight === 'vocab' ? <ChevronUp size={20} className="text-ink/30" /> : <ChevronDown size={20} className="text-ink/30" />}
@@ -769,13 +777,13 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                   <div className="bg-gray-50 p-4 border-t border-ink/5 space-y-3 animate-fade-in">
                     <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-ink/5 shadow-sm">
                       <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">BAN</span>
-                      <span className="text-sm text-ink"><span className="line-through text-ink/40">Using the word</span> <span className="font-bold text-red-500 bg-red-50 px-1 rounded">delve</span> in intro...</span>
+                      <span className="text-sm text-ink"><span className="line-through text-ink/40">{t('insights.usingTheWord')}</span> <span className="font-bold text-red-500 bg-red-50 px-1 rounded">delve</span> {t('insights.inIntro')}</span>
                     </div>
                     <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-ink/5 shadow-sm">
                       <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded">BAN</span>
-                      <span className="text-sm text-ink">...creates a rich <span className="font-bold text-red-500 bg-red-50 px-1 rounded">tapestry</span> of...</span>
+                      <span className="text-sm text-ink">{t('insights.createsRich')} <span className="font-bold text-red-500 bg-red-50 px-1 rounded">tapestry</span> {t('insights.of')}</span>
                     </div>
-                    <div className="text-xs text-center text-ink/40 pt-2">These words dilute your unique brand voice.</div>
+                    <div className="text-xs text-center text-ink/40 pt-2">{t('insights.bannedWordMessage')}</div>
                   </div>
                 )}
               </div>

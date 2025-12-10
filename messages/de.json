@@ -229,5 +229,349 @@
             "power": "Resonate Power",
             "notLoggedIn": "Nicht angemeldet"
         }
+    },
+    "Dashboard": {
+        "error": {
+            "title": "Fehler",
+            "retry": "Wiederholen",
+            "failedToLoadIdentity": "Identitätsprofil konnte nicht geladen werden",
+            "failedToLoadHistory": "Transformationsverlauf konnte nicht geladen werden",
+            "failedToLoadData": "Dashboard-Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+            "notLoggedIn": "Sie müssen eingeloggt sein, um Text zu transformieren.",
+            "transformationFailed": "Transformation fehlgeschlagen: {error}",
+            "unknownError": "Unbekannter Fehler"
+        },
+        "header": {
+            "greeting": "Guten Morgen, {name}.",
+            "fallbackName": "Benutzer",
+            "subtitle": "Was schreiben wir heute um?"
+        },
+        "identityHud": {
+            "active": "Aktiv: {tone}",
+            "activeFallback": "Aktiv: Allgemein",
+            "activeIdentity": "Aktive Identität",
+            "live": "LIVE",
+            "toneAndStyle": "Ton & Stil",
+            "coreValues": "Kernwerte",
+            "editProfile": "Profil bearbeiten →",
+            "createIdentity": "Identität erstellen"
+        },
+        "workbench": {
+            "resonatedOutput": "Resonierte Ausgabe",
+            "newRewrite": "Neue Umschreibung",
+            "copied": "Kopiert",
+            "copyText": "Text kopieren",
+            "alignedWith": "Abgestimmt auf Ihr {tone} Profil",
+            "placeholder": "Fügen Sie hier Ihren rohen KI-Entwurf ein...",
+            "resonating": "Resoniere...",
+            "resonateText": "Text resonieren"
+        },
+        "recentActivity": {
+            "title": "Kürzliche Umschreibungen",
+            "viewAll": "Gesamten Verlauf anzeigen →",
+            "clickToCopy": "Zum Kopieren klicken",
+            "empty": "Keine kürzlichen Transformationen gefunden.",
+            "time": {
+                "justNow": "Gerade eben",
+                "minutesAgo": "vor {minutes}m",
+                "hoursAgo": "vor {hours}h",
+                "daysAgo": "vor {days}d"
+            }
+        }
+    },
+    "Transform": {
+        "upgradeToast": "Upgrade auf Pro, um Gemini Flash 2.5 zu nutzen",
+        "authError": "Nicht authentifiziert",
+        "transformationFailed": "Transformation fehlgeschlagen: {error}",
+        "unknownError": "Unbekannter Fehler",
+        "title": "Kommandozentrale",
+        "clean": "Reinigen",
+        "diffView": "Diff-Ansicht",
+        "refine": "Verfeinern",
+        "parameters": "Parameter",
+        "insights": "Erkenntnisse",
+        "refinePanel": {
+            "contextualRefinements": "Kontextuelle Verfeinerungen",
+            "placeholder": "z.B. 'Mach es schlagkräftig für Slack', 'Dies ist eine formelle E-Mail'...",
+            "quickChips": "Schnell-Chips",
+            "chips": {
+                "Brief": "Kurz",
+                "Professional": "Professionell",
+                "Empathetic": "Empathisch",
+                "Slack": "Slack",
+                "Email": "E-Mail",
+                "Linkedin": "LinkedIn"
+            }
+        },
+        "parametersPanel": {
+            "temperature": "Temperatur"
+        },
+        "editor": {
+            "inputPlaceholder": "Fügen Sie hier Ihren rohen Entwurf ein...",
+            "clear": "Löschen",
+            "readyToResonate": "Bereit zum Resonieren"
+        },
+        "output": {
+            "alignmentScore": "Ausrichtungswert",
+            "copy": "Kopieren"
+        },
+        "insightsPanel": {
+            "analysis": "Analyse",
+            "toneMatch": "Ton-Übereinstimmung",
+            "whyThisGrade": "Warum diese Note?",
+            "improvement": "Verbesserung",
+            "generateToSee": "Generieren Sie eine Transformation, um eine detaillierte Analyse zu sehen.",
+            "transformLogic": "Transformationslogik"
+        }
+    },
+    "History": {
+        "title": "Transformations-Feed",
+        "description": "Überprüfen Sie Ihre vergangenen Resonanzen und Identitätsversionen.",
+        "tabs": {
+            "feed": "Feed",
+            "versions": "Versionen"
+        },
+        "back": "Zurück",
+        "search": {
+            "placeholder": "Innerhalb von Transformationen suchen...",
+            "clear": "Suche löschen"
+        },
+        "sort": {
+            "date": "Nach Datum sortieren",
+            "score": "Nach Bewertung sortieren"
+        },
+        "error": {
+            "title": "Fehler beim Laden des Feeds",
+            "loginVersions": "Sie müssen eingeloggt sein, um Versionen anzuzeigen.",
+            "loginRestore": "Sie müssen eingeloggt sein, um Versionen wiederherzustellen.",
+            "restoreFailed": "Version konnte nicht wiederhergestellt werden",
+            "retry": "Wiederholen"
+        },
+        "loading": {
+            "feed": "Lade Transformations-Feed...",
+            "versions": "Lade Versionen..."
+        },
+        "empty": {
+            "transformations": "Keine Transformationen gefunden",
+            "transformationsSubtitle": "Gehen Sie zum Dashboard, um Ihre erste Resonanz zu erstellen.",
+            "transformationsSearch": "Versuchen Sie, Ihre Suchbegriffe anzupassen.",
+            "versions": "Noch keine Identitätsversionen.",
+            "versionsSubtitle": "Identitätsversionen erscheinen hier, sobald sie erstellt wurden."
+        },
+        "card": {
+            "alignment": "Ausrichtung",
+            "from": "Von:",
+            "copy": "Kopieren",
+            "originalInput": "Ursprüngliche Eingabe",
+            "resonatedOutput": "Resonierte Ausgabe",
+            "close": "Schließen",
+            "copyResult": "Ergebnis kopieren"
+        },
+        "versionCard": {
+            "version": "Version",
+            "created": "Erstellt",
+            "edit": "Diese Version bearbeiten",
+            "rollback": "Zurücksetzen auf V{version}",
+            "changes": "Änderungen",
+            "none": "Keine",
+            "noChanges": "Keine Konfigurationsänderungen erkannt.",
+            "initial": "Initiale Version erstellt.",
+            "viewConfig": "Vollständige Konfiguration anzeigen",
+            "hideConfig": "Vollständige Konfiguration ausblenden",
+            "jsonSnapshot": "Vollständiger JSON-Schnappschuss",
+            "live": "Live"
+        },
+        "time": {
+            "justNow": "Gerade eben",
+            "minutesAgo": "vor {minutes} Minuten",
+            "hoursAgo": "vor {hours} Stunden",
+            "today": "Heute",
+            "yesterday": "Gestern",
+            "daysAgo": "vor {days} Tagen"
+        }
+    },
+    "Analytics": {
+        "title": "Identitäts-Gesundheitsbericht",
+        "subtitle": "Echtzeit-Überwachung Ihrer KI-Stimm-Integrität.",
+        "systemOnline": "System Online",
+        "alignment": "Ausrichtung",
+        "drift": {
+            "title": "Abweichungs-Monitor",
+            "stable": "Stabil",
+            "detected": "Abweichung Erkannt",
+            "radarTitle": "Abweichungs-Radar",
+            "radarDescription": "Die Lücke zwischen <azure>Blau</azure> und <slate>Grau</slate> stellt die Identitätsabweichung dar."
+        },
+        "metrics": {
+            "identityAlignmentScore": "Identitäts-Ausrichtungswert",
+            "totalOps": "Gesamt-Ops",
+            "latency": "Latenz"
+        },
+        "velocity": {
+            "title": "Identitäts-Geschwindigkeit",
+            "notEnoughData": "Nicht genügend Daten zur Berechnung der Geschwindigkeit"
+        },
+        "spread": {
+            "title": "Punkteverteilung"
+        },
+        "signature": {
+            "title": "Signatur-Cloud",
+            "signature": "Signatur",
+            "intrusion": "Intrusion"
+        },
+        "insights": {
+            "title": "Fehlausrichtungs-Erkenntnisse",
+            "toneViolations": "Ton-Verstöße",
+            "toneViolationsDesc": "Passives Sprachverhalten & generische Formulierungen erkannt",
+            "vocabBreaches": "Vokabel-Verstöße",
+            "vocabBreachesDesc": "Verwendung verbotener Wörter '{word1}', '{word2}'",
+            "noToneViolations": "Keine signifikanten Ton-Verstöße erkannt.",
+            "bannedWordMessage": "Diese Wörter verwässern Ihre einzigartige Markenstimme.",
+            "usingTheWord": "Verwendung des Wortes",
+            "inIntro": "in Einleitung...",
+            "createsRich": "...erzeugt ein reiches",
+            "of": "von..."
+        },
+        "empty": {
+            "title": "Noch keine Identitätsdaten",
+            "description": "Beginnen Sie mit der Texttransformation, um Ihren Bericht zu erstellen.",
+            "button": "Zum Transformer"
+        },
+        "attributes": {
+            "Tone": "Ton",
+            "Formality": "Formalität",
+            "Directness": "Direktheit",
+            "Humor": "Humor",
+            "Empathy": "Empathie"
+        }
+    },
+    "Memory": {
+        "title": "Kontext-Studio",
+        "subtitle": "Bauen Sie das Gehirn für Ihren digitalen Zwilling.",
+        "brainStrength": "Gehirnstärke",
+        "points": "Punkte",
+        "scanning": "Scanne neuronales Netzwerk...",
+        "emptyState": {
+            "title": "Wissen leer",
+            "description": "Ihr digitaler Zwilling hat noch nichts gelernt.\nVerwenden Sie die Vorlagen auf der linken Seite, um sein Gehirn aufzubauen."
+        },
+        "templates": {
+            "title": "Kontext-Vorlagen",
+            "role": {
+                "label": "Meine Rolle",
+                "content": "Rolle: [Titel]\nHauptverantwortlichkeiten:\n- [Verantwortlichkeit 1]\n- [Verantwortlichkeit 2]"
+            },
+            "project": {
+                "label": "Aktuelles Projekt",
+                "content": "Projektname: [Name]\nZiel: [Ziel]\nFrist: [Datum]\nStatus: [Aktiv/Planung]"
+            },
+            "team": {
+                "label": "Teammitglieder",
+                "content": "Team-Kontext:\n- [Name] ist [Rolle]\n- [Name] kümmert sich um [Bereich]"
+            },
+            "prefs": {
+                "label": "Präferenzen",
+                "content": "Präferenz: [Kommunikation/Arbeitsstil]\nEinschränkung: [z.B. Keine Meetings am Freitag]\nGrund: [Kontext]"
+            }
+        },
+        "input": {
+            "title": "Neue Erinnerung",
+            "placeholder": "Geben Sie einen Fakt, eine Regel oder eine Präferenz ein...",
+            "submit": "Zum Gedächtnis hinzufügen",
+            "clearTemplate": "Vorlage löschen",
+            "proTip": {
+                "title": "Profi-Tipp",
+                "content": "Seien Sie spezifisch. Statt \"Ich mag kurze E-Mails\", versuchen Sie \"Einschränkung: Begrenzen Sie E-Mail-Antworten auf maximal 3 Sätze.\""
+            }
+        },
+        "categories": {
+            "Identity": "Kernidentität",
+            "Constraints": "Aktive Einschränkungen",
+            "Projects": "Projektdaten",
+            "General": "Allgemeiner Kontext"
+        },
+        "actions": {
+            "deactivate": "Erinnerung deaktivieren",
+            "activate": "Erinnerung aktivieren"
+        },
+        "errors": {
+            "loginRequiredSave": "Sie müssen eingeloggt sein, um Erinnerungen zu speichern.",
+            "saveFailed": "Speichern der Erinnerung fehlgeschlagen",
+            "loginRequiredDelete": "Sie müssen eingeloggt sein, um Erinnerungen zu löschen.",
+            "deleteFailed": "Löschen der Erinnerung fehlgeschlagen",
+            "updateFailed": "Statusaktualisierung fehlgeschlagen"
+        },
+        "lockedData": {
+            "role": "Rolle: Senior Software-Architekt",
+            "tone": "Ton: Professionell, Direkt",
+            "constraint": "Einschränkung: Keine Meetings am Morgen"
+        }
+    },
+    "Plans": {
+        "title": "Pläne",
+        "subtitle": "Wählen Sie den perfekten Plan für Ihre Identitätsbedürfnisse."
+    },
+    "Pricing": {
+        "title": "Wählen Sie einen Plan, der zu Ihnen passt",
+        "subtitle": "Skalieren Sie Ihre Möglichkeiten zur Identitätsbewahrung, während Sie wachsen. Wechseln Sie Pläne oder kündigen Sie jederzeit.",
+        "popular": "Beliebt",
+        "currentPlan": "Aktueller Plan",
+        "downgrade": "Herabstufen",
+        "switchPlan": "Plan wechseln",
+        "startFreeTrial": "Kostenlose Testversion starten",
+        "getStarted": "Loslegen",
+        "compareFeatures": "Funktionen vergleichen",
+        "featureHighlights": "Funktions-Highlights",
+        "yes": "Ja",
+        "no": "Nein",
+        "tiers": {
+            "free": {
+                "name": "Free",
+                "description": "Der Einstieg",
+                "features": {
+                    "transformations": "50 Transformationen",
+                    "personas": "1 Persona",
+                    "speed": "Standardgeschwindigkeit (GPT-4o-mini)"
+                }
+            },
+            "pro": {
+                "name": "Pro",
+                "description": "Täglicher Begleiter",
+                "features": {
+                    "transformations": "2.000 Transformationen",
+                    "personas": "5 Personas",
+                    "speed": "Hohe Geschwindigkeit (Gemini 2.5 Flash)",
+                    "memory": "Gedächtnis"
+                }
+            },
+            "power": {
+                "name": "Power",
+                "description": "Der Skalierer",
+                "features": {
+                    "transformations": "Unbegrenzte Transformationen",
+                    "personas": "Unbegrenzte Personas",
+                    "analytics": "Analytik",
+                    "access": "Zugang zu Gemini 2.5 Flash"
+                }
+            }
+        },
+        "comparison": {
+            "features": {
+                "transformations": "Transformationen",
+                "personas": "Personas",
+                "aiModel": "KI-Modell",
+                "longTermMemory": "Langzeitgedächtnis",
+                "analyticsDashboard": "Analytik-Dashboard",
+                "prioritySupport": "Prioritäts-Support",
+                "apiAccess": "API-Zugriff"
+            },
+            "values": {
+                "50mo": "50/Monat",
+                "2000mo": "2.000/Monat",
+                "unlimited": "Unbegrenzt",
+                "gpt4omini": "GPT-4o-mini",
+                "geminiFlash": "Gemini 2.5 Flash"
+            }
+        }
     }
 }

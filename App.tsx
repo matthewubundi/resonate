@@ -5,6 +5,7 @@ import { ResonateLoader } from './components/ResonateLoader';
 import { PageView } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useOnboarding } from './hooks/useOnboarding';
+import { useSettings } from './hooks/useSettings';
 
 // Lazy load views for better performance
 const Landing = React.lazy(() => import('./views/Landing').then(module => ({ default: module.Landing })));
@@ -105,9 +106,11 @@ const AppContent: React.FC = () => {
     // Track email for verification step
     const [verificationEmail, setVerificationEmail] = useState<string | undefined>(undefined);
 
+    const { settings, loading: settingsLoading } = useSettings();
+
     // Watch for user authentication after login
     useEffect(() => {
-        if (pendingLogin && user && !onboardingLoading) {
+        if (pendingLogin && user && !onboardingLoading && !settingsLoading) {
             setPendingLogin(false);
 
             // Navigate immediately without artificial delay
@@ -115,15 +118,16 @@ const AppContent: React.FC = () => {
                 router.push('/onboarding');
                 setView('onboarding');
             } else {
-                router.push('/dashboard');
-                setView('dashboard');
+                const targetPage = settings.defaultLandingPage as PageView;
+                router.push(`/${targetPage}`);
+                setView(targetPage);
             }
         }
-    }, [user, pendingLogin, onboardingCompleted, onboardingLoading, router]);
+    }, [user, pendingLogin, onboardingCompleted, onboardingLoading, settingsLoading, settings, router]);
 
     // Watch for user authentication after signup
     useEffect(() => {
-        if (pendingSignup && user && !onboardingLoading) {
+        if (pendingSignup && user && !onboardingLoading && !settingsLoading) {
             // User is now authenticated, check onboarding status
             setPendingSignup(false);
 
@@ -133,12 +137,13 @@ const AppContent: React.FC = () => {
                 router.push('/onboarding');
                 setView('onboarding');
             } else {
-                // User has completed onboarding, go to dashboard
-                router.push('/dashboard');
-                setView('dashboard');
+                // User has completed onboarding, go to target page
+                const targetPage = settings.defaultLandingPage as PageView;
+                router.push(`/${targetPage}`);
+                setView(targetPage);
             }
         }
-    }, [user, pendingSignup, onboardingCompleted, onboardingLoading, router]);
+    }, [user, pendingSignup, onboardingCompleted, onboardingLoading, settingsLoading, settings, router]);
 
     // Handle login
     const handleLogin = () => {

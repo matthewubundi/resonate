@@ -6,7 +6,7 @@ import { GeneratedIdentity } from '../types';
 import { Copy, Check, AlertCircle, Save, Undo, Code, Layout as LayoutIcon, Sliders, Type, Shield, List, Plus, X, Search, ToggleLeft, ToggleRight, Sparkles, Download } from 'lucide-react';
 
 export const IdentityEditor = () => {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [identityId, setIdentityId] = useState<string | null>(null);
     const [identityName, setIdentityName] = useState<string>('');
     const [originalName, setOriginalName] = useState<string>('');
@@ -35,6 +35,8 @@ export const IdentityEditor = () => {
     // Fetch identity data
     useEffect(() => {
         const fetchIdentity = async () => {
+            if (authLoading) return;
+
             if (!user) {
                 setLoading(false);
                 return;
@@ -85,7 +87,7 @@ export const IdentityEditor = () => {
         };
 
         fetchIdentity();
-    }, [user]);
+    }, [user, authLoading]);
 
     const handleSave = async () => {
         if (!user || !identityId || !editableData) {
@@ -460,8 +462,8 @@ export const IdentityEditor = () => {
                                                                     updateField('tone', newTones.join(', '));
                                                                 }}
                                                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${isSelected
-                                                                        ? 'bg-azure text-white border-azure shadow-sm'
-                                                                        : 'bg-white text-ink/70 border-ink/10 hover:border-azure/30 hover:text-azure hover:bg-azure/5'
+                                                                    ? 'bg-azure text-white border-azure shadow-sm'
+                                                                    : 'bg-white text-ink/70 border-ink/10 hover:border-azure/30 hover:text-azure hover:bg-azure/5'
                                                                     }`}
                                                             >
                                                                 {tag}
@@ -483,8 +485,8 @@ export const IdentityEditor = () => {
                                                                 key={option}
                                                                 onClick={() => updateField('formality', option)}
                                                                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${editableData.formality === option
-                                                                        ? 'bg-white text-azure shadow-sm'
-                                                                        : 'text-ink/60 hover:text-ink hover:bg-ink/5'
+                                                                    ? 'bg-white text-azure shadow-sm'
+                                                                    : 'text-ink/60 hover:text-ink hover:bg-ink/5'
                                                                     }`}
                                                             >
                                                                 {option}
@@ -511,8 +513,8 @@ export const IdentityEditor = () => {
                                                                 key={option}
                                                                 onClick={() => updateField('directness', option)}
                                                                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${editableData.directness === option
-                                                                        ? 'bg-white text-azure shadow-sm'
-                                                                        : 'text-ink/60 hover:text-ink hover:bg-ink/5'
+                                                                    ? 'bg-white text-azure shadow-sm'
+                                                                    : 'text-ink/60 hover:text-ink hover:bg-ink/5'
                                                                     }`}
                                                             >
                                                                 {option}

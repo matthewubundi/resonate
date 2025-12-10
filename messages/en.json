@@ -229,5 +229,349 @@
             "power": "Resonate Power",
             "notLoggedIn": "Not logged in"
         }
+    },
+    "Dashboard": {
+        "error": {
+            "title": "Error",
+            "retry": "Retry",
+            "failedToLoadIdentity": "Failed to load identity profile",
+            "failedToLoadHistory": "Failed to load transformation history",
+            "failedToLoadData": "Failed to load dashboard data. Please try again.",
+            "notLoggedIn": "You must be logged in to transform text.",
+            "transformationFailed": "Transformation failed: {error}",
+            "unknownError": "Unknown error"
+        },
+        "header": {
+            "greeting": "Good morning, {name}.",
+            "fallbackName": "User",
+            "subtitle": "What are we rewriting today?"
+        },
+        "identityHud": {
+            "active": "Active: {tone}",
+            "activeFallback": "Active: General",
+            "activeIdentity": "Active Identity",
+            "live": "LIVE",
+            "toneAndStyle": "Tone & Style",
+            "coreValues": "Core Values",
+            "editProfile": "Edit Profile →",
+            "createIdentity": "Create Identity"
+        },
+        "workbench": {
+            "resonatedOutput": "Resonated Output",
+            "newRewrite": "New Rewrite",
+            "copied": "Copied",
+            "copyText": "Copy Text",
+            "alignedWith": "Aligned with your {tone} profile",
+            "placeholder": "Paste your raw AI draft here...",
+            "resonating": "Resonating...",
+            "resonateText": "Resonate Text"
+        },
+        "recentActivity": {
+            "title": "Recent Rewrites",
+            "viewAll": "View All History →",
+            "clickToCopy": "Click to Copy",
+            "empty": "No recent transformations found.",
+            "time": {
+                "justNow": "Just now",
+                "minutesAgo": "{minutes}m ago",
+                "hoursAgo": "{hours}h ago",
+                "daysAgo": "{days}d ago"
+            }
+        }
+    },
+    "Transform": {
+        "upgradeToast": "Upgrade to Pro to use Gemini Flash 2.5",
+        "authError": "Not authenticated",
+        "transformationFailed": "Transformation failed: {error}",
+        "unknownError": "Unknown error",
+        "title": "Command Center",
+        "clean": "Clean",
+        "diffView": "Diff View",
+        "refine": "Refine",
+        "parameters": "Parameters",
+        "insights": "Insights",
+        "refinePanel": {
+            "contextualRefinements": "Contextual Refinements",
+            "placeholder": "e.g. 'Make it punchy for Slack', 'This is a formal email', 'Focus on empathy'...",
+            "quickChips": "Quick Chips",
+            "chips": {
+                "Brief": "Brief",
+                "Professional": "Professional",
+                "Empathetic": "Empathetic",
+                "Slack": "Slack",
+                "Email": "Email",
+                "Linkedin": "Linkedin"
+            }
+        },
+        "parametersPanel": {
+            "temperature": "Temperature"
+        },
+        "editor": {
+            "inputPlaceholder": "Paste your raw draft here...",
+            "clear": "Clear",
+            "readyToResonate": "Ready to Resonate"
+        },
+        "output": {
+            "alignmentScore": "Alignment Score",
+            "copy": "Copy"
+        },
+        "insightsPanel": {
+            "analysis": "Analysis",
+            "toneMatch": "Tone Match",
+            "whyThisGrade": "Why this grade?",
+            "improvement": "Improvement",
+            "generateToSee": "Generate a transformation to see detailed analysis.",
+            "transformLogic": "Transform Logic"
+        }
+    },
+    "History": {
+        "title": "Transformation Feed",
+        "description": "Review your past resonances and identity versions.",
+        "tabs": {
+            "feed": "Feed",
+            "versions": "Versions"
+        },
+        "back": "Back",
+        "search": {
+            "placeholder": "Search inside transformations...",
+            "clear": "Clear Search"
+        },
+        "sort": {
+            "date": "Sort by Date",
+            "score": "Sort by Score"
+        },
+        "error": {
+            "title": "Error Loading Feed",
+            "loginVersions": "You must be logged in to view versions.",
+            "loginRestore": "You must be logged in to restore versions.",
+            "restoreFailed": "Failed to restore version",
+            "retry": "Retry"
+        },
+        "loading": {
+            "feed": "Loading transformation feed...",
+            "versions": "Loading versions..."
+        },
+        "empty": {
+            "transformations": "No transformations found",
+            "transformationsSubtitle": "Go to the Dashboard to create your first resonance.",
+            "transformationsSearch": "Try adjusting your search terms.",
+            "versions": "No identity versions yet.",
+            "versionsSubtitle": "Identity versions will appear here once they are created."
+        },
+        "card": {
+            "alignment": "Alignment",
+            "from": "From:",
+            "copy": "Copy",
+            "originalInput": "Original Input",
+            "resonatedOutput": "Resonated Output",
+            "close": "Close",
+            "copyResult": "Copy Result"
+        },
+        "versionCard": {
+            "version": "Version",
+            "created": "Created",
+            "edit": "Edit This Version",
+            "rollback": "Rollback to V{version}",
+            "changes": "Changes",
+            "none": "None",
+            "noChanges": "No configuration changes detected.",
+            "initial": "Initial version created.",
+            "viewConfig": "View Full Configuration",
+            "hideConfig": "Hide Full Configuration",
+            "jsonSnapshot": "Full JSON Snapshot",
+            "live": "Live"
+        },
+        "time": {
+            "justNow": "Just now",
+            "minutesAgo": "{minutes} minutes ago",
+            "hoursAgo": "{hours} hours ago",
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "daysAgo": "{days} days ago"
+        }
+    },
+    "Analytics": {
+        "title": "Identity Health Report",
+        "subtitle": "Real-time monitoring of your AI voice integrity.",
+        "systemOnline": "System Online",
+        "alignment": "Alignment",
+        "drift": {
+            "title": "Drift Monitor",
+            "stable": "Stable",
+            "detected": "Drift Detected",
+            "radarTitle": "Drift Radar",
+            "radarDescription": "Gap between <azure>Blue</azure> and <slate>Grey</slate> represents identity drift."
+        },
+        "metrics": {
+            "identityAlignmentScore": "Identity Alignment Score",
+            "totalOps": "Total Ops",
+            "latency": "Latency"
+        },
+        "velocity": {
+            "title": "Identity Velocity",
+            "notEnoughData": "Not enough data to calculate velocity"
+        },
+        "spread": {
+            "title": "Score Spread"
+        },
+        "signature": {
+            "title": "Signature Cloud",
+            "signature": "Signature",
+            "intrusion": "Intrusion"
+        },
+        "insights": {
+            "title": "Misalignment Insights",
+            "toneViolations": "Tone Violations",
+            "toneViolationsDesc": "Detected passive voice & generic phrasing",
+            "vocabBreaches": "Vocabulary Breaches",
+            "vocabBreachesDesc": "Use of banned words '{word1}', '{word2}'",
+            "noToneViolations": "No significant tone violations detected.",
+            "bannedWordMessage": "These words dilute your unique brand voice.",
+            "usingTheWord": "Using the word",
+            "inIntro": "in intro...",
+            "createsRich": "...creates a rich",
+            "of": "of..."
+        },
+        "empty": {
+            "title": "No Identity Data Yet",
+            "description": "Start transforming text to generate your Identity Health Report.",
+            "button": "Go to Transformer"
+        },
+        "attributes": {
+            "Tone": "Tone",
+            "Formality": "Formality",
+            "Directness": "Directness",
+            "Humor": "Humor",
+            "Empathy": "Empathy"
+        }
+    },
+    "Memory": {
+        "title": "Context Studio",
+        "subtitle": "Build the brain for your digital twin.",
+        "brainStrength": "Brain Strength",
+        "points": "Points",
+        "scanning": "Scanning neural network...",
+        "emptyState": {
+            "title": "Knowledge Empty",
+            "description": "Your digital twin hasn't learned anything yet.\nUse the templates on the left to start building its brain."
+        },
+        "templates": {
+            "title": "Context Templates",
+            "role": {
+                "label": "My Role",
+                "content": "Role: [Title]\nKey Responsibilities:\n- [Responsibility 1]\n- [Responsibility 2]"
+            },
+            "project": {
+                "label": "Current Project",
+                "content": "Project Name: [Name]\nGoal: [Goal]\nDeadline: [Date]\nStatus: [Active/Planning]"
+            },
+            "team": {
+                "label": "Team Members",
+                "content": "Team Context:\n- [Name] is [Role]\n- [Name] handles [Area]"
+            },
+            "prefs": {
+                "label": "Preferences",
+                "content": "Preference: [Communication/Work Style]\nConstraint: [e.g., No meetings on Fridays]\nReason: [Context]"
+            }
+        },
+        "input": {
+            "title": "New Memory",
+            "placeholder": "Enter a fact, rule, or preference...",
+            "submit": "Add to Memory",
+            "clearTemplate": "Clear template",
+            "proTip": {
+                "title": "Pro Tip",
+                "content": "Be specific. Instead of \"I like short emails\", try \"Constraint: Limit email responses to 3 sentences maximum.\""
+            }
+        },
+        "categories": {
+            "Identity": "Core Identity",
+            "Constraints": "Active Constraints",
+            "Projects": "Project Data",
+            "General": "General Context"
+        },
+        "actions": {
+            "deactivate": "Deactivate memory",
+            "activate": "Activate memory"
+        },
+        "errors": {
+            "loginRequiredSave": "You must be logged in to save memories.",
+            "saveFailed": "Failed to save memory",
+            "loginRequiredDelete": "You must be logged in to delete memories.",
+            "deleteFailed": "Failed to delete memory",
+            "updateFailed": "Failed to update status"
+        },
+        "lockedData": {
+            "role": "Role: Senior Software Architect",
+            "tone": "Tone: Professional, Direct",
+            "constraint": "Constraint: No morning meetings"
+        }
+    },
+    "Plans": {
+        "title": "Plans",
+        "subtitle": "Choose the perfect plan for your identity needs."
+    },
+    "Pricing": {
+        "title": "Choose a plan that’s right for you",
+        "subtitle": "Scale your identity preservation capabilities as you grow. Switch plans or cancel any time.",
+        "popular": "Popular",
+        "currentPlan": "Current Plan",
+        "downgrade": "Downgrade",
+        "switchPlan": "Switch Plan",
+        "startFreeTrial": "Start free trial",
+        "getStarted": "Get started",
+        "compareFeatures": "Compare features",
+        "featureHighlights": "Feature Highlights",
+        "yes": "Yes",
+        "no": "No",
+        "tiers": {
+            "free": {
+                "name": "Free",
+                "description": "The Hook",
+                "features": {
+                    "transformations": "50 transformations",
+                    "personas": "1 persona",
+                    "speed": "Standard speed (GPT-4o-mini)"
+                }
+            },
+            "pro": {
+                "name": "Pro",
+                "description": "Daily Driver",
+                "features": {
+                    "transformations": "2,000 transformations",
+                    "personas": "5 personas",
+                    "speed": "High speed (Gemini 2.5 Flash)",
+                    "memory": "Memory"
+                }
+            },
+            "power": {
+                "name": "Power",
+                "description": "The Scaler",
+                "features": {
+                    "transformations": "Unlimited transformations",
+                    "personas": "Unlimited personas",
+                    "analytics": "Analytics",
+                    "access": "Gemini 2.5 Flash Access"
+                }
+            }
+        },
+        "comparison": {
+            "features": {
+                "transformations": "Transformations",
+                "personas": "Personas",
+                "aiModel": "AI Model",
+                "longTermMemory": "Long-term Memory",
+                "analyticsDashboard": "Analytics Dashboard",
+                "prioritySupport": "Priority Support",
+                "apiAccess": "API Access"
+            },
+            "values": {
+                "50mo": "50/mo",
+                "2000mo": "2,000/mo",
+                "unlimited": "Unlimited",
+                "gpt4omini": "GPT-4o-mini",
+                "geminiFlash": "Gemini 2.5 Flash"
+            }
+        }
     }
 }

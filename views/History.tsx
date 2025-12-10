@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '../components/Components';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { PageView } from '../types';
+import { useSettings } from '../hooks/useSettings';
 import { AlertCircle, Loader2, ArrowLeft, ArrowRight, RotateCcw, ChevronDown, ChevronUp, Edit, GitCommit } from 'lucide-react';
 
 interface TransformationRow {
@@ -25,7 +27,9 @@ interface IdentityVersion {
 const PAGE_SIZE = 10;
 
 export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = ({ onNavigate }) => {
+  const t = useTranslations('History');
   const { user } = useAuth();
+  const { settings, loading: settingsLoading } = useSettings();
   const [activeTab, setActiveTab] = useState<'transformations' | 'versions'>('transformations');
   const [rows, setRows] = useState<TransformationRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -46,7 +50,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
   const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null);
 
   const fetchRows = async () => {
-    if (!user) return;
+    if (!user || settingsLoading) return;
     setLoading(true);
     setError(null);
 
@@ -58,6 +62,20 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
         .from('transformations')
         .select('id, input_text, final_output, alignment_score, model_used, created_at', { count: 'exact' })
         .eq('user_id', user.id);
+
+      // Apply Retention Filter
+      if (settings?.historyRetention && settings.historyRetention !== 'forever') {
+        if (settings.historyRetention === 'none') {
+          setRows([]);
+          setTotal(0);
+          setLoading(false);
+          return;
+        }
+        const days = settings.historyRetention === '30_days' ? 30 : 7;
+        const thresholdDate = new Date();
+        thresholdDate.setDate(thresholdDate.getDate() - days);
+        query = query.gte('created_at', thresholdDate.toISOString());
+      }
 
       // Search Logic
       if (searchQuery) {
@@ -79,7 +97,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
       setTotal(count || 0);
     } catch (err: any) {
       console.error('Error fetching history:', err);
-      setError(err.message || 'Failed to load history');
+      setError(err.message || t('error.title'));
     } finally {
       setLoading(false);
     }
@@ -94,13 +112,13 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [user, searchQuery, sortOption]);
+  }, [user, searchQuery, sortOption, settingsLoading, settings.historyRetention]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !settingsLoading) {
       fetchRows();
     }
-  }, [page]);
+  }, [page, settingsLoading, settings.historyRetention]);
 
   const fetchVersions = async () => {
     if (!user) return;
@@ -110,7 +128,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setVersionsError('You must be logged in to view versions.');
+        setVersionsError(t('error.loginVersions'));
         setVersionsLoading(false);
         return;
       }
@@ -124,14 +142,14 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to fetch versions');
+        throw new Error(errorData.error || t('error.title'));
       }
 
       const data = await res.json();
       setVersions(data.versions || []);
     } catch (err: any) {
       console.error('Error fetching versions:', err);
-      setVersionsError(err.message || 'Failed to load versions');
+      setVersionsError(err.message || t('error.title'));
     } finally {
       setVersionsLoading(false);
     }
@@ -144,7 +162,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setVersionsError('You must be logged in to restore versions.');
+        setVersionsError(t('error.loginRestore'));
         setRestoring(null);
         return;
       }
@@ -160,14 +178,14 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to restore version');
+        throw new Error(errorData.error || t('error.restoreFailed'));
       }
 
       // Refresh versions after rollback
       await fetchVersions();
     } catch (err: any) {
       console.error('Error restoring version:', err);
-      setVersionsError(err.message || 'Failed to restore version');
+      setVersionsError(err.message || t('error.restoreFailed'));
     } finally {
       setRestoring(null);
     }
@@ -189,12 +207,12 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffMinutes < 1) return 'Just now';
-    if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffMinutes < 1) return t('time.justNow');
+    if (diffMinutes < 60) return t('time.minutesAgo', { minutes: diffMinutes });
+    if (diffHours < 24) return t('time.hoursAgo', { hours: diffHours });
+    if (diffDays === 0) return t('time.today');
+    if (diffDays === 1) return t('time.yesterday');
+    if (diffDays < 7) return t('time.daysAgo', { days: diffDays });
     return d.toLocaleDateString();
   };
 
@@ -232,7 +250,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
 
   // Helper to format value for display
   const formatValue = (val: any) => {
-    if (val === undefined) return 'None';
+    if (val === undefined) return t('versionCard.none');
     if (Array.isArray(val)) return val.join(', ');
     if (typeof val === 'object') return JSON.stringify(val);
     return String(val);
@@ -245,9 +263,9 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-ink">Transformation Feed</h1>
+            <h1 className="text-3xl font-bold text-ink">{t('title')}</h1>
             <p className="text-ink/60 mt-1">
-              Review your past resonances and identity versions.
+              {t('description')}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -259,7 +277,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                   : 'text-ink/60 hover:text-ink hover:bg-slate-50'
                   }`}
               >
-                Feed
+                {t('tabs.feed')}
               </button>
               <button
                 onClick={() => setActiveTab('versions')}
@@ -268,12 +286,12 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                   : 'text-ink/60 hover:text-ink hover:bg-slate-50'
                   }`}
               >
-                Versions
+                {t('tabs.versions')}
               </button>
             </div>
             <Button variant="ghost" className="bg-white border border-ink/5 shadow-sm text-ink hover:bg-slate-50" onClick={() => onNavigate('dashboard')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              {t('back')}
             </Button>
           </div>
         </div>
@@ -292,7 +310,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                 </div>
                 <input
                   type="text"
-                  placeholder="Search inside transformations..."
+                  placeholder={t('search.placeholder')}
                   className="block w-full pl-10 pr-3 py-2 border border-ink/10 rounded-lg leading-5 bg-paleslate/30 placeholder-ink/30 focus:outline-none focus:bg-white focus:ring-1 focus:ring-azure focus:border-azure transition-colors sm:text-sm text-ink"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -304,8 +322,8 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                   onChange={(e) => setSortOption(e.target.value as 'date' | 'score')}
                   className="block w-full md:w-auto pl-3 pr-8 py-2 text-sm border border-ink/10 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-azure focus:border-azure text-ink"
                 >
-                  <option value="date">Sort by Date</option>
-                  <option value="score">Sort by Score</option>
+                  <option value="date">{t('sort.date')}</option>
+                  <option value="score">{t('sort.score')}</option>
                 </select>
               </div>
             </div>
@@ -315,10 +333,10 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
               <div className="bg-highlight/10 border border-highlight/20 rounded-lg p-4 flex items-start gap-3">
                 <AlertCircle className="text-highlight" size={18} />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-highlight">Error Loading Feed</p>
+                  <p className="text-sm font-semibold text-highlight">{t('error.title')}</p>
                   <p className="text-sm text-ink/80">{error}</p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={fetchRows}>Retry</Button>
+                <Button variant="ghost" size="sm" onClick={fetchRows}>{t('error.retry')}</Button>
               </div>
             )}
 
@@ -326,20 +344,20 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
             {loading ? (
               <div className="flex flex-col items-center justify-center py-24 text-ink/40">
                 <Loader2 className="h-8 w-8 animate-spin mb-4 text-azure" />
-                <p>Loading transformation feed...</p>
+                <p>{t('loading.feed')}</p>
               </div>
             ) : rows.length === 0 ? (
               <div className="text-center py-24 bg-white rounded-2xl border border-ink/5 border-dashed">
                 <div className="mx-auto w-16 h-16 bg-paleslate rounded-full flex items-center justify-center mb-4 text-ink/20">
                   <RotateCcw size={32} />
                 </div>
-                <h3 className="text-lg font-medium text-ink">No transformations found</h3>
+                <h3 className="text-lg font-medium text-ink">{t('empty.transformations')}</h3>
                 <p className="text-ink/50 mt-1 max-w-sm mx-auto">
-                  {searchQuery ? 'Try adjusting your search terms.' : 'Go to the Dashboard to create your first resonance.'}
+                  {searchQuery ? t('empty.transformationsSearch') : t('empty.transformationsSubtitle')}
                 </p>
                 {searchQuery && (
                   <Button variant="ghost" className="mt-4 text-azure hover:bg-azure/5" onClick={() => setSearchQuery('')}>
-                    Clear Search
+                    {t('search.clear')}
                   </Button>
                 )}
               </div>
@@ -370,7 +388,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                             <div className="flex items-center gap-3 text-xs mb-1">
                               <span className={`px-2 py-0.5 rounded-full font-bold ${isHigh ? 'bg-mint/10 text-mint-hover' : 'bg-highlight/10 text-yellow-700'
                                 }`}>
-                                {score.toFixed(1)} Alignment
+                                {score.toFixed(1)} {t('card.alignment')}
                               </span>
                               <span className="text-ink/40 font-medium">{formatRelativeDate(row.created_at)}</span>
                               {row.model_used && (
@@ -387,7 +405,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
 
                             {/* Snippet */}
                             <p className="text-ink/50 text-sm line-clamp-1 font-medium">
-                              From: "{row.input_text.slice(0, 80)}{row.input_text.length > 80 ? '...' : ''}"
+                              {t('card.from')} "{row.input_text.slice(0, 80)}{row.input_text.length > 80 ? '...' : ''}"
                             </p>
                           </div>
 
@@ -417,7 +435,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                           <div className="grid md:grid-cols-2 gap-6">
                             {/* Original */}
                             <div className="space-y-2">
-                              <label className="text-xs font-bold text-ink/40 uppercase tracking-wider">Original Input</label>
+                              <label className="text-xs font-bold text-ink/40 uppercase tracking-wider">{t('card.originalInput')}</label>
                               <div className="p-3 bg-white rounded-lg border border-ink/5 text-sm text-ink/70 leading-relaxed whitespace-pre-wrap">
                                 {row.input_text}
                               </div>
@@ -425,7 +443,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
 
                             {/* Resonated */}
                             <div className="space-y-2">
-                              <label className="text-xs font-bold text-azure/60 uppercase tracking-wider">Resonated Output</label>
+                              <label className="text-xs font-bold text-azure/60 uppercase tracking-wider">{t('card.resonatedOutput')}</label>
                               <div className="p-3 bg-white rounded-lg border border-azure/20 shadow-sm text-sm text-ink leading-relaxed whitespace-pre-wrap">
                                 {row.final_output}
                               </div>
@@ -434,7 +452,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
 
                           <div className="mt-4 flex justify-end gap-3">
                             <Button variant="outline" size="sm" onClick={() => setExpandedCardId(null)}>
-                              Close
+                              {t('card.close')}
                             </Button>
                             <Button
                               variant="primary"
@@ -444,7 +462,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                                 navigator.clipboard.writeText(row.final_output);
                               }}
                             >
-                              Copy Result
+                              {t('card.copyResult')}
                             </Button>
                           </div>
                         </div>
@@ -491,22 +509,22 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
               <div className="bg-highlight/10 border border-highlight/20 rounded-lg p-4 flex items-start gap-3">
                 <AlertCircle className="text-highlight" size={18} />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-highlight">Error</p>
+                  <p className="text-sm font-semibold text-highlight">{t('error.title')}</p>
                   <p className="text-sm text-ink/80">{versionsError}</p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={fetchVersions}>Retry</Button>
+                <Button variant="ghost" size="sm" onClick={fetchVersions}>{t('error.retry')}</Button>
               </div>
             )}
 
             {versionsLoading ? (
               <div className="flex items-center justify-center py-12 text-ink/60">
                 <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                Loading versions...
+                {t('loading.versions')}
               </div>
             ) : versions.length === 0 ? (
               <div className="text-center py-12 text-ink/60 bg-white rounded-xl border border-ink/5">
-                <p className="font-medium text-lg mb-2">No identity versions yet.</p>
-                <p className="text-sm">Identity versions will appear here once they are created.</p>
+                <p className="font-medium text-lg mb-2">{t('empty.versions')}</p>
+                <p className="text-sm">{t('empty.versionsSubtitle')}</p>
               </div>
             ) : (
               <div className="relative pl-10 md:pl-12">
@@ -551,7 +569,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                           {/* Live Badge for Current */}
                           {isCurrent && (
                             <div className="absolute top-0 right-0 bg-mint text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm">
-                              Live
+                              {t('versionCard.live')}
                             </div>
                           )}
 
@@ -561,11 +579,11 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                               <div>
                                 <div className="flex items-center gap-3">
                                   <h3 className={`text-lg font-bold ${isCurrent ? 'text-azure' : 'text-ink'}`}>
-                                    Version {versionNumber}
+                                    {t('versionCard.version')} {versionNumber}
                                   </h3>
                                   <span className="text-sm text-ink/40">•</span>
                                   <span className="text-sm text-ink/50 font-medium">
-                                    Created {formatRelativeDate(version.created_at)}
+                                    {t('versionCard.created')} {formatRelativeDate(version.created_at)}
                                   </span>
                                 </div>
                                 {version.change_summary && (
@@ -585,7 +603,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                                     className="border-azure/20 text-azure hover:bg-azure/5"
                                   >
                                     <Edit className="h-3.5 w-3.5 mr-2" />
-                                    Edit This Version
+                                    {t('versionCard.edit')}
                                   </Button>
                                 ) : (
                                   <Button
@@ -597,7 +615,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                                     className="hover:bg-highlight hover:text-white hover:border-yellow-500 transition-colors"
                                   >
                                     <RotateCcw className="h-3.5 w-3.5 mr-2" />
-                                    Rollback to V{versionNumber}
+                                    {t('versionCard.rollback', { version: versionNumber })}
                                   </Button>
                                 )}
                               </div>
@@ -607,7 +625,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                             <div className="bg-white/50 rounded-lg border border-ink/5 p-4 mb-2">
                               <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-ink/40">
                                 <GitCommit className="h-3 w-3" />
-                                Changes
+                                {t('versionCard.changes')}
                               </div>
 
                               {changes.length > 0 ? (
@@ -629,7 +647,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                                 </div>
                               ) : (
                                 <p className="text-sm text-ink/40 italic">
-                                  {prevVersion ? 'No configuration changes detected.' : 'Initial version created.'}
+                                  {prevVersion ? t('versionCard.noChanges') : t('versionCard.initial')}
                                 </p>
                               )}
                             </div>
@@ -639,7 +657,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                               onClick={() => setExpandedVersionId(isExpanded ? null : version.id)}
                               className="text-xs font-medium text-ink/40 hover:text-azure flex items-center gap-1 mt-2 transition-colors ml-auto"
                             >
-                              {isExpanded ? 'Hide Full Configuration' : 'View Full Configuration'}
+                              {isExpanded ? t('versionCard.hideConfig') : t('versionCard.viewConfig')}
                               {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                             </button>
                           </div>
@@ -648,7 +666,7 @@ export const HistoryPage: React.FC<{ onNavigate: (page: PageView) => void }> = (
                           {isExpanded && (
                             <div className="bg-slate-50 border-t border-ink/5 p-6 animate-fade-in">
                               <div className="text-xs font-bold text-ink/40 uppercase tracking-wide mb-3">
-                                Full JSON Snapshot
+                                {t('versionCard.jsonSnapshot')}
                               </div>
                               <pre className="text-xs font-mono text-ink/70 overflow-x-auto bg-white p-4 rounded border border-ink/5">
                                 {JSON.stringify(version.identity_json, null, 2)}

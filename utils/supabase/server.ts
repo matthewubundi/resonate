@@ -67,27 +67,27 @@ export async function getAuthenticatedClient(req: Request) {
   if (authHeader?.startsWith('Bearer ')) {
     // Bearer token authentication
     const token = authHeader.substring(7);
-    
+
     // Create a client with the token for RLS
     const supabase = createClientWithToken(token);
-    
+
     // Verify the token and get the user
     const { data: { user }, error } = await supabase.auth.getUser();
-    
+
     if (error || !user) {
       throw new Error('Unauthorized');
     }
-    
+
     return { supabase, user };
   } else {
     // Cookie-based authentication
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('Unauthorized');
     }
-    
+
     return { supabase, user };
   }
 }

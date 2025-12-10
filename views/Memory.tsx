@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslations } from 'next-intl';
 
 interface MemoryItem {
   id: string;
@@ -17,38 +18,6 @@ interface MemoryItem {
   created_at: string;
   isActive: boolean;
 }
-
-// Context Templates
-const TEMPLATES = [
-  {
-    id: 'role',
-    label: 'My Role',
-    icon: UserCircle,
-    template: "Role: [Title]\nKey Responsibilities:\n- [Responsibility 1]\n- [Responsibility 2]",
-    color: 'text-azure'
-  },
-  {
-    id: 'project',
-    label: 'Current Project',
-    icon: Briefcase,
-    template: "Project Name: [Name]\nGoal: [Goal]\nDeadline: [Date]\nStatus: [Active/Planning]",
-    color: 'text-purple-600'
-  },
-  {
-    id: 'team',
-    label: 'Team Members',
-    icon: Users,
-    template: "Team Context:\n- [Name] is [Role]\n- [Name] handles [Area]",
-    color: 'text-indigo-600'
-  },
-  {
-    id: 'prefs',
-    label: 'Preferences',
-    icon: Settings,
-    template: "Preference: [Communication/Work Style]\nConstraint: [e.g., No meetings on Fridays]\nReason: [Context]",
-    color: 'text-emerald-600'
-  }
-];
 
 const fetcher = async (url: string) => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -69,15 +38,48 @@ const fetcher = async (url: string) => {
 };
 
 export const Memory: React.FC = () => {
-  const { user } = useAuth();
+  const t = useTranslations('Memory');
+  const { user, loading: authLoading } = useAuth();
   const [newMemory, setNewMemory] = useState('');
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const key = user ? '/api/memory' : null;
+  const key = (user && !authLoading) ? '/api/memory' : null;
   const { data: apiData, isLoading: swrLoading, mutate } = useSWR(key, fetcher);
   const { tier, loading: tierLoading } = useSubscription();
+
+  // Context Templates
+  const TEMPLATES = useMemo(() => [
+    {
+      id: 'role',
+      label: t('templates.role.label'),
+      icon: UserCircle,
+      template: t('templates.role.content'),
+      color: 'text-azure'
+    },
+    {
+      id: 'project',
+      label: t('templates.project.label'),
+      icon: Briefcase,
+      template: t('templates.project.content'),
+      color: 'text-purple-600'
+    },
+    {
+      id: 'team',
+      label: t('templates.team.label'),
+      icon: Users,
+      template: t('templates.team.content'),
+      color: 'text-indigo-600'
+    },
+    {
+      id: 'prefs',
+      label: t('templates.prefs.label'),
+      icon: Settings,
+      template: t('templates.prefs.content'),
+      color: 'text-emerald-600'
+    }
+  ], [t]);
 
   const memories: MemoryItem[] = useMemo(() => {
     return (apiData?.data || []).map((m: any) => ({
@@ -103,7 +105,7 @@ export const Memory: React.FC = () => {
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setError('You must be logged in to save memories.');
+        setError(t('errors.loginRequiredSave'));
         setSaving(false);
         return;
       }
@@ -120,7 +122,7 @@ export const Memory: React.FC = () => {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to save memory');
+        throw new Error(errorData.error || t('errors.saveFailed'));
       }
 
       const data = await res.json();
@@ -131,7 +133,7 @@ export const Memory: React.FC = () => {
       setActiveTemplate(null);
     } catch (err: any) {
       console.error('Error saving memory:', err);
-      setError(err.message || 'Failed to save memory');
+      setError(err.message || t('errors.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -143,7 +145,7 @@ export const Memory: React.FC = () => {
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setError('You must be logged in to delete memories.');
+        setError(t('errors.loginRequiredDelete'));
         return;
       }
 
@@ -167,13 +169,13 @@ export const Memory: React.FC = () => {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to delete memory');
+        throw new Error(errorData.error || t('errors.deleteFailed'));
       }
 
       mutate(); // Revalidate to be sure
     } catch (err: any) {
       console.error('Error deleting memory:', err);
-      setError(err.message || 'Failed to delete memory');
+      setError(err.message || t('errors.deleteFailed'));
       mutate(); // Revert on error by revalidating
     }
   };
@@ -206,7 +208,7 @@ export const Memory: React.FC = () => {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update status');
+        throw new Error(t('errors.updateFailed'));
       }
       // No need to mutate() again immediately if we trust the optimistic update,
       // but strictly speaking we should eventually revalidate. SWR does this on focus by default.
@@ -227,9 +229,10 @@ export const Memory: React.FC = () => {
   // Helper to categorize memory
   const getMemoryCategory = (content: string) => {
     const lower = content.toLowerCase();
-    if (lower.includes('role') || lower.includes('i am') || lower.includes('senior')) return 'Identity';
-    if (lower.includes('preference') || lower.includes('no ') || lower.includes('don\'t')) return 'Constraints';
-    if (lower.includes('project') || lower.includes('deadline') || lower.includes('meeting')) return 'Projects';
+    // Added multilingual checks
+    if (lower.includes('role') || lower.includes('i am') || lower.includes('senior') || lower.includes('rolle') || lower.includes('rôle')) return 'Identity';
+    if (lower.includes('preference') || lower.includes('no ') || lower.includes('don\'t') || lower.includes('präferenz') || lower.includes('préférence')) return 'Constraints';
+    if (lower.includes('project') || lower.includes('deadline') || lower.includes('meeting') || lower.includes('projekt') || lower.includes('projet')) return 'Projects';
     return 'General';
   };
 
@@ -261,15 +264,18 @@ export const Memory: React.FC = () => {
   }, [memories]);
 
   // Render Section
-  const renderSection = (title: string, items: MemoryItem[], colorClass: string) => {
+  const renderSection = (titleKey: string, items: MemoryItem[], colorClass: string) => {
     if (items.length === 0) return null;
+    // Map the internal category key to the display title using translation
+    // titleKey is 'Identity', 'Constraints', etc.
+    const displayTitle = t(`categories.${titleKey}`);
 
     return (
       <div className="mb-8 last:mb-0">
-        <h3 className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-3 px-1">{title}</h3>
+        <h3 className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-3 px-1">{displayTitle}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
           {items.map(item => {
-            const Icon = getCategoryIcon(title);
+            const Icon = getCategoryIcon(titleKey);
             return (
               <div
                 key={item.id}
@@ -292,7 +298,7 @@ export const Memory: React.FC = () => {
                         relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-azure focus:ring-offset-2
                         ${item.isActive ? 'bg-azure' : 'bg-ink/20'}
                       `}
-                      title={item.isActive ? "Deactivate memory" : "Activate memory"}
+                      title={item.isActive ? t('actions.deactivate') : t('actions.activate')}
                     >
                       <span
                         className={`
@@ -323,7 +329,7 @@ export const Memory: React.FC = () => {
   };
 
   // Render Logic
-  if (tierLoading) {
+  if (tierLoading || authLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-paleslate">
         <div className="w-10 h-10 border-4 border-azure/20 border-t-azure rounded-full animate-spin" />
@@ -342,16 +348,16 @@ export const Memory: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
               <Zap className="text-azure fill-current" size={24} />
-              Context Studio
+              {t('title')}
             </h1>
-            <p className="text-ink/60 text-sm mt-1">Build the brain for your digital twin.</p>
+            <p className="text-ink/60 text-sm mt-1">{t('subtitle')}</p>
           </div>
 
           {/* Brain Health / Context Points */}
           <div className="hidden lg:flex items-center gap-4 bg-white px-4 py-2 rounded-full border border-ink/5 shadow-sm">
             <div className="flex flex-col items-end">
-              <span className="text-xs font-bold text-ink uppercase tracking-wider">Brain Strength</span>
-              <span className="text-sm font-medium text-azure">{activeContextPoints} Points</span>
+              <span className="text-xs font-bold text-ink uppercase tracking-wider">{t('brainStrength')}</span>
+              <span className="text-sm font-medium text-azure">{activeContextPoints} {t('points')}</span>
             </div>
             <div className="w-24 h-2 bg-paleslate rounded-full overflow-hidden">
               <div
@@ -371,7 +377,7 @@ export const Memory: React.FC = () => {
 
               {/* Context Templates */}
               <div>
-                <h2 className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-3">Context Templates</h2>
+                <h2 className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-3">{t('templates.title')}</h2>
                 <div className="grid grid-cols-2 gap-2">
                   {TEMPLATES.map(tmpl => (
                     <button
@@ -396,13 +402,13 @@ export const Memory: React.FC = () => {
                 <CardHeader className="bg-gradient-to-r from-white to-paleslate border-b border-ink/5 pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     <Sparkles size={16} className="text-azure" />
-                    New Memory
+                    {t('input.title')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="relative">
                     <TextArea
-                      placeholder="Enter a fact, rule, or preference..."
+                      placeholder={t('input.placeholder')}
                       rows={8}
                       value={newMemory}
                       onChange={(e) => setNewMemory(e.target.value)}
@@ -412,7 +418,7 @@ export const Memory: React.FC = () => {
                       <button
                         onClick={() => { setActiveTemplate(null); setNewMemory(''); }}
                         className="absolute top-2 right-2 p-1 text-ink/30 hover:text-ink/60 bg-white/50 rounded-full backdrop-blur-sm"
-                        title="Clear template"
+                        title={t('input.clearTemplate')}
                       >
                         <RotateCcw size={12} />
                       </button>
@@ -426,7 +432,7 @@ export const Memory: React.FC = () => {
                     className="w-full bg-azure hover:bg-azure-hover text-white shadow-lg shadow-azure/20 h-11 text-sm font-semibold"
                   >
                     <CheckCircle2 size={16} className="mr-2" />
-                    Add to Memory
+                    {t('input.submit')}
                   </Button>
                 </CardContent>
               </Card>
@@ -441,9 +447,9 @@ export const Memory: React.FC = () => {
 
               {/* Tips */}
               <div className="bg-white/50 border border-ink/5 rounded-lg p-4">
-                <h4 className="text-xs font-bold text-ink/50 uppercase tracking-wider mb-2">Pro Tip</h4>
+                <h4 className="text-xs font-bold text-ink/50 uppercase tracking-wider mb-2">{t('input.proTip.title')}</h4>
                 <p className="text-xs text-ink/60 leading-relaxed">
-                  Be specific. Instead of "I like short emails", try "Constraint: Limit email responses to 3 sentences maximum."
+                  {t('input.proTip.content')}
                 </p>
               </div>
             </div>
@@ -458,22 +464,22 @@ export const Memory: React.FC = () => {
               {swrLoading && !apiData && !isLocked ? (
                 <div className="flex flex-col items-center justify-center h-full text-center text-ink/40">
                   <div className="w-12 h-12 rounded-full border-2 border-azure/20 border-t-azure animate-spin mb-4" />
-                  <p className="font-medium animate-pulse">Scanning neural network...</p>
+                  <p className="font-medium animate-pulse">{t('scanning')}</p>
                 </div>
               ) : (memories.length > 0 || isLocked) ? (
                 <div className="max-w-4xl mx-auto space-y-2">
                   {isLocked && memories.length === 0 ? (
                     // DUMMY CONTENT FOR LOCKED STATE
                     <>
-                      {renderSection('Core Identity', [{ id: '1', content: 'Role: Senior Software Architect', created_at: '', isActive: true }, { id: '2', content: 'Tone: Professional, Direct', created_at: '', isActive: true }], 'bg-azure text-azure')}
-                      {renderSection('Active Constraints', [{ id: '3', content: 'Constraint: No morning meetings', created_at: '', isActive: true }], 'bg-luminousmint text-emerald-700')}
+                      {renderSection('Identity', [{ id: '1', content: t('lockedData.role'), created_at: '', isActive: true }, { id: '2', content: t('lockedData.tone'), created_at: '', isActive: true }], 'bg-azure text-azure')}
+                      {renderSection('Constraints', [{ id: '3', content: t('lockedData.constraint'), created_at: '', isActive: true }], 'bg-luminousmint text-emerald-700')}
                     </>
                   ) : (
                     <>
-                      {renderSection('Core Identity', groupedMemories['Identity'], 'bg-azure text-azure')}
-                      {renderSection('Active Constraints', groupedMemories['Constraints'], 'bg-luminousmint text-emerald-700')}
-                      {renderSection('Project Data', groupedMemories['Projects'], 'bg-purple-500 text-purple-700')}
-                      {renderSection('General Context', groupedMemories['General'], 'bg-slate-500 text-slate-700')}
+                      {renderSection('Identity', groupedMemories['Identity'], 'bg-azure text-azure')}
+                      {renderSection('Constraints', groupedMemories['Constraints'], 'bg-luminousmint text-emerald-700')}
+                      {renderSection('Projects', groupedMemories['Projects'], 'bg-purple-500 text-purple-700')}
+                      {renderSection('General', groupedMemories['General'], 'bg-slate-500 text-slate-700')}
                     </>
                   )}
 
@@ -483,10 +489,9 @@ export const Memory: React.FC = () => {
                   <div className="w-20 h-20 bg-paleslate rounded-full flex items-center justify-center mb-6">
                     <Brain className="text-ink/20" size={40} />
                   </div>
-                  <h3 className="text-xl font-bold text-ink mb-2">Knowledge Empty</h3>
-                  <p className="text-ink/50 leading-relaxed">
-                    Your digital twin hasn't learned anything yet.
-                    Use the templates on the left to start building its brain.
+                  <h3 className="text-xl font-bold text-ink mb-2">{t('emptyState.title')}</h3>
+                  <p className="text-ink/50 leading-relaxed max-w-[80%] mx-auto whitespace-pre-line">
+                    {t('emptyState.description')}
                   </p>
                 </div>
               )}

@@ -109,7 +109,7 @@ const getAvatarConfig = (name: string) => {
 };
 
 export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ onNavigate }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -136,36 +136,31 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
 
   // Fetch personas on mount
   useEffect(() => {
+    if (authLoading) return;
     if (user) {
       fetchPersonas();
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchPersonas = async () => {
     setLoading(true);
     setError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError('You must be logged in to view personas.');
-        setLoading(false);
-        return;
+      // Use client-side supabase directly so it handles auth session automatically
+      const { data, error } = await supabase
+        .from('identities')
+        .select('id, identity_json, is_active, created_at, name, last_used_at')
+        .eq('user_id', user!.id)
+        .order('is_active', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
       }
 
-      const response = await fetch('/api/personas/list', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch personas');
-      }
-
-      const transformedPersonas: Persona[] = (data.personas || []).map((p: ApiPersona) => {
+      const transformedPersonas: Persona[] = (data || []).map((p: any) => {
         const formalityMap: Record<string, 'High Formality' | 'Low Formality' | 'Medium Formality'> = {
           'High': 'High Formality',
           'Low': 'Low Formality',
@@ -417,10 +412,33 @@ export const Personas: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
         </div>
 
         {/* Personas Grid */}
-        {loading ? (
+        {(loading || authLoading) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-64 bg-slate-100 rounded-xl animate-pulse"></div>
+              <div key={i} className="h-full min-h-[340px] bg-white rounded-xl border border-slate-200 p-6 flex flex-col justify-between animate-pulse">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-slate-200"></div>
+                  <div className="flex-1 space-y-2 py-1">
+                    <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+                <div className="space-y-4 my-6">
+                  <div className="space-y-1">
+                    <div className="h-2 bg-slate-200 rounded w-1/4 mb-1"></div>
+                    <div className="h-3 bg-slate-200 rounded-full w-full"></div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="h-2 bg-slate-200 rounded w-1/4 mb-1"></div>
+                    <div className="h-3 bg-slate-200 rounded-full w-full"></div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="h-2 bg-slate-200 rounded w-1/4 mb-1"></div>
+                    <div className="h-3 bg-slate-200 rounded-full w-full"></div>
+                  </div>
+                </div>
+                <div className="h-10 bg-slate-200 rounded-lg w-full mt-auto"></div>
+              </div>
             ))}
           </div>
         ) : (

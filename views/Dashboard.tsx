@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardHeader, CardTitle, CardContent, Button, Chip, TextArea } from '../components/Components';
 import { ArrowRight, Sparkles, History, Zap, Activity, Copy, X, RefreshCw, AlertCircle, Check, ChevronDown, User } from 'lucide-react';
 import { PageView } from '../types';
@@ -37,7 +38,8 @@ interface TransformationLog {
 }
 
 export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ onNavigate }) => {
-  const { user } = useAuth();
+  const t = useTranslations('Dashboard');
+  const { user, loading: authLoading } = useAuth();
   const [quickInput, setQuickInput] = useState('');
   const [quickOutput, setQuickOutput] = useState('');
   const [isTransforming, setIsTransforming] = useState(false);
@@ -54,11 +56,18 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
 
   // Fetch identity and transformation history on mount
   const fetchData = async () => {
+    // If auth is still loading, don't do anything yet. Keep initial loading state.
+    if (authLoading) return;
+
     if (!user) {
       setLoadingIdentity(false);
       setLoadingTransformations(false);
       return;
     }
+
+    // Ensure loading skeletons are shown when we start fetching
+    setLoadingIdentity(true);
+    setLoadingTransformations(true);
 
     // Set initial name from metadata while loading
     if (user.user_metadata?.full_name) {
@@ -103,18 +112,18 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
       if (idData && !idError) {
         setIdentity(idData.identity_json as IdentityProfile);
       } else if (idError && idError.code !== 'PGRST116') {
-        throw new Error('Failed to load identity profile');
+        throw new Error(t('error.failedToLoadIdentity'));
       }
 
       // 2. Set Transformations
       if (transData && !transError) {
         setTransformations(transData as TransformationLog[]);
       } else if (transError) {
-        throw new Error('Failed to load transformation history');
+        throw new Error(t('error.failedToLoadHistory'));
       }
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
-      setError(error.message || 'Failed to load dashboard data. Please try again.');
+      setError(error.message || t('error.failedToLoadData'));
     } finally {
       setLoadingIdentity(false);
       setLoadingTransformations(false);
@@ -124,7 +133,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
 
   useEffect(() => {
     fetchData();
-  }, [user]);
+  }, [user, authLoading]);
 
   // Refresh transformations after a successful transformation
   const refreshTransformations = async () => {
@@ -174,7 +183,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
       // Get the session token for authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setError('You must be logged in to transform text.');
+        setError(t('error.notLoggedIn'));
         setIsTransforming(false);
         return;
       }
@@ -197,7 +206,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
       // Refresh transformation history
       await refreshTransformations();
     } catch (err: any) {
-      setError('Transformation failed: ' + (err.message || 'Unknown error'));
+      setError(t('error.transformationFailed', { error: err.message || t('error.unknownError') }));
       console.error(err);
     } finally {
       setIsTransforming(false);
@@ -213,10 +222,10 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) return t('recentActivity.time.justNow');
+    if (diffMins < 60) return t('recentActivity.time.minutesAgo', { minutes: diffMins });
+    if (diffHours < 24) return t('recentActivity.time.hoursAgo', { hours: diffHours });
+    if (diffDays < 7) return t('recentActivity.time.daysAgo', { days: diffDays });
     return date.toLocaleDateString();
   };
 
@@ -234,7 +243,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
           <div className="flex items-start gap-3 flex-1">
             <AlertCircle className="text-highlight flex-shrink-0 mt-0.5" size={20} />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-highlight mb-1">Error</p>
+              <p className="text-sm font-semibold text-highlight mb-1">{t('error.title')}</p>
               <p className="text-sm text-ink/80">{error}</p>
             </div>
           </div>
@@ -243,7 +252,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
               <X size={16} />
             </Button>
             <Button variant="ghost" size="sm" onClick={handleRefresh}>
-              Retry
+              {t('error.retry')}
             </Button>
           </div>
         </div>
@@ -253,9 +262,9 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-ink">
-            Good morning, {userName ? userName.split(' ')[0] : 'User'}.
+            {t('header.greeting', { name: userName ? userName.split(' ')[0] : t('header.fallbackName') })}
           </h1>
-          <p className="text-ink/60 text-lg">What are we rewriting today?</p>
+          <p className="text-ink/60 text-lg">{t('header.subtitle')}</p>
         </div>
 
         {/* Identity HUD (Persona Pill) */}
@@ -270,7 +279,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
                 // Collapsed State
                 <>
                   <div className="w-2 h-2 rounded-full bg-azure animate-pulse"></div>
-                  <span className="text-sm font-semibold text-ink">Active: {identity.tone || 'General'}</span>
+                  <span className="text-sm font-semibold text-ink">{identity.tone ? t('identityHud.active', { tone: identity.tone }) : t('identityHud.activeFallback')}</span>
                   <div
                     className="cursor-pointer p-1 hover:bg-paleslate rounded-full transition-colors"
                     onClick={() => setIsIdentityExpanded(true)}
@@ -284,10 +293,10 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
                   <div className="flex items-center justify-between border-b border-ink/5 pb-2">
                     <div className="flex items-center gap-2">
                       <User size={16} className="text-azure" />
-                      <span className="font-bold text-ink text-sm">Active Identity</span>
+                      <span className="font-bold text-ink text-sm">{t('identityHud.activeIdentity')}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs bg-azure/10 text-azure px-2 py-0.5 rounded font-mono font-bold">LIVE</span>
+                      <span className="text-xs bg-azure/10 text-azure px-2 py-0.5 rounded font-mono font-bold">{t('identityHud.live')}</span>
                       <button
                         className="h-6 w-6 flex items-center justify-center p-0 text-ink/40 hover:text-ink hover:bg-paleslate rounded-full transition-colors"
                         onClick={() => setIsIdentityExpanded(false)}
@@ -298,7 +307,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-1 block">Tone & Style</label>
+                    <label className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-1 block">{t('identityHud.toneAndStyle')}</label>
                     <div className="flex flex-wrap gap-2">
                       <span className="bg-paleslate text-ink text-xs px-2 py-1 rounded-md font-medium">{identity.tone}</span>
                       <span className="bg-paleslate text-ink text-xs px-2 py-1 rounded-md font-medium">{identity.formality}</span>
@@ -308,7 +317,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
 
                   {identity.values && identity.values.length > 0 && (
                     <div>
-                      <label className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-1 block">Core Values</label>
+                      <label className="text-xs font-bold text-ink/40 uppercase tracking-wider mb-1 block">{t('identityHud.coreValues')}</label>
                       <div className="flex flex-wrap gap-1">
                         {identity.values.slice(0, 3).map((v, i) => (
                           <span key={i} className="text-xs text-ink/70 border border-ink/10 px-1.5 py-0.5 rounded">{v}</span>
@@ -324,7 +333,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
                       onClick={(e) => { e.stopPropagation(); onNavigate('editor'); }}
                       className="text-xs text-azure hover:text-azure-hover p-0 h-auto"
                     >
-                      Edit Profile →
+                      {t('identityHud.editProfile')}
                     </Button>
                   </div>
                 </div>
@@ -332,7 +341,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
             </div>
           ) : (
             <Button onClick={() => onNavigate('onboarding')} variant="outline" size="sm" className="bg-white">
-              <Sparkles size={14} className="mr-2" /> Create Identity
+              <Sparkles size={14} className="mr-2" /> {t('identityHud.createIdentity')}
             </Button>
           )}
         </div>
@@ -346,14 +355,14 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
             <div className="animate-fade-in relative">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-azure flex items-center gap-2">
-                  <Sparkles size={20} /> Resonated Output
+                  <Sparkles size={20} /> {t('workbench.resonatedOutput')}
                 </h2>
                 <div className="flex gap-2">
                   <Button variant="ghost" onClick={() => setQuickOutput('')} className="text-ink/60 hover:text-ink">
-                    New Rewrite
+                    {t('workbench.newRewrite')}
                   </Button>
                   <Button onClick={handleCopy} className={`min-w-[100px] ${copySuccess ? 'bg-mint text-white' : ''}`}>
-                    {copySuccess ? <><Check size={16} className="mr-2" /> Copied</> : <><Copy size={16} className="mr-2" /> Copy Text</>}
+                    {copySuccess ? <><Check size={16} className="mr-2" /> {t('workbench.copied')}</> : <><Copy size={16} className="mr-2" /> {t('workbench.copyText')}</>}
                   </Button>
                 </div>
               </div>
@@ -363,14 +372,14 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
               </div>
 
               <div className="mt-6 flex justify-end">
-                <p className="text-sm text-ink/40 italic">Aligned with your {identity?.tone} profile</p>
+                <p className="text-sm text-ink/40 italic">{t('workbench.alignedWith', { tone: identity?.tone || '' })}</p>
               </div>
             </div>
           ) : (
             // Input View
             <div className="relative">
               <TextArea
-                placeholder="Paste your raw AI draft here..."
+                placeholder={t('workbench.placeholder')}
                 className="w-full bg-transparent border-none text-lg text-ink placeholder:text-ink/30 focus:ring-0 resize-none p-0 min-h-[240px]"
                 value={quickInput}
                 onChange={(e) => setQuickInput(e.target.value)}
@@ -386,7 +395,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
                   disabled={isTransforming || !quickInput.trim() || !identity}
                   className="shadow-lg shadow-azure/20 rounded-full px-10 transition-transform hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  {isTransforming ? 'Resonating...' : <>Resonate Text <ArrowRight size={18} className="ml-2" /></>}
+                  {isTransforming ? t('workbench.resonating') : <>{t('workbench.resonateText')} <ArrowRight size={18} className="ml-2" /></>}
                 </Button>
               </div>
             </div>
@@ -397,14 +406,14 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
       {/* Recent Activity Grid */}
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-lg font-bold text-ink">Recent Rewrites</h3>
+          <h3 className="text-lg font-bold text-ink">{t('recentActivity.title')}</h3>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onNavigate('history')}
             className="text-azure hover:text-azure-hover"
           >
-            View All History →
+            {t('recentActivity.viewAll')}
           </Button>
         </div>
 
@@ -444,7 +453,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
                     </p>
                   </div>
                   <div className="mt-4 flex items-center text-azure text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Copy size={12} className="mr-1" /> Click to Copy
+                    <Copy size={12} className="mr-1" /> {t('recentActivity.clickToCopy')}
                   </div>
                 </CardContent>
               </Card>
@@ -452,7 +461,7 @@ export const Dashboard: React.FC<{ onNavigate: (page: PageView) => void }> = ({ 
           </div>
         ) : (
           <div className="text-center py-12 bg-paleslate/50 rounded-xl border border-dashed border-ink/10">
-            <p className="text-ink/40">No recent transformations found.</p>
+            <p className="text-ink/40">{t('recentActivity.empty')}</p>
           </div>
         )}
       </div>

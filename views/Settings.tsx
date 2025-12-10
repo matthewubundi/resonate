@@ -155,7 +155,7 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     const t = useTranslations('Settings');
     const router = useRouter();
     const pathname = usePathname();
-    const { user, signOut } = useAuth();
+    const { user, signOut, loading: authLoading } = useAuth();
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'General');
     const [loading, setLoading] = useState(true);
@@ -215,6 +215,8 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
     // Fetch profile data
     useEffect(() => {
         const fetchProfile = async () => {
+            if (authLoading) return;
+
             if (!user) {
                 setLoading(false);
                 return;
@@ -283,7 +285,15 @@ export const Settings: React.FC<{ onNavigate: (page: PageView) => void }> = ({ o
         };
 
         fetchProfile();
-    }, [user]);
+    }, [user, authLoading]);
+
+    if (loading || authLoading) {
+        return (
+            <div className="w-full max-w-5xl mx-auto h-[600px] flex items-center justify-center">
+                <div className="w-10 h-10 border-4 border-azure/20 border-t-azure rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     const hasChanges = () => {
         return (

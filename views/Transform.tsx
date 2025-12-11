@@ -220,7 +220,7 @@ export const Transform: React.FC = () => {
     <div className="h-[calc(100vh-120px)] flex flex-col gap-4 text-ink">
 
       {/* Top Toolbar */}
-      <div className="flex items-center justify-between px-2 py-1">
+      <div className="flex flex-col md:flex-row items-center justify-between px-2 py-1 gap-2 md:gap-0">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-extrabold tracking-tight">{t('title')}</h1>
 
@@ -254,7 +254,7 @@ export const Transform: React.FC = () => {
             onClick={() => setShowRefine(!showRefine)}
             className={showRefine ? 'bg-slate-100 text-ink' : 'text-ink/60'}
           >
-            <Zap size={16} className="mr-2" /> {t('refine')}
+            <Zap size={16} className="md:mr-2" /> <span className="hidden md:inline">{t('refine')}</span>
           </Button>
           <Button
             variant="ghost"
@@ -262,7 +262,7 @@ export const Transform: React.FC = () => {
             onClick={() => setShowParams(!showParams)}
             className={showParams ? 'bg-slate-100 text-ink' : 'text-ink/60'}
           >
-            <Sliders size={16} className="mr-2" /> {t('parameters')}
+            <Sliders size={16} className="md:mr-2" /> <span className="hidden md:inline">{t('parameters')}</span>
           </Button>
           <Button
             variant="ghost"
@@ -270,7 +270,7 @@ export const Transform: React.FC = () => {
             onClick={() => setShowInsights(!showInsights)}
             className={showInsights ? 'bg-slate-100 text-ink' : 'text-ink/60'}
           >
-            <Sidebar size={16} className="mr-2" /> {t('insights')}
+            <Sidebar size={16} className="md:mr-2" /> <span className="hidden md:inline">{t('insights')}</span>
           </Button>
         </div>
       </div >
@@ -280,8 +280,8 @@ export const Transform: React.FC = () => {
         showRefine && (
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mx-2 mb-2 animate-in slide-in-from-top-2 duration-200">
             <div className="flex flex-col gap-3">
-              <div className="flex items-start gap-4">
-                <div className="flex-1">
+              <div className="flex flex-col md:flex-row items-start gap-4">
+                <div className="w-full md:flex-1">
                   <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">{t('refinePanel.contextualRefinements')}</label>
                   <textarea
                     className="w-full text-sm p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-azure focus:border-azure outline-none resize-none h-20"
@@ -290,7 +290,7 @@ export const Transform: React.FC = () => {
                     onChange={(e) => setInstructions(e.target.value)}
                   />
                 </div>
-                <div className="w-1/3">
+                <div className="w-full md:w-1/3">
                   <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">{t('refinePanel.quickChips')}</label>
                   <div className="flex flex-wrap gap-2">
                     {['Brief', 'Professional', 'Empathetic', 'Slack', 'Email', 'Linkedin'].map(chip => (
@@ -324,7 +324,7 @@ export const Transform: React.FC = () => {
       }
 
       {/* Main Editor Surface */}
-      <div className="relative flex flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mx-2 mb-2">
+      <div className="relative flex flex-col md:flex-row flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mx-2 mb-2">
 
         {/* LEFT: Input Pane */}
         <div className="flex-1 flex flex-col relative group">
@@ -340,7 +340,7 @@ export const Transform: React.FC = () => {
         </div>
 
         {/* CENTER: Divider & Action */}
-        <div className="relative w-px bg-slate-100 flex items-center justify-center z-20">
+        <div className="relative h-px w-full md:w-px md:h-auto bg-slate-100 flex items-center justify-center z-20 shrink-0">
           <button
             onClick={handleTransform}
             disabled={!inputText.trim() || isProcessing}
@@ -406,7 +406,7 @@ export const Transform: React.FC = () => {
         </div>
 
         {/* FAR RIGHT: Insights Sidebar (Drawer) */}
-        <div className={`absolute right-0 top-0 h-full bg-slate-50 border-l border-slate-200 w-80 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] transition-transform duration-300 transform z-30 ${showInsights ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`absolute right-0 top-0 h-full bg-slate-50 border-l border-slate-200 w-full md:w-80 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] transition-transform duration-300 transform z-30 ${showInsights ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="h-full flex flex-col">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white">
               <h3 className="font-bold text-ink text-sm uppercase tracking-wide">{t('insightsPanel.analysis')}</h3>

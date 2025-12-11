@@ -46,6 +46,10 @@
 - [x] **Billing Integration**: Stripe setup for "Pro" tiers, Upgrade Gates, and Billing Portal.
 - [ ] **Context-Aware "Smart Switching"**: Auto-detect context (Email vs Tweet) to suggest identity.
 - [ ] **"Active Learning" Loop**: A/B testing feedback to refine identity weights.
+  - [ ] **Feedback Collection**: UI for "Thumbs Up/Down" and specific tags (e.g., "Too Formal") on transformation results.
+  - [ ] **Feedback Logging**: Schema update to store user ratings in the `transformations` table.
+  - [ ] **Automated Tuning**: mechanism to auto-adjust identity attributes (JSON) based on consistent negative feedback (e.g., "Make less formal").
+  - [ ] **A/B Testing Mode**: Option to generate two variations of a rewrite and let user preference update the identity model.
 - [x] **Internationalization (i18n)**:
   - [x] Full support for English, French, and German.
   - [x] Middleware (Proxy) routing for locale detection.

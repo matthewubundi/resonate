@@ -84,8 +84,8 @@ const Gauge = ({ value, metrics }: { value: number; metrics: AnalyticsMetrics | 
   const color = normalizedValue >= 9 ? '#2563EB' : (normalizedValue >= 8 ? '#4ADE80' : '#EAB308');
 
   return (
-    <div className="relative flex flex-col items-center justify-center pt-4 pb-2">
-      <div className="relative h-40 w-80 overflow-hidden mb-[-20px]">
+    <div className="relative flex flex-col items-center justify-center pt-4 pb-2 w-full">
+      <div className="relative w-full max-w-[20rem] aspect-[2/1] overflow-hidden mb-[-10%]">
         <svg viewBox="0 0 200 110" className="w-full h-full">
           {/* Background Track */}
           <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#F1F5F9" strokeWidth="20" strokeLinecap="round" />
@@ -102,11 +102,11 @@ const Gauge = ({ value, metrics }: { value: number; metrics: AnalyticsMetrics | 
           />
         </svg>
         {/* Center Text */}
-        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-end pb-8">
-          <span className="text-6xl font-black text-ink tracking-tighter block leading-none">
+        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-end pb-[15%]">
+          <span className="text-4xl md:text-6xl font-black text-ink tracking-tighter block leading-none">
             {value.toFixed(1)}
           </span>
-          <span className="text-xs font-bold text-ink/40 uppercase tracking-widest mt-2">{((metrics as any)?.t) ? (metrics as any).t('alignment') : 'Alignment'}</span>
+          <span className="text-[10px] md:text-xs font-bold text-ink/40 uppercase tracking-widest mt-1">{((metrics as any)?.t) ? (metrics as any).t('alignment') : 'Alignment'}</span>
         </div>
       </div>
     </div>
@@ -452,7 +452,7 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
 
   return (
     <UpgradeGate requiredTier="power" isLocked={isLocked}>
-      <div className="space-y-8 pb-20 min-h-screen bg-paleslate p-6 md:p-12">
+      <div className="space-y-8 pb-20 min-h-screen bg-paleslate p-4 md:p-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
@@ -476,8 +476,8 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="pt-8 pb-8 px-8">
-              <div className="flex flex-col md:flex-row items-center justify-around gap-8">
+            <CardContent className="pt-6 pb-6 px-4 md:pt-8 md:pb-8 md:px-8">
+              <div className="flex flex-col md:flex-row items-center justify-around gap-4 md:gap-8">
                 <Gauge value={finalMetrics.recentAverageScore} metrics={{ ...metrics, t } as any} />
 
                 <div className="flex flex-col gap-4 w-full md:w-auto md:min-w-[260px]">
@@ -557,7 +557,7 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                 <TrendingUp size={14} /> {t('velocity.title')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="h-[250px] w-full">
                 {finalMetrics.scoreOverTime.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -616,7 +616,7 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                 <Activity size={14} className="rotate-90" /> {t('spread.title')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={finalMetrics.scoreDistribution} layout="vertical" margin={{ left: 0, right: 20 }}>
@@ -661,11 +661,11 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
 
           {/* C. Vocabulary Analysis ("The Fingerprint") */}
           <Card className="bg-white shadow-sm border-ink/5 ring-1 ring-ink/5 h-full">
-            <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-6 flex flex-row items-center justify-between">
+            <CardHeader className="border-b border-gray-50 bg-gray-50/50 py-4 px-4 md:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
               <CardTitle className="text-xs font-bold uppercase tracking-widest text-ink/50 flex items-center gap-2">
                 <Search size={14} /> {t('signature.title')}
               </CardTitle>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-azure"></div>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">{t('signature.signature')}</span>
@@ -676,13 +676,13 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-8 h-full">
+            <CardContent className="p-4 md:p-8 h-full">
               <div className="flex flex-wrap justify-center content-center gap-3 h-full min-h-[250px]">
                 {finalMetrics.mostUsedWords.map((item, idx) => {
                   // Visual logic for size and color
                   const isTop = idx < 3;
                   const isMid = idx >= 3 && idx < 8;
-                  const sizeClass = isTop ? 'text-2xl px-6 py-3' : (isMid ? 'text-lg px-4 py-2' : 'text-sm px-3 py-1');
+                  const sizeClass = isTop ? 'text-lg md:text-2xl px-3 md:px-6 py-1.5 md:py-3' : (isMid ? 'text-sm md:text-lg px-2.5 md:px-4 py-1 md:py-2' : 'text-xs md:text-sm px-2 md:px-3 py-1');
                   const colorClass = isTop
                     ? 'bg-azure text-white shadow-lg shadow-azure/20'
                     : (isMid ? 'bg-paleslate text-ink border border-ink/5' : 'bg-white text-ink/60 border border-gray-100');
@@ -690,22 +690,22 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                   return (
                     <div
                       key={idx}
-                      className={`rounded-full font-semibold transition-all hover:scale-110 cursor-default flex items-center gap-2 ${sizeClass} ${colorClass}`}
+                      className={`rounded-full font-semibold transition-all hover:scale-110 cursor-default flex items-center gap-2 max-w-full ${sizeClass} ${colorClass}`}
                     >
-                      {item.word}
-                      {isTop && <span className="text-[10px] bg-white/20 px-1.5 rounded-full">{item.count}</span>}
+                      <span className="truncate">{item.word}</span>
+                      {isTop && <span className="text-[10px] bg-white/20 px-1.5 rounded-full shrink-0">{item.count}</span>}
                     </div>
                   );
                 })}
 
                 {/* Mock Banned Words for Visual */}
-                <div className="rounded-full bg-highlight/10 text-highlight border border-highlight/20 px-4 py-2 text-sm font-bold flex items-center gap-2 hover:bg-highlight/20 transition-colors animate-pulse">
-                  <AlertCircle size={14} />
-                  delve
+                <div className="rounded-full bg-highlight/10 text-highlight border border-highlight/20 px-4 py-2 text-sm font-bold flex items-center gap-2 hover:bg-highlight/20 transition-colors animate-pulse max-w-full">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span className="truncate">delve</span>
                 </div>
-                <div className="rounded-full bg-highlight/10 text-highlight border border-highlight/20 px-3 py-1 text-xs font-bold flex items-center gap-1 hover:bg-highlight/20 transition-colors">
-                  <AlertCircle size={12} />
-                  tapestry
+                <div className="rounded-full bg-highlight/10 text-highlight border border-highlight/20 px-3 py-1 text-xs font-bold flex items-center gap-1 hover:bg-highlight/20 transition-colors max-w-full">
+                  <AlertCircle size={12} className="shrink-0" />
+                  <span className="truncate">tapestry</span>
                 </div>
               </div>
 
@@ -719,7 +719,7 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                 <AlertTriangle size={14} /> {t('insights.title')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-4 md:p-6 space-y-4">
 
               {/* Insight Card 1: Tone Violations */}
               <div className="border border-ink/10 rounded-xl overflow-hidden transition-all duration-200">
@@ -727,8 +727,8 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                   className="bg-white p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => setExpandedInsight(expandedInsight === 'tone' ? null : 'tone')}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-highlight/10 flex items-center justify-center text-highlight font-black text-lg">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-highlight/10 flex items-center justify-center text-highlight font-black text-lg shrink-0">
                       {finalMetrics.categoryBreakdown.toneViolations}
                     </div>
                     <div>
@@ -762,8 +762,8 @@ export const AnalyticsPage: React.FC<{ onNavigate: (page: PageView) => void }> =
                   className="bg-white p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => setExpandedInsight(expandedInsight === 'vocab' ? null : 'vocab')}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-lg">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-lg shrink-0">
                       {finalMetrics.categoryBreakdown.vocabBreaches + 2} {/* +2 for the mocked ones */}
                     </div>
                     <div>

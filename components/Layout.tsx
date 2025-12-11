@@ -50,21 +50,33 @@ export const Layout: React.FC<LayoutProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const [subscriptionTier, setSubscriptionTier] = React.useState<string>('free');
+  const [isLoadingProfile, setIsLoadingProfile] = React.useState(true);
 
   React.useEffect(() => {
     if (user) {
       const fetchProfile = async () => {
-        const { data } = await supabase
-          .from('profiles')
-          .select('avatar_url, subscription_tier')
-          .eq('id', user.id)
-          .single();
-        if (data) {
-          if (data.avatar_url) setAvatarUrl(data.avatar_url);
-          if (data.subscription_tier) setSubscriptionTier(data.subscription_tier);
+        try {
+          // Initialize loading state
+          setIsLoadingProfile(true);
+          const { data } = await supabase
+            .from('profiles')
+            .select('avatar_url, subscription_tier')
+            .eq('id', user.id)
+            .single();
+          if (data) {
+            if (data.avatar_url) setAvatarUrl(data.avatar_url);
+            if (data.subscription_tier) setSubscriptionTier(data.subscription_tier);
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+        } finally {
+          setIsLoadingProfile(false);
         }
       };
       fetchProfile();
+    } else {
+      // If no user, stop loading
+      setIsLoadingProfile(false);
     }
   }, [user]);
 
@@ -149,25 +161,35 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-ink">{getUserDisplayName()}</p>
-                <p className="text-[10px] text-azure font-bold uppercase tracking-wider">
-                  {getSubscriptionDisplay()}
-                </p>
+            {isLoadingProfile ? (
+              <div className="flex items-center gap-3 animate-pulse">
+                <div className="text-right hidden sm:block">
+                  <div className="h-4 w-32 bg-ink/10 rounded mb-1"></div>
+                  <div className="h-3 w-16 bg-ink/10 rounded ml-auto"></div>
+                </div>
+                <div className="h-9 w-9 rounded-full bg-ink/10 box-border border border-ink/5"></div>
               </div>
-              <div className="h-9 w-9 rounded-full bg-paleslate border border-ink/10 text-azure flex items-center justify-center font-bold overflow-hidden relative">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="Profile"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  getUserInitial()
-                )}
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-bold text-ink">{getUserDisplayName()}</p>
+                  <p className="text-[10px] text-azure font-bold uppercase tracking-wider">
+                    {getSubscriptionDisplay()}
+                  </p>
+                </div>
+                <div className="h-9 w-9 rounded-full bg-paleslate border border-ink/10 text-azure flex items-center justify-center font-bold overflow-hidden relative">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Profile"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    getUserInitial()
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </header>
 

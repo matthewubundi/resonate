@@ -347,50 +347,53 @@ export const IdentityEditor = () => {
         <div className="flex flex-col h-[calc(100vh-6rem)] relative"> {/* Adjust height for layout */}
 
             {/* Sticky Header */}
-            <div className="sticky top-0 z-10 bg-white border-b border-ink/5 px-6 py-4 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-4">
+            <div className="sticky top-0 z-10 bg-white border-b border-ink/5 px-4 md:px-6 py-3 md:py-4 shadow-sm flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                     {/* Identity Name Input */}
-                    <div className="relative group">
+                    <div className="relative group flex-1 min-w-0">
                         <input
                             type="text"
                             value={identityName}
                             onChange={(e) => setIdentityName(e.target.value)}
-                            className="text-xl font-bold text-ink bg-transparent border-b border-transparent hover:border-ink/20 focus:border-azure focus:outline-none transition-colors px-1 py-0.5"
+                            className="w-full text-lg md:text-xl font-bold text-ink bg-transparent border-b border-transparent hover:border-ink/20 focus:border-azure focus:outline-none transition-colors px-1 py-0.5 truncate"
                             placeholder={t('header.namePlaceholder')}
                         />
-                        <span className="absolute -right-4 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-ink/30">
+                        <span className="absolute -right-4 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-ink/30 hidden md:block">
                             <Type size={12} />
                         </span>
                     </div>
 
                     {hasChanges() && (
-                        <span className="bg-highlight/10 text-highlight text-xs px-2 py-0.5 rounded-full font-medium border border-highlight/20 animate-pulse">
-                            {t('header.unsavedChanges')}
-                        </span>
+                        <>
+                            <span className="md:hidden h-2 w-2 rounded-full bg-highlight animate-pulse shrink-0" title={t('header.unsavedChanges')} />
+                            <span className="hidden md:inline-block bg-highlight/10 text-highlight text-xs px-2 py-0.5 rounded-full font-medium border border-highlight/20 animate-pulse whitespace-nowrap">
+                                {t('header.unsavedChanges')}
+                            </span>
+                        </>
                     )}
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="sm" onClick={handleDownload} title="Download JSON">
+                <div className="flex items-center gap-1 md:gap-3 shrink-0">
+                    <Button variant="ghost" size="sm" onClick={handleDownload} title="Download JSON" className="px-2 md:px-4">
                         <Download size={18} />
-                        <span className="ml-2 hidden sm:inline">{t('header.download')}</span>
+                        <span className="ml-2 hidden lg:inline">{t('header.download')}</span>
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setShowJsonSplit(!showJsonSplit)} className={showJsonSplit ? 'text-azure bg-azure/10' : ''}>
+                    <Button variant="ghost" size="sm" onClick={() => setShowJsonSplit(!showJsonSplit)} className={`px-2 md:px-4 ${showJsonSplit ? 'text-azure bg-azure/10' : ''}`}>
                         {showJsonSplit ? <LayoutIcon size={18} /> : <Code size={18} />}
-                        <span className="ml-2 hidden sm:inline">{showJsonSplit ? t('header.hideJson') : t('header.viewJson')}</span>
+                        <span className="ml-2 hidden lg:inline">{showJsonSplit ? t('header.hideJson') : t('header.viewJson')}</span>
                     </Button>
 
-                    <div className="h-6 w-px bg-ink/10 mx-1"></div>
+                    <div className="h-6 w-px bg-ink/10 mx-1 hidden md:block"></div>
 
-                    <Button variant="outline" size="sm" onClick={handleReset} disabled={!hasChanges() || saving}>
-                        <Undo size={16} className="mr-2" />
-                        {t('header.discard')}
+                    <Button variant="outline" size="sm" onClick={handleReset} disabled={!hasChanges() || saving} className="px-2 md:px-4">
+                        <Undo size={16} className="md:mr-2" />
+                        <span className="hidden md:inline">{t('header.discard')}</span>
                     </Button>
                     <Button variant="primary" size="sm" onClick={handleSave} isLoading={saving} disabled={!hasChanges() || saving}
-                        className={hasChanges() ? 'ring-2 ring-highlight/50 ring-offset-1' : ''}
+                        className={`px-2 md:px-4 ${hasChanges() ? 'ring-2 ring-highlight/50 ring-offset-1' : ''}`}
                     >
-                        <Save size={16} className="mr-2" />
-                        {t('header.saveVersion')}
+                        <Save size={16} className="md:mr-2" />
+                        <span className="hidden md:inline">{t('header.saveVersion')}</span>
                     </Button>
                 </div>
             </div>
@@ -427,8 +430,8 @@ export const IdentityEditor = () => {
                     </div>
 
                     {/* Scrollable Content */}
-                    <div className="flex-1 overflow-y-auto bg-paleslate p-6">
-                        <div className="max-w-4xl mx-auto space-y-6">
+                    <div className="flex-1 overflow-y-auto bg-paleslate p-4 md:p-6">
+                        <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
 
                             {/* Active Tab Content */}
                             {/* Active Tab Content */}

@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
+import { isDemoMode } from '@/lib/demo';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || (isDemoMode ? 'sk_test_demo' : ''), {
     apiVersion: '2025-11-17.clover',
 });
 
@@ -14,6 +15,14 @@ export async function POST(req: Request) {
 
         if (!priceId || !userId) {
             return NextResponse.json({ error: 'Missing priceId or userId' }, { status: 400 });
+        }
+
+        if (isDemoMode) {
+            return NextResponse.json({
+                url: '/plans?demo=billing-simulated',
+                demo: true,
+                message: 'Demo mode simulates Stripe checkout and never creates a paid session.',
+            });
         }
 
         const { user } = await getAuthenticatedClient(req);

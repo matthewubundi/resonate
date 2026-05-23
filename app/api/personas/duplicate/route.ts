@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
+import { demoPersonas, isDemoMode } from '@/lib/demo';
 
 export async function POST(req: Request) {
     try {
+        if (isDemoMode) {
+            const { id } = await req.json();
+            const source = demoPersonas.find((persona) => persona.id === id) || demoPersonas[0];
+            return NextResponse.json({
+                success: true,
+                demo: true,
+                persona: {
+                    ...source,
+                    id: `identity-demo-copy-${Date.now()}`,
+                    name: `Copy of ${source.name}`,
+                    is_active: false,
+                },
+            });
+        }
+
         // Auth Check
         const { supabase, user } = await getAuthenticatedClient(req);
 

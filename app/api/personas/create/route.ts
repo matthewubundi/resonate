@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
+import { demoIdentity, isDemoMode } from '@/lib/demo';
 
 export async function POST(req: Request) {
   try {
+    if (isDemoMode) {
+      const { name, description } = await req.json();
+      return NextResponse.json({
+        success: true,
+        demo: true,
+        persona: {
+          id: `identity-demo-${Date.now()}`,
+          name: name || 'Demo Persona',
+          identity_json: { ...demoIdentity, description },
+          is_active: false,
+          created_at: new Date().toISOString(),
+        },
+      });
+    }
+
     // Auth Check - supports both Bearer token and cookie auth with RLS
     const { supabase, user } = await getAuthenticatedClient(req);
 

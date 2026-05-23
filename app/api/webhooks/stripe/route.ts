@@ -2,14 +2,19 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isDemoMode } from '@/lib/demo';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || (isDemoMode ? 'sk_test_demo' : ''), {
     apiVersion: '2025-11-17.clover',
 });
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
+    if (isDemoMode) {
+        return NextResponse.json({ received: true, demo: true });
+    }
+
     const body = await req.text();
     const signature = req.headers.get('stripe-signature') as string;
 

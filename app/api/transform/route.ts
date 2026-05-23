@@ -12,8 +12,9 @@ import { z } from 'zod';
 import { buildTransformationPrompt, buildEvaluationPrompt, buildRetryPrompt } from '@/lib/ai';
 import { LLMFactory } from '@/lib/llm/LLMFactory';
 import { Message } from '@/lib/llm/types';
+import { isDemoMode, simulateDemoTransform } from '@/lib/demo';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || (isDemoMode ? 'demo-openai-key' : undefined) });
 
 export async function OPTIONS(req: Request) {
   const corsResponse = handleCors(req);
@@ -27,6 +28,19 @@ export async function POST(req: Request) {
     // CORS Check
     const corsError = handleCors(req);
     if (corsError) return corsError;
+
+    if (isDemoMode) {
+      const body = await req.json();
+      const validated = transformSchema.parse(body);
+      const response = NextResponse.json(
+        simulateDemoTransform(validated.inputText, validated.instructions)
+      );
+      const origin = req.headers.get('origin');
+      Object.entries(corsHeaders(origin)).forEach(([key, value]) => {
+        response.headers.set(key, value);
+      });
+      return response;
+    }
 
     // Rate Limiting
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';

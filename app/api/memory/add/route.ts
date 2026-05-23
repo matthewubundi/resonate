@@ -1,11 +1,29 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
+import { isDemoMode } from '@/lib/demo';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || (isDemoMode ? 'demo-openai-key' : undefined) });
 
 export async function POST(req: Request) {
   try {
+    if (isDemoMode) {
+      const { content } = await req.json();
+      if (!content || !content.trim()) {
+        return NextResponse.json({ error: 'Content is required' }, { status: 400 });
+      }
+      return NextResponse.json({
+        success: true,
+        demo: true,
+        data: {
+          id: `mem-demo-${Date.now()}`,
+          content,
+          is_active: true,
+          created_at: new Date().toISOString(),
+        },
+      });
+    }
+
     // Auth Check - supports both Bearer token and cookie auth with RLS
     const { supabase, user } = await getAuthenticatedClient(req);
 

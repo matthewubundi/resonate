@@ -2,13 +2,14 @@
 import OpenAI from 'openai';
 import { ILLMProvider, LLMRequest, LLMResponse, ModelId } from '../types';
 import { logger } from '@/lib/logger';
+import { isDemoMode } from '@/lib/demo';
 
 export class OpenAIProvider implements ILLMProvider {
     private openai: OpenAI;
     private modelId: ModelId;
 
     constructor(modelId: ModelId = 'gpt-4o-mini') {
-        this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || (isDemoMode ? 'demo-openai-key' : undefined) });
         this.modelId = modelId;
     }
 

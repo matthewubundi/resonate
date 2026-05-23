@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
+import { demoIdentity, isDemoMode } from '@/lib/demo';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || (isDemoMode ? 'demo-openai-key' : undefined) });
 
 const EXTRACTION_PROMPT = `
 You are the Identity Architect. Analyze the user's raw onboarding data and writing samples to construct a 'identity_json' profile.
@@ -55,6 +56,10 @@ You will receive a JSON object containing:
 
 export async function POST(req: Request) {
   try {
+    if (isDemoMode) {
+      return NextResponse.json({ data: demoIdentity, demo: true });
+    }
+
     // Auth Check - supports both Bearer token and cookie auth with RLS
     await getAuthenticatedClient(req);
 

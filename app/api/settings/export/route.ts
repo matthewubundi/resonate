@@ -1,8 +1,33 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import {
+    demoIdentityVersions,
+    demoMemories,
+    demoPersonas,
+    demoProfile,
+    demoTransformations,
+    demoUser,
+    isDemoMode,
+} from '@/lib/demo';
 
 export async function GET(req: NextRequest) {
     try {
+        if (isDemoMode) {
+            return NextResponse.json({
+                profiles: [demoProfile],
+                identities: demoPersonas,
+                memories: demoMemories,
+                transformations: demoTransformations,
+                identity_versions: demoIdentityVersions,
+                metadata: {
+                    export_date: new Date().toISOString(),
+                    user_id: demoUser.id,
+                    version: 'demo-1.0',
+                    demo: true,
+                },
+            });
+        }
+
         // Get the authorization header from the request
         const authHeader = req.headers.get('Authorization');
 

@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
+import { isDemoMode } from '@/lib/demo';
 
 export async function POST(req: Request) {
   try {
+    if (isDemoMode) {
+      return NextResponse.json({
+        success: true,
+        demo: true,
+        message: 'Demo mode simulates settings updates for this session.',
+      });
+    }
+
     // Auth Check - supports both Bearer token and cookie auth with RLS
     const { supabase, user } = await getAuthenticatedClient(req);
 
@@ -43,4 +52,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

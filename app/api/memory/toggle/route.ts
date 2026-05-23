@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
+import { isDemoMode } from '@/lib/demo';
 
 export async function POST(req: Request) {
     try {
+        if (isDemoMode) {
+            const { id, is_active } = await req.json();
+            return NextResponse.json({
+                success: true,
+                demo: true,
+                data: { id, is_active },
+            });
+        }
+
         const { supabase, user } = await getAuthenticatedClient(req);
         const { id, is_active } = await req.json();
 

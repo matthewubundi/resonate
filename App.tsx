@@ -21,6 +21,7 @@ const AnalyticsPage = React.lazy(() => import('./views/Analytics').then(module =
 const Memory = React.lazy(() => import('./views/Memory').then(module => ({ default: module.Memory })));
 const Personas = React.lazy(() => import('./views/Personas').then(module => ({ default: module.Personas })));
 const Documentation = React.lazy(() => import('./views/Documentation').then(module => ({ default: module.default })));
+const Architecture = React.lazy(() => import('./views/Architecture').then(module => ({ default: module.Architecture })));
 const Settings = React.lazy(() => import('./views/Settings').then(module => ({ default: module.Settings })));
 const TermsOfService = React.lazy(() => import('./views/TermsOfService').then(module => ({ default: module.TermsOfService })));
 const PrivacyPolicy = React.lazy(() => import('./views/PrivacyPolicy').then(module => ({ default: module.PrivacyPolicy })));
@@ -30,41 +31,41 @@ const Plans = React.lazy(() => import('./views/Plans').then(module => ({ default
 
 
 
-// --- Main App Component ---
+// Detect current route and map to view
+const getInitialView = (pathname: string | null): PageView => {
+    if (typeof window === 'undefined') return 'landing';
+
+    const routeMap: Record<string, PageView> = {
+        '/dashboard': 'dashboard',
+        '/transform': 'transform',
+        '/login': 'login',
+        '/signup': 'signup',
+        '/editor': 'editor',
+        '/analytics': 'analytics',
+        '/history': 'history',
+        '/auth/reset-password': 'reset-password',
+        '/settings': 'settings',
+        '/onboarding': 'onboarding',
+        '/memory': 'memory',
+        '/personas': 'personas',
+        '/architecture': 'architecture',
+        '/documentation': 'documentation',
+        '/check-email': 'check-email',
+        '/verified': 'verified',
+        '/terms': 'terms',
+        '/privacy': 'privacy',
+        '/plans': 'plans',
+    };
+
+    return routeMap[pathname || '/'] || 'landing';
+};
 
 const AppContent: React.FC = () => {
     const router = useRouter();
     const pathname = usePathname();
+    const initialPathRef = React.useRef(pathname);
 
-    // Detect current route and map to view
-    const getInitialView = (): PageView => {
-        if (typeof window === 'undefined') return 'landing';
-
-        const routeMap: Record<string, PageView> = {
-            '/dashboard': 'dashboard',
-            '/transform': 'transform',
-            '/login': 'login',
-            '/signup': 'signup',
-            '/editor': 'editor',
-            '/analytics': 'analytics',
-            '/history': 'history',
-            '/auth/reset-password': 'reset-password',
-            '/settings': 'settings',
-            '/onboarding': 'onboarding',
-            '/memory': 'memory',
-            '/personas': 'personas',
-            '/documentation': 'documentation',
-            '/check-email': 'check-email',
-            '/verified': 'verified',
-            '/terms': 'terms',
-            '/privacy': 'privacy',
-            '/plans': 'plans',
-        };
-
-        return routeMap[pathname || '/'] || 'landing';
-    };
-
-    const [view, setView] = useState<PageView>(getInitialView());
+    const [view, setView] = useState<PageView>(getInitialView(pathname));
     const [isDarkMode, setIsDarkMode] = useState(false); // Default to light
     const { user, signOut, loading } = useAuth();
     const { onboardingCompleted, loading: onboardingLoading, refetch: refetchOnboarding } = useOnboarding(user);
@@ -74,7 +75,7 @@ const AppContent: React.FC = () => {
     // Only set initial view on mount, don't update on pathname changes
     // This prevents unnecessary re-renders when switching browser tabs
     useEffect(() => {
-        const currentView = getInitialView();
+        const currentView = getInitialView(initialPathRef.current);
         // Only update if view is different from current
         setView(prev => {
             if (prev !== currentView) {
@@ -181,7 +182,7 @@ const AppContent: React.FC = () => {
     // Protected route handler
     const handleNavigate = (page: PageView) => {
         // If trying to access protected pages without authentication, redirect to login
-        const protectedPages: PageView[] = ['dashboard', 'transform', 'editor', 'analytics', 'history', 'memory', 'personas', 'settings', 'plans'];
+        const protectedPages: PageView[] = ['dashboard', 'transform', 'editor', 'analytics', 'history', 'memory', 'personas', 'settings', 'plans', 'architecture'];
 
         if (protectedPages.includes(page) && !user) {
             router.push('/login');
@@ -210,6 +211,7 @@ const AppContent: React.FC = () => {
             'loading': '/loading',
             'memory': '/memory',
             'personas': '/personas',
+            'architecture': '/architecture',
             'review': '/review',
             'documentation': '/documentation',
             'check-email': '/check-email',
@@ -221,6 +223,7 @@ const AppContent: React.FC = () => {
         };
 
         router.push(routeMap[page] || '/');
+        setView(page);
     };
 
     // Show loading screen while checking authentication and onboarding status
@@ -327,6 +330,8 @@ const AppContent: React.FC = () => {
                 return <Memory />;
             case 'personas':
                 return <Personas onNavigate={handleNavigate} />;
+            case 'architecture':
+                return <Architecture onNavigate={handleNavigate} />;
             case 'settings':
                 return <Settings onNavigate={handleNavigate} />;
             case 'plans':

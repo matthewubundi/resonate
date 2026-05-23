@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
 import { AlertCircle } from 'lucide-react';
+import { isDemoMode } from '../lib/demo';
 
 export const Transform: React.FC = () => {
   const t = useTranslations('Transform');
@@ -22,7 +23,7 @@ export const Transform: React.FC = () => {
   // Initialize state from sessionStorage if available
   const [inputText, setInputText] = useState(() => {
     if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('transform_inputText') || '';
+      return sessionStorage.getItem('transform_inputText') || (isDemoMode ? 'We should leverage cross-functional alignment to maximize stakeholder outcomes before launch.' : '');
     }
     return '';
   });

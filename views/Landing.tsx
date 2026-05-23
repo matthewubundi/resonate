@@ -25,6 +25,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from '@/src/i18n/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import { isDemoMode } from '../lib/demo';
 
 
 
@@ -295,7 +296,7 @@ const BentoGridFeatures = () => {
             <div className="space-y-2 text-slate-300">
               <p><span className="text-purple-400">const</span> <span className="text-blue-300">engine</span> = <span className="text-purple-400">new</span> <span className="text-yellow-300">Resonate</span>();</p>
               <p><span className="text-purple-400">await</span> engine.<span className="text-blue-400">loadIdentity</span>(<span className="text-green-400">'./my-voice.json'</span>);</p>
-              <p className="text-slate-600">// &lt; 15ms injection</p>
+              <p className="text-slate-600">{"// < 15ms injection"}</p>
               <p><span className="text-purple-400">return</span> engine.<span className="text-blue-400">process</span>(draft);</p>
             </div>
           </div>
@@ -720,6 +721,13 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void; onNa
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
+  const handleStart = () => {
+    if (isDemoMode) {
+      onNavigate?.('dashboard');
+      return;
+    }
+    onSignup();
+  };
 
   const changeLanguage = (newLocale: string) => {
     router.replace(pathname, { locale: newLocale });
@@ -788,10 +796,10 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void; onNa
             <div className="flex gap-3">
               <button onClick={onLogin} className="hidden sm:block text-sm font-semibold text-slate-600 hover:text-slate-900 px-4 py-2">{t('nav.logIn')}</button>
               <button
-                onClick={onSignup}
+                onClick={handleStart}
                 className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-all shadow-none active:scale-95"
               >
-                {t('nav.getStarted')}
+                {isDemoMode ? 'Start Demo' : t('nav.getStarted')}
               </button>
             </div>
           </div>
@@ -852,15 +860,23 @@ export const Landing: React.FC<{ onLogin: () => void; onSignup: () => void; onNa
               className="flex flex-col sm:flex-row gap-4"
             >
               <button
-                onClick={onSignup}
+                onClick={handleStart}
                 className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-lg bg-blue-600 px-8 font-semibold text-white transition-all hover:bg-blue-700 active:scale-95"
               >
-                <span className="mr-2">{t('hero.startSetup')}</span>
+                <span className="mr-2">{isDemoMode ? 'Start Demo' : t('hero.startSetup')}</span>
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
               </button>
+              {isDemoMode && (
+                <button
+                  onClick={() => onNavigate?.('architecture')}
+                  className="inline-flex h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-8 font-semibold text-slate-900 hover:bg-slate-50 transition-all active:scale-95"
+                >
+                  Technical Notes
+                </button>
+              )}
               <button
                 onClick={() => onNavigate?.('documentation')}
-                className="inline-flex h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-8 font-semibold text-slate-900 hover:bg-slate-50 transition-all active:scale-95"
+                className={`${isDemoMode ? 'hidden sm:inline-flex' : 'inline-flex'} h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-8 font-semibold text-slate-900 hover:bg-slate-50 transition-all active:scale-95`}
               >
                 {t('hero.viewDocs')}
               </button>

@@ -2,13 +2,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ILLMProvider, LLMRequest, LLMResponse, ModelId } from '../types';
 import { logger } from '@/lib/logger';
+import { isDemoMode } from '@/lib/demo';
 
 export class GeminiProvider implements ILLMProvider {
     private genAI: GoogleGenerativeAI;
     private modelId: ModelId;
 
     constructor(modelId: ModelId = 'gemini-flash-latest') {
-        const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+        const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || (isDemoMode ? 'demo-gemini-key' : undefined);
         if (!apiKey) {
             throw new Error('Missing GOOGLE_API_KEY or GEMINI_API_KEY environment variable');
         }

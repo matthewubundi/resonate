@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
+import { demoMemories, isDemoMode } from '@/lib/demo';
 
 export async function GET(req: Request) {
   try {
+    if (isDemoMode) {
+      const url = new URL(req.url);
+      const limit = parseInt(url.searchParams.get('limit') || '50');
+      return NextResponse.json({ data: demoMemories.slice(0, limit), demo: true });
+    }
+
     // Auth Check - supports both Bearer token and cookie auth with RLS
     const { supabase, user } = await getAuthenticatedClient(req);
 

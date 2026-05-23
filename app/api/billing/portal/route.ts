@@ -2,13 +2,22 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isDemoMode } from '@/lib/demo';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || (isDemoMode ? 'sk_test_demo' : ''), {
     apiVersion: '2025-11-17.clover',
 });
 
 export async function POST(req: Request) {
     try {
+        if (isDemoMode) {
+            return NextResponse.json({
+                url: '/settings?tab=Billing&demo=portal-simulated',
+                demo: true,
+                message: 'Demo mode simulates the Stripe billing portal.',
+            });
+        }
+
         const { user } = await getAuthenticatedClient(req);
 
         if (!user) {

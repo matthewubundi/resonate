@@ -1,5 +1,54 @@
 import React, { useEffect, useRef } from 'react';
 
+class Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    size: number;
+
+    constructor(width: number, height: number, moveSpeed: number) {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * moveSpeed;
+        this.vy = (Math.random() - 0.5) * moveSpeed;
+        this.size = Math.random() * 2 + 1;
+    }
+
+    update(width: number, height: number, mouse: { x: number; y: number }) {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Bounce off edges
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+
+        // Mouse interaction
+        const dx = mouse.x - this.x;
+        const dy = mouse.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < 200) {
+            const forceDirectionX = dx / distance;
+            const forceDirectionY = dy / distance;
+            const force = (200 - distance) / 200;
+            const directionX = forceDirectionX * force * 0.5;
+            const directionY = forceDirectionY * force * 0.5;
+
+            this.x += directionX;
+            this.y += directionY;
+        }
+    }
+
+    draw(ctx: CanvasRenderingContext2D, color: string) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.5;
+        ctx.fill();
+    }
+}
+
 const HeroBackground: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -25,56 +74,6 @@ const HeroBackground: React.FC = () => {
         const moveSpeed = 0.5;
         const color = '#2563EB'; // Azure Blue
 
-        class Particle {
-            x: number;
-            y: number;
-            vx: number;
-            vy: number;
-            size: number;
-
-            constructor() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * moveSpeed;
-                this.vy = (Math.random() - 0.5) * moveSpeed;
-                this.size = Math.random() * 2 + 1;
-            }
-
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Bounce off edges
-                if (this.x < 0 || this.x > width) this.vx *= -1;
-                if (this.y < 0 || this.y > height) this.vy *= -1;
-
-                // Mouse interaction
-                const dx = mouse.x - this.x;
-                const dy = mouse.y - this.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                if (distance < 200) {
-                    const forceDirectionX = dx / distance;
-                    const forceDirectionY = dy / distance;
-                    const force = (200 - distance) / 200;
-                    const directionX = forceDirectionX * force * 0.5;
-                    const directionY = forceDirectionY * force * 0.5;
-
-                    this.x += directionX;
-                    this.y += directionY;
-                }
-            }
-
-            draw() {
-                if (!ctx) return;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = color;
-                ctx.globalAlpha = 0.5;
-                ctx.fill();
-            }
-        }
-
         const init = () => {
             width = container.clientWidth;
             height = container.clientHeight;
@@ -84,7 +83,7 @@ const HeroBackground: React.FC = () => {
             particles = [];
             const count = Math.floor((width * height) / 15000); // Responsive density
             for (let i = 0; i < count; i++) {
-                particles.push(new Particle());
+                particles.push(new Particle(width, height, moveSpeed));
             }
         };
 
@@ -94,8 +93,8 @@ const HeroBackground: React.FC = () => {
 
             // Update and draw particles
             particles.forEach(particle => {
-                particle.update();
-                particle.draw();
+                particle.update(width, height, mouse);
+                particle.draw(ctx, color);
             });
 
             // Draw connections

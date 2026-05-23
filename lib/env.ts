@@ -5,6 +5,10 @@ const requiredEnvVars = [
 ] as const;
 
 export function validateEnv() {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || process.env.DEMO_MODE === 'true') {
+        return;
+    }
+
     const missing: string[] = [];
 
     for (const envVar of requiredEnvVars) {

@@ -15,6 +15,7 @@ export type PageView =
   | 'personas'
   | 'settings'
   | 'documentation'
+  | 'architecture'
   | 'check-email'
   | 'verified'
   | 'terms'

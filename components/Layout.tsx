@@ -11,7 +11,8 @@ import {
   Menu,
   LogOut,
   Cpu,
-  CreditCard
+  CreditCard,
+  Network
 } from 'lucide-react';
 import Image from 'next/image';
 import { NavItem, PageView } from '../types';
@@ -39,6 +40,7 @@ const NAV_ITEMS: { id: NavItem['id']; icon: any }[] = [
   { id: 'analytics', icon: BarChart3 },
   { id: 'memory', icon: Brain },
   { id: 'personas', icon: Users },
+  { id: 'architecture', icon: Network },
   { id: 'plans', icon: CreditCard },
   { id: 'settings', icon: Settings },
 ];

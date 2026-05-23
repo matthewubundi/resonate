@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/utils/supabase/server';
+import { isDemoMode } from '@/lib/demo';
 
 export async function POST(req: Request) {
     try {
+        if (isDemoMode) {
+            return NextResponse.json({
+                success: true,
+                demo: true,
+                message: 'Demo mode simulates persona deletion without removing seeded data.',
+            });
+        }
+
         const { supabase, user } = await getAuthenticatedClient(req);
 
         const { id } = await req.json();

@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isDemoMode } from '@/lib/demo';
 
 export async function POST(req: Request) {
     try {
+        if (isDemoMode) {
+            return NextResponse.json({
+                success: true,
+                demo: true,
+                message: 'Demo mode simulates account deletion without deleting seeded data.',
+            });
+        }
+
         // 1. Verify Authentication
         const authHeader = req.headers.get('Authorization');
         if (!authHeader) {

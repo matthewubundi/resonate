@@ -1,10 +1,10 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 
 # Resonate
 
 An engineering-grade, AI-powered application that constructs a machine-readable identity layer to preserve, align, and refine your unique communication identity across various channels and platforms.
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Active-brightgreen?style=flat-square&logo=vercel)](https://resonate-phi.vercel.app)
 [![Next.js](https://img.shields.io/badge/Next.js-16.0.7-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.2-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.0-38bdf8?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
@@ -23,11 +23,20 @@ Generic AI outputs sound sterile, robotic, and inconsistent. **Resonate** solves
 
 This repository serves as a **portfolio-quality implementation** designed to showcase clean code architecture, professional database design with Row-Level Security, multi-model routing abstraction, and automated prompt evaluation loops.
 
+### 🌟 Key Highlights
+- 🚀 **Interactive Demo Mode** – Test the full application experience with seeded mock timelines and active personas, completely offline and with no credentials needed.
+- 🔄 **Self-Healing LLM Loop** – Multi-model pipeline featuring an autonomous auditor agent that evaluates and self-corrects style misalignment below an 8.0/10 threshold.
+- 🧠 **Contextual Memory** – Uses cosine-similarity vector searches (`pgvector` + OpenAI embeddings) to inject personalized user guidelines into target prompts.
+- 🔐 **Enterprise-Grade Security** – Comprehensive Postgres Row-Level Security (RLS) policies isolating user profiles, histories, and memories.
+- ⚡ **Streamlined DX & Tests** – Standardized developer workflow (`Makefile`) and unit tests via Vitest achieving rapid test execution times (under 2 seconds).
+
 ---
 
 ## ⚡ Portfolio Demo Mode (No Setup Required)
 
 Resonate includes a fully isolated **Demo Mode** specifically designed for recruiter and developer inspections. 
+
+**👉 [Try the Live Demo (Runs in Demo Mode)](https://resonate-phi.vercel.app)**
 
 By running in Demo Mode, the entire application works offline or without paid credentials:
 - **Zero Configs**: Runs immediately without needing Supabase, Stripe, OpenAI, Gemini, or Redis keys.

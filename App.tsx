@@ -1,3 +1,4 @@
+import './lib/fetchMock';
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, usePathname } from '@/src/i18n/navigation';
 import { Layout } from './components/Layout';

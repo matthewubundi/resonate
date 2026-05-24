@@ -1,8 +1,6 @@
 import { Session, User } from '@supabase/supabase-js';
 
-export const isDemoMode =
-  process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ||
-  process.env.DEMO_MODE === 'true';
+export const isDemoMode = true;
 
 export const demoUser = {
   id: 'demo-user-resonate',

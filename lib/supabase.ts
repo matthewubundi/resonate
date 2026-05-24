@@ -1,5 +1,6 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { demoSession, demoUser, getDemoRows, isDemoMode } from './demo';
+import { demoSession, demoUser, isDemoMode } from './demo';
+import { getLocalData, setLocalData } from './localStore';
 
 // Supabase configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -15,7 +16,7 @@ class DemoQueryBuilder {
     private countOnly = false;
 
     constructor(private table: string) {
-        this.rows = [...getDemoRows(table)];
+        this.rows = [...getLocalData(table)];
     }
 
     select(_columns = '*', options?: { count?: string; head?: boolean }) {
@@ -60,21 +61,41 @@ class DemoQueryBuilder {
 
     insert(payload: any) {
         const inserted = Array.isArray(payload) ? payload : [payload];
-        this.rows = inserted.map((row, index) => ({
+        const newRows = inserted.map((row, index) => ({
             id: row.id || `demo-${this.table}-${Date.now()}-${index}`,
             created_at: row.created_at || new Date().toISOString(),
             ...row,
         }));
+        
+        const fullRows = getLocalData(this.table);
+        const updatedRows = [...fullRows, ...newRows];
+        setLocalData(this.table, updatedRows);
+        
+        this.rows = newRows;
         this.shouldSingle = inserted.length === 1;
         return this;
     }
 
     update(payload: any) {
-        this.rows = this.rows.map((row) => ({ ...row, ...payload }));
+        const fullRows = getLocalData(this.table);
+        const matchedIds = new Set(this.rows.map(r => r.id));
+        const updatedFullRows = fullRows.map(row => {
+            if (matchedIds.has(row.id)) {
+                const updatedRow = { ...row, ...payload };
+                this.rows = this.rows.map(r => r.id === row.id ? updatedRow : r);
+                return updatedRow;
+            }
+            return row;
+        });
+        setLocalData(this.table, updatedFullRows);
         return this;
     }
 
     delete() {
+        const fullRows = getLocalData(this.table);
+        const matchedIds = new Set(this.rows.map(r => r.id));
+        const remainingFullRows = fullRows.filter(row => !matchedIds.has(row.id));
+        setLocalData(this.table, remainingFullRows);
         this.rows = [];
         return this;
     }

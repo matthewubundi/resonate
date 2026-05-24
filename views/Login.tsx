@@ -186,7 +186,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignup, onBac
 
                     <div className="pt-8">
                         <h1 className="text-3xl font-bold text-ink tracking-tight mb-2">Access Your Identity Layer</h1>
-                        <p className="text-ink/60">Enter your credentials to synchronize.</p>
+                        <p className="text-ink/60 mb-4">Enter your credentials to synchronize.</p>
+                    </div>
+
+                    <div className="p-4 bg-azure/5 border border-azure/20 rounded-xl flex gap-3 text-sm text-azure leading-relaxed">
+                        <div className="mt-0.5 text-base flex-shrink-0">💡</div>
+                        <div>
+                            <span className="font-semibold">Demo Sandbox Active:</span> This app runs entirely in your browser using local storage. Use any email and password to log in, or click a social provider for instant access.
+                        </div>
                     </div>
 
                     {error && (

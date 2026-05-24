@@ -157,7 +157,14 @@ export const Signup: React.FC<SignupProps> = ({ onSignup, onNavigateToLogin, onB
 
                     <div className="pt-8">
                         <h1 className="text-3xl font-bold text-ink tracking-tight mb-2">Initialize Your Fingerprint</h1>
-                        <p className="text-ink/60">Create your identity layer to begin.</p>
+                        <p className="text-ink/60 mb-4">Create your identity layer to begin.</p>
+                    </div>
+
+                    <div className="p-4 bg-azure/5 border border-azure/20 rounded-xl flex gap-3 text-sm text-azure leading-relaxed">
+                        <div className="mt-0.5 text-base flex-shrink-0">💡</div>
+                        <div>
+                            <span className="font-semibold">Demo Sandbox Active:</span> This app runs entirely in your browser using local storage. Create an account with any email/password to start the interactive demo.
+                        </div>
                     </div>
 
                     {error && (

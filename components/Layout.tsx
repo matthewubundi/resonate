@@ -113,6 +113,10 @@ export const Layout: React.FC<LayoutProps> = ({
             <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={32} height={32} className="w-8 h-8 object-contain" />
             <span className="font-bold text-lg tracking-tight text-azure">Resonate</span>
           </div>
+          <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-azure/10 text-azure border border-azure/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-azure animate-pulse"></span>
+            Demo Sandbox
+          </div>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
@@ -199,9 +203,15 @@ export const Layout: React.FC<LayoutProps> = ({
         {isMobileMenuOpen && (
           <div className="absolute inset-0 z-50 bg-ink/20 md:hidden backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="h-full w-64 bg-paleslate p-4 border-r border-ink/10 shadow-xl" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center gap-2 mb-8 px-2">
-                <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={32} height={32} className="w-8 h-8 object-contain" />
-                <span className="font-bold text-lg text-azure">Resonate</span>
+              <div className="flex flex-col gap-2 mb-8 px-2">
+                <div className="flex items-center gap-2">
+                  <Image src="/Resonate-Logo.png" alt="Resonate Logo" width={32} height={32} className="w-8 h-8 object-contain" />
+                  <span className="font-bold text-lg text-azure">Resonate</span>
+                </div>
+                <div className="inline-flex items-center self-start gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-azure/10 text-azure border border-azure/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-azure animate-pulse"></span>
+                  Demo Sandbox
+                </div>
               </div>
               <nav className="space-y-1">
                 {NAV_ITEMS.map((item) => (
